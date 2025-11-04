@@ -9,6 +9,10 @@ import { useToast } from '../components/ui/Toast'
 
 const LETTER_FILTERS = ['Alle', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ'.split('')]
 
+// Split letters into two balanced rows (15 items each)
+const LETTER_FILTERS_ROW1 = ['Alle', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ'.split('').slice(0, 14)]
+const LETTER_FILTERS_ROW2 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ'.split('').slice(14)
+
 const getInitials = (name: string) =>
   name
     .split(' ')
@@ -169,22 +173,41 @@ const CheckInPage = () => {
       <PageCard className="space-y-6">
         <div className="flex flex-col gap-4">
           <TableSearch value={search} onChange={setSearch} placeholder="Søg efter spiller" />
-          <div className="flex gap-2 flex-wrap">
-            {LETTER_FILTERS.map((letter) => (
-              <button
-                key={letter}
-                type="button"
-                onClick={() => setFilterLetter(letter)}
-                className={clsx(
-                  'rounded-full px-3 py-1 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
-                  filterLetter === letter
-                    ? 'bg-accent text-white shadow-[0_2px_8px_hsl(var(--line)/.12)]'
-                    : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] hover:text-foreground border-hair'
-                )}
-              >
-                {letter}
-              </button>
-            ))}
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2 flex-wrap">
+              {LETTER_FILTERS_ROW1.map((letter) => (
+                <button
+                  key={letter}
+                  type="button"
+                  onClick={() => setFilterLetter(letter)}
+                  className={clsx(
+                    'rounded-full px-3 py-1 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
+                    filterLetter === letter
+                      ? 'bg-accent text-white shadow-[0_2px_8px_hsl(var(--line)/.12)]'
+                      : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] hover:text-foreground border-hair'
+                  )}
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {LETTER_FILTERS_ROW2.map((letter) => (
+                <button
+                  key={letter}
+                  type="button"
+                  onClick={() => setFilterLetter(letter)}
+                  className={clsx(
+                    'rounded-full px-3 py-1 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
+                    filterLetter === letter
+                      ? 'bg-accent text-white shadow-[0_2px_8px_hsl(var(--line)/.12)]'
+                      : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] hover:text-foreground border-hair'
+                  )}
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
