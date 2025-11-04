@@ -314,7 +314,7 @@ const CoachPage = () => {
         </PageCard>
       )}
 
-      <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(200px,240px)_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(200px,240px)_1fr] lg:items-start">
         {/* Bench */}
         <PageCard className="space-y-2" onDragOver={(e) => e.preventDefault()} onDrop={onDropToBench}>
           <header className="flex items-center justify-between">
@@ -323,7 +323,7 @@ const CoachPage = () => {
               {bench.length}
             </span>
           </header>
-          <div className="flex flex-col space-y-2 overflow-y-auto">
+          <div className="flex flex-col space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
             {bench.length === 0 && (
               <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-4 text-center text-xs text-[hsl(var(--muted))] border-hair">
                 Ingen spillere på bænken
@@ -342,7 +342,7 @@ const CoachPage = () => {
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
                   <p className="text-[10px] text-[hsl(var(--muted))] truncate">
-                    {new Date(player.checkInAt).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
+                    Niveau {player.level ?? '–'}
                   </p>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
