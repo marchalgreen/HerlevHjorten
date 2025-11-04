@@ -211,8 +211,23 @@ const listActiveCheckIns = async (): Promise<CheckedInPlayer[]> => {
     })
 }
 
+const removeCheckIn = async (input: { playerId: string }) => {
+  const session = await ensureActiveSession()
+  const state = loadState()
+  const checkInIndex = state.checkIns.findIndex(
+    (checkIn: CheckIn) => checkIn.sessionId === session.id && checkIn.playerId === input.playerId
+  )
+  if (checkInIndex === -1) {
+    throw new Error('Spilleren er ikke tjekket ind')
+  }
+  updateState((current: DatabaseState) => {
+    current.checkIns.splice(checkInIndex, 1)
+  })
+}
+
 const checkInsApi = {
   add: addCheckIn,
+  remove: removeCheckIn,
   listActive: listActiveCheckIns
 }
 

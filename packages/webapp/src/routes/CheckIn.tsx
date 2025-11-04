@@ -104,6 +104,21 @@ const CheckInPage = () => {
     [loadCheckIns, notify, session]
   )
 
+  const handleCheckOut = useCallback(
+    async (player: Player) => {
+      if (!session) return
+      setError(null)
+      try {
+        await api.checkIns.remove({ playerId: player.id })
+        await loadCheckIns()
+        notify({ variant: 'success', title: 'Spiller tjekket ud', description: player.name })
+      } catch (err: any) {
+        setError(err.message ?? 'Kunne ikke tjekke ud')
+      }
+    },
+    [loadCheckIns, notify, session]
+  )
+
   if (loading) {
     return (
       <section className="mx-auto flex h-full max-w-4xl items-center justify-center">
@@ -142,9 +157,9 @@ const CheckInPage = () => {
       </header>
 
       <PageCard className="space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4">
           <TableSearch value={search} onChange={setSearch} placeholder="Søg efter spiller" />
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex gap-2 flex-wrap">
             {LETTER_FILTERS.map((letter) => (
               <button
                 key={letter}
@@ -197,13 +212,12 @@ const CheckInPage = () => {
                   <div className="flex items-center gap-3">
                     <Badge variant={isChecked ? 'success' : 'muted'}>{isChecked ? 'Tjekket ind' : 'Klar'}</Badge>
                     <Button
-                      variant={isChecked ? 'ghost' : 'primary'}
+                      variant={isChecked ? 'secondary' : 'primary'}
                       size="sm"
-                      disabled={isChecked}
-                      onClick={() => handleCheckIn(player)}
+                      onClick={() => (isChecked ? handleCheckOut(player) : handleCheckIn(player))}
                       className={clsx(!isChecked && 'ring-2 ring-[hsl(var(--accent)/.2)]')}
                     >
-                      {isChecked ? 'Tjekket ind' : 'Check ind'}
+                      {isChecked ? 'Check ud' : 'Check ind'}
                     </Button>
                   </div>
                 </div>

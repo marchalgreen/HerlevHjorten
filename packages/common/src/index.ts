@@ -98,6 +98,7 @@ export type RendererApi = {
   }
   checkIns: {
     add(input: { playerId: string }): Promise<CheckIn>
+    remove(input: { playerId: string }): Promise<void>
     listActive(): Promise<CheckedInPlayer[]>
   }
   matches: {
