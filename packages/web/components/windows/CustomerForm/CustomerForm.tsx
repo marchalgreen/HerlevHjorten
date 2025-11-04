@@ -43,7 +43,6 @@ import SegmentedPills from '@/components/ui/SegmentedPills';
 import CustomerDetails from './CustomerDetails';
 import CustomerOrders from './CustomerOrders';
 import DatePopover from '@/components/ui/DatePopover';
-import IDScanOverlay from '@/components/scan/IDScanOverlay';
 
 /* ---------- helpers ---------- */
 
@@ -145,7 +144,6 @@ export default function CustomerForm({ payload }: Props) {
   const [tab, setTab] = useState<Tab>('details');
   const [dirty, setDirty] = useState(false);
   const openWin = useDesktop(useShallow((s) => s.open));
-  const [scanOpen, setScanOpen] = useState(false);
 
   const hue = useMemo(
     () => hueFromString(`${local.id || local.customerNo || local.email || ''}`),
@@ -156,27 +154,7 @@ export default function CustomerForm({ payload }: Props) {
     setTmpCPR(normalizeCpr(local.cprFull || ''));
   }, [local.cprFull]);
 
-  // ✅ if requested, open scan — but never auto-open after a full page reload
-  const consumedOpenScanRef = useRef(false);
-  useEffect(() => {
-    if (consumedOpenScanRef.current) return;
-    try {
-      const nav = (performance.getEntriesByType?.('navigation') || [])[0] as
-        | PerformanceNavigationTiming
-        | undefined;
-      const isReload = nav?.type === 'reload';
-      if (payload?.openScan && !isReload) {
-        consumedOpenScanRef.current = true; // consume once
-        setScanOpen(true);
-      }
-    } catch {
-      // fallback: only consume once if present
-      if (payload?.openScan && !consumedOpenScanRef.current) {
-        consumedOpenScanRef.current = true;
-        setScanOpen(true);
-      }
-    }
-  }, [payload?.openScan]);
+  // ID scan overlay removed in minimal template
 
   const handleSave = React.useCallback(() => {
     setDirty(false);
@@ -428,19 +406,7 @@ export default function CustomerForm({ payload }: Props) {
             <Button variant="secondary" className="chip gap-1.5">
               <CalendarCheck size={16} weight="bold" /> Book aftale
             </Button>
-            <Button
-              variant="secondary"
-              className="chip gap-1.5"
-              onClick={() =>
-                openWin({
-                  type: 'synsJournal',
-                  title: `Syns-/journal — ${local.firstName} ${local.lastName}`.trim(),
-                  payload: { customer: local },
-                })
-              }
-            >
-              <NotePencil size={16} weight="bold" /> Syns-/journal
-            </Button>
+            {/* SynsJournal removed in minimal template */}
             <Button variant="secondary" className="chip gap-1.5">
               <Eyeglasses size={16} weight="bold" /> Stel/glas
             </Button>
@@ -470,9 +436,7 @@ export default function CustomerForm({ payload }: Props) {
               <CurrencyDollar size={16} weight="bold" /> Finans
             </Button>
 
-            <Button variant="secondary" className="chip gap-1.5" onClick={() => setScanOpen(true)}>
-              <IdentificationBadge size={16} weight="bold" /> Scan sundhedskort
-            </Button>
+            {/* ID scan removed in minimal template */}
 
             <div className="ml-auto" />
 
@@ -503,26 +467,7 @@ export default function CustomerForm({ payload }: Props) {
         )}
       </div>
 
-      {/* Scan overlay */}
-      <IDScanOverlay
-        open={scanOpen}
-        onOpenChange={setScanOpen}
-        onScan={(id) => {
-          const digits = (id || '').replace(/\D+/g, '');
-          const front = digits.slice(0, 6);
-          const fullMatch = id && /^\d{6}-\d{4}$/.test(id);
-          setLocal((prev) => {
-            const cprFull = fullMatch ? id : undefined;
-            const cprMasked =
-              front && front.length === 6
-                ? `${front}-xxxx`
-                : toMasked(prev.cprFull) || prev.cprMasked;
-            const iso = front ? isoFromCprFront(front, prev.birthdate) : prev.birthdate;
-            return { ...prev, birthdate: iso || prev.birthdate, cprFull, cprMasked } as Customer;
-          });
-          setDirty(true);
-        }}
-      />
+      {/* Scan overlay removed in minimal template */}
     </TooltipProvider>
   );
 }
