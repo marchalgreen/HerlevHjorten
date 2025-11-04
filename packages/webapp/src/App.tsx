@@ -3,20 +3,33 @@ import { useMemo } from 'react'
 import PlayersPage from './routes/Players'
 import CheckInPage from './routes/CheckIn'
 import CoachPage from './routes/Coach'
-import { SidebarNav } from './components/ui/SidebarNav'
-import { Search, UsersRound, LayoutDashboard } from 'lucide-react'
+import { SidebarItem } from './components/navigation/SidebarItem'
+import { Search, UsersRound, Grid2x2 } from 'lucide-react'
+
+const SidebarNav = () => {
+  return (
+    <nav aria-label="Primær navigation" className="nav-list">
+      <SidebarItem to="/check-in" icon={<Search />} label="Check ind" />
+      <SidebarItem to="/coach" icon={<Grid2x2 />} label="Kampprogram" />
+      <SidebarItem to="/players" icon={<UsersRound />} label="Spillere" />
+    </nav>
+  )
+}
 
 const navItems = [
   { to: '/check-in', label: 'Check ind', icon: <Search size={18} /> },
-  { to: '/coach', label: 'Kampprogram', icon: <LayoutDashboard size={18} /> },
+  { to: '/coach', label: 'Kampprogram', icon: <Grid2x2 size={18} /> },
   { to: '/players', label: 'Spillere', icon: <UsersRound size={18} /> }
 ]
 
 const MobileNav = () => {
-  const items = useMemo(() => navItems, [])
   return (
     <div className="md:hidden card-glass-active ring-1 ring-[hsl(var(--line)/.12)] px-3 py-2">
-      <SidebarNav items={items} orientation="horizontal" />
+      <nav aria-label="Primær navigation" className="nav-list">
+        <SidebarItem to="/check-in" icon={<Search />} label="Check ind" />
+        <SidebarItem to="/coach" icon={<Grid2x2 />} label="Kampprogram" />
+        <SidebarItem to="/players" icon={<UsersRound />} label="Spillere" />
+      </nav>
     </div>
   )
 }
@@ -47,7 +60,7 @@ const App = () => {
               </p>
             </div>
             <div className="mt-8">
-              <SidebarNav items={navItems} size="lg" />
+              <SidebarNav />
             </div>
           </div>
         </aside>
