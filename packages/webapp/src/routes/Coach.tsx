@@ -197,7 +197,7 @@ const CoachPage = () => {
     return (
       <div
         key={slotIndex}
-        className={`flex min-h-[56px] items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
+        className={`flex min-h-[40px] items-center justify-between rounded-md px-2 py-1 text-xs transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
           player
             ? 'bg-[hsl(var(--surface))] ring-1 ring-[hsl(var(--line)/.12)] hover:shadow-sm'
             : 'bg-[hsl(var(--surface-2))] ring-1 ring-[hsl(var(--line)/.12)] text-[hsl(var(--muted))]'
@@ -217,20 +217,20 @@ const CoachPage = () => {
                 event.dataTransfer.setData('application/x-player-id', player.id)
                 event.dataTransfer.effectAllowed = 'move'
               }}
-              className="cursor-grab active:cursor-grabbing text-sm font-semibold text-[hsl(var(--foreground))]"
+              className="cursor-grab active:cursor-grabbing text-xs font-semibold text-[hsl(var(--foreground))] truncate"
             >
               {player.alias ?? player.name}
             </span>
             <button
               type="button"
               onClick={() => handleMove(player.id)}
-              className="rounded-md px-2 py-1 text-xs font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.85)] ring-1 ring-[hsl(var(--line)/.12)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none"
+              className="rounded px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.85)] ring-1 ring-[hsl(var(--line)/.12)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none flex-shrink-0 ml-1"
             >
               Bænk
             </button>
           </>
         ) : (
-          <span className="text-xs text-[hsl(var(--muted))]">Tom plads</span>
+          <span className="text-[10px] text-[hsl(var(--muted))]">Tom</span>
         )}
       </div>
     )
@@ -370,38 +370,38 @@ const CoachPage = () => {
         </PageCard>
 
         {/* Courts */}
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <section className="grid grid-cols-2 gap-2 xl:grid-cols-4">
           {matches.map((court) => (
             <PageCard
               key={court.courtIdx}
-              className="space-y-3 hover:shadow-md"
+              className="space-y-1.5 hover:shadow-md p-3"
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => void onDropToCourt(event, court.courtIdx)}
             >
-              <header className="flex items-center justify-between">
-                <h3 className="text-base font-medium text-[hsl(var(--foreground))]">Bane {court.courtIdx}</h3>
-                <span className="text-xs text-[hsl(var(--muted))]">{court.slots.length} / {EMPTY_SLOTS}</span>
+              <header className="flex items-center justify-between mb-1">
+                <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">Bane {court.courtIdx}</h3>
+                <span className="text-[10px] text-[hsl(var(--muted))]">{court.slots.length}/{EMPTY_SLOTS}</span>
               </header>
               
               {/* Court visualization: two halves with net divider */}
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 {/* Top half (slots 0-1) */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1">
                   {Array.from({ length: 2 }).map((_, idx) => renderPlayerSlot(court, idx))}
                 </div>
                 
                 {/* Net divider */}
-                <div className="relative flex items-center justify-center py-1">
+                <div className="relative flex items-center justify-center py-0.5">
                   <div className="absolute inset-0 flex items-center">
                     <div className="h-px w-full bg-[hsl(var(--line)/.3)]"></div>
                   </div>
-                  <div className="relative bg-[hsl(var(--surface))] px-2">
-                    <div className="h-1 w-8 rounded-full bg-[hsl(var(--primary)/.2)] ring-1 ring-[hsl(var(--primary)/.3)]"></div>
+                  <div className="relative bg-[hsl(var(--surface))] px-1.5">
+                    <div className="h-0.5 w-6 rounded-full bg-[hsl(var(--primary)/.2)] ring-1 ring-[hsl(var(--primary)/.3)]"></div>
                   </div>
                 </div>
                 
                 {/* Bottom half (slots 2-3) */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1">
                   {Array.from({ length: 2 }).map((_, idx) => renderPlayerSlot(court, idx + 2))}
                 </div>
               </div>
