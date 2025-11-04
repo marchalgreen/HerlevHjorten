@@ -54,12 +54,12 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed bottom-6 right-6 z-50 flex w-80 flex-col gap-3">
+      <div className="pointer-events-none fixed bottom-6 left-6 z-50 flex w-80 max-w-[calc(100vw-2rem)] flex-col-reverse gap-3">
         {toasts.map((toast) => (
           <div
             key={toast.id}
             className={clsx(
-              'rounded-lg p-4 shadow-lg ring-1 ring-[hsl(var(--line)/.2)] backdrop-blur-sm',
+              'pointer-events-auto rounded-lg p-4 shadow-lg ring-1 ring-[hsl(var(--line)/.2)] backdrop-blur-sm transition-all duration-200 ease-out',
               variantStyles[toast.variant ?? 'default']
             )}
             role="status"

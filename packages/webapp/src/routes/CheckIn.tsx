@@ -17,6 +17,16 @@ const getInitials = (name: string) =>
     .map((part) => part[0]?.toUpperCase())
     .join('')
 
+const getInitialsBgColor = (gender: 'Herre' | 'Dame' | null | undefined) => {
+  if (gender === 'Herre') {
+    return 'bg-[hsl(205_60%_94%)]' // subtle light blue-tinted
+  }
+  if (gender === 'Dame') {
+    return 'bg-[hsl(340_55%_94%)]' // subtle light rose-tinted
+  }
+  return 'bg-[hsl(var(--surface-2))]' // neutral gray for no gender
+}
+
 const CheckInPage = () => {
   const [players, setPlayers] = useState<Player[]>([])
   const [checkedIn, setCheckedIn] = useState<CheckedInPlayer[]>([])
@@ -199,7 +209,10 @@ const CheckInPage = () => {
                   )}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[hsl(var(--surface-2))] text-lg font-semibold text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)]">
+                    <div className={clsx(
+                      'flex h-12 w-12 items-center justify-center rounded-full text-lg font-semibold text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)]',
+                      getInitialsBgColor(player.gender)
+                    )}>
                       {initials}
                     </div>
                     <div>
