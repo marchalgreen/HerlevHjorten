@@ -27,7 +27,6 @@ import WidgetManager from '@/components/desktop/widgets/WidgetManager';
 import GlassFrame from './topbar/GlassFrame';
 import SplitNewButton from './topbar/SplitNewButton';
 import ProfileBadge from './topbar/ProfileBadge';
-import IDScanOverlay from '@/components/scan/IDScanOverlay';
 
 /* =========================================================
    Tokens
@@ -36,7 +35,7 @@ import IDScanOverlay from '@/components/scan/IDScanOverlay';
 const TYPE_COLORS: Record<string, string> = {
   booking_calendar: '210 100% 56%',
   logbook: '262 83% 58%',
-  inventory: '38 92% 50%',
+  // inventory: '38 92% 50%', // removed in minimal template
   hotkeys: '210 10% 46%',
   search: '210 100% 56%',
 };
@@ -132,24 +131,7 @@ export default function TopBar() {
 
   const [scanOpen, setScanOpen] = useState(false);
   // Robust open hook: listen on both window & document, and expose a callable
-  useEffect(() => {
-    const onOpenScan = () => setScanOpen(true);
-
-    // event listeners
-    window.addEventListener('open-id-scan' as any, onOpenScan);
-    document.addEventListener('open-id-scan' as any, onOpenScan);
-
-    // callable fallback for places that prefer a function over events
-    (window as any).__openIdScan = onOpenScan;
-
-    return () => {
-      window.removeEventListener('open-id-scan' as any, onOpenScan);
-      document.removeEventListener('open-id-scan' as any, onOpenScan);
-      if ((window as any).__openIdScan === onOpenScan) {
-        delete (window as any).__openIdScan;
-      }
-    };
-  }, []);
+  // ID scan overlay removed in minimal template
 
   useEffect(() => {
     const set = () => setOnline(typeof navigator !== 'undefined' ? navigator.onLine : null);
@@ -228,13 +210,13 @@ export default function TopBar() {
 
   const activeTintHsl = useMemo(() => {
     if (searchOpen) return TYPE_COLORS['search'];
-    const order = ['booking_calendar', 'logbook', 'inventory', 'hotkeys'];
+    const order = ['booking_calendar', 'logbook', 'hotkeys'];
     const found = order.find((t) => isOpen(t));
     return found ? TYPE_COLORS[found] : null;
   }, [searchOpen, isOpen]);
 
   // Create actions
-  type CreateAction = 'customer' | 'booking' | 'order';
+  type CreateAction = 'customer' | 'booking';
   const lastCreateRef = useRef<CreateAction>('customer');
   useEffect(() => {
     try {
@@ -251,18 +233,12 @@ export default function TopBar() {
   const launchCreate = (a: CreateAction) => {
     persistCreate(a);
     if (a === 'customer') {
-      setScanOpen(true);
+      open({ type: 'customer', title: 'Kundekort', payload: { fromEl: 'launcher-customer-top' } });
     } else if (a === 'booking') {
       open({
         type: 'booking_calendar',
         title: 'Kalender',
         payload: { fromEl: 'launcher-booking-top', intent: 'new_booking' },
-      });
-    } else if (a === 'order') {
-      open({
-        type: 'inventory',
-        title: 'Varer',
-        payload: { fromEl: 'launcher-inventory-top', intent: 'new_order' },
       });
     }
   };
@@ -363,20 +339,7 @@ export default function TopBar() {
                   }
                   tintHsl={TYPE_COLORS['logbook']}
                 />
-                <Chip
-                  id="launcher-inventory-top"
-                  label="Varer"
-                  icon={Package}
-                  active={isOpen('inventory')}
-                  onClick={() =>
-                    open({
-                      type: 'inventory',
-                      title: 'Varer',
-                      payload: { fromEl: 'launcher-inventory-top' },
-                    })
-                  }
-                  tintHsl={TYPE_COLORS['inventory']}
-                />
+                {/* Inventory removed in minimal template */}
                 <Chip
                   id="launcher-hotkeys-top"
                   label="Genveje"
@@ -430,11 +393,11 @@ export default function TopBar() {
                 }
                 onNewCustomer={() => launchCreate('customer')}
                 onNewBooking={() => launchCreate('booking')}
-                onNewOrder={() => launchCreate('order')}
+                onNewOrder={() => { /* inventory removed */ }}
                 tints={{
                   customer: TYPE_COLORS.search,
                   booking: TYPE_COLORS.booking_calendar,
-                  order: TYPE_COLORS.inventory,
+                  order: TYPE_COLORS.search,
                 }}
               />
 
@@ -500,13 +463,7 @@ export default function TopBar() {
       </header>
       <WidgetManager open={managerOpen} onClose={() => setManagerOpen(false)} />
 
-      <IDScanOverlay
-        open={scanOpen}
-        onOpenChange={setScanOpen}
-        onScan={() => {
-          /* no-op; overlay handles opening existing or draft itself */
-        }}
-      />
+      {/* IDScanOverlay removed in minimal template */}
     </>
   );
 }
