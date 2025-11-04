@@ -39,6 +39,7 @@ export type Match = {
   courtId: string
   startedAt: string
   endedAt?: string | null
+  round?: number | null
 }
 
 export type MatchPlayer = {
@@ -102,8 +103,8 @@ export type RendererApi = {
     listActive(): Promise<CheckedInPlayer[]>
   }
   matches: {
-    autoArrange(): Promise<AutoArrangeResult>
-    list(): Promise<CourtWithPlayers[]>
+    autoArrange(round?: number): Promise<AutoArrangeResult>
+    list(round?: number): Promise<CourtWithPlayers[]>
     reset(): Promise<void>
     move(payload: MatchMovePayload): Promise<void>
   }

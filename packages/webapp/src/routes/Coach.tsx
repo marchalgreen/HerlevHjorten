@@ -19,6 +19,7 @@ const CoachPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [moveMenuPlayer, setMoveMenuPlayer] = useState<string | null>(null)
+  const [selectedRound, setSelectedRound] = useState<number>(1)
 
   const loadSession = async () => {
     try {
@@ -48,7 +49,7 @@ const CoachPage = () => {
       return
     }
     try {
-      const data = await api.matches.list()
+      const data = await api.matches.list(selectedRound)
       setMatches(data)
     } catch (err: any) {
       setError(err.message ?? 'Kunne ikke hente baner')
@@ -73,7 +74,7 @@ const CoachPage = () => {
     void loadCheckIns()
     void loadMatches()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.id])
+  }, [session?.id, selectedRound])
 
   const assignedIds = useMemo(() => {
     const ids = new Set<string>()
@@ -114,11 +115,11 @@ const CoachPage = () => {
   const handleAutoMatch = async () => {
     if (!session) return
     try {
-      const result: AutoArrangeResult = await api.matches.autoArrange()
+      const result: AutoArrangeResult = await api.matches.autoArrange(selectedRound)
       await loadMatches()
       await loadCheckIns()
-      setInfo(`Fordelte spillere på ${result.filledCourts} baner`)
-      setTimeout(() => setInfo(null), 1800)
+      setInfo(`Fordelte spillere på ${result.filledCourts} baner (Runde ${selectedRound})`)
+      setTimeout(() => setInfo(null), 3000)
     } catch (err: any) {
       setError(err.message ?? 'Kunne ikke matche spillere')
     }
@@ -297,14 +298,26 @@ const CoachPage = () => {
           {error && <span className="mt-2 block text-sm text-[hsl(var(--destructive))]">{error}</span>}
         </div>
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleAutoMatch}
-            disabled={!session || bench.length === 0}
-            className="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none bg-[hsl(var(--surface-glass)/.85)] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.95)] border-hair disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-sm"
-          >
-            Auto-match
-          </button>
+          <div className="flex gap-2 items-center">
+            <button
+              type="button"
+              onClick={handleAutoMatch}
+              disabled={!session || bench.length === 0}
+              className="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none bg-[hsl(var(--surface-glass)/.85)] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.95)] ring-1 ring-[hsl(var(--line)/.12)] disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-sm"
+            >
+              Auto-match
+            </button>
+            <select
+              value={selectedRound}
+              onChange={(e) => setSelectedRound(Number(e.target.value))}
+              className="rounded-md px-3 py-2 text-sm bg-[hsl(var(--surface))] text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none"
+              disabled={!session}
+            >
+              <option value={1}>Runde 1</option>
+              <option value={2}>Runde 2</option>
+              <option value={3}>Runde 3</option>
+            </select>
+          </div>
           <button
             type="button"
             onClick={handleResetMatches}

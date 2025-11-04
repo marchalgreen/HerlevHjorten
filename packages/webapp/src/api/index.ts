@@ -231,7 +231,7 @@ const checkInsApi = {
   listActive: listActiveCheckIns
 }
 
-const listMatches = async (): Promise<CourtWithPlayers[]> => {
+const listMatches = async (round?: number): Promise<CourtWithPlayers[]> => {
   const state = loadState()
   const session = await getActiveSession()
   const courts = [...state.courts].sort((a, b) => a.idx - b.idx)
@@ -239,7 +239,18 @@ const listMatches = async (): Promise<CourtWithPlayers[]> => {
     return courts.map((court) => ({ courtIdx: court.idx, slots: [] }))
   }
 
-  const matches = state.matches.filter((match: Match) => match.sessionId === session.id)
+  let matches = state.matches.filter((match: Match) => match.sessionId === session.id)
+  
+  // Filter by round if specified
+  if (round !== undefined) {
+    matches = matches.filter((match: Match) => {
+      // If round is specified, show only matches for that round
+      // If round is null/undefined on match, treat as round 1 (for backward compatibility)
+      const matchRound = match.round ?? 1
+      return matchRound === round
+    })
+  }
+
   if (!matches.length) {
     return courts.map((court) => ({ courtIdx: court.idx, slots: [] }))
   }
@@ -282,7 +293,7 @@ const resetMatches = async (): Promise<void> => {
   })
 }
 
-const autoArrangeMatches = async (): Promise<AutoArrangeResult> => {
+const autoArrangeMatches = async (round?: number): Promise<AutoArrangeResult> => {
   const session = await ensureActiveSession()
   const state = loadState()
   const checkIns = state.checkIns
@@ -293,10 +304,15 @@ const autoArrangeMatches = async (): Promise<AutoArrangeResult> => {
     return { filledCourts: 0, benched: 0 }
   }
 
-  const existingMatches = state.matches.filter((match: Match) => match.sessionId === session.id)
+  // Filter matches: exclude players already in the same round (allow same player in different rounds)
+  const existingMatchesInRound = state.matches.filter(
+    (match: Match) => match.sessionId === session.id && (match.round ?? 1) === (round ?? 1)
+  )
+  
+  // Only exclude players who are already assigned in THIS round
   const assignedPlayers = new Set(
     state.matchPlayers
-      .filter((mp) => existingMatches.some((match: Match) => match.id === mp.matchId))
+      .filter((mp) => existingMatchesInRound.some((match: Match) => match.id === mp.matchId))
       .map((mp) => mp.playerId)
   )
 
@@ -309,8 +325,10 @@ const autoArrangeMatches = async (): Promise<AutoArrangeResult> => {
   }
 
   const courts = [...state.courts].sort((a, b) => a.idx - b.idx)
+  
+  // Only exclude courts that are occupied in THIS round
   const occupied = new Set(
-    existingMatches
+    existingMatchesInRound
       .map((match) => courts.find((court) => court.id === match.courtId)?.idx)
       .filter((idx): idx is number => typeof idx === 'number')
   )
@@ -344,7 +362,8 @@ const autoArrangeMatches = async (): Promise<AutoArrangeResult> => {
         sessionId: session.id,
         courtId: court.id,
         startedAt: new Date().toISOString(),
-        endedAt: null
+        endedAt: null,
+        round: round ?? null
       })
       playerIds.forEach((playerId: string, slot: number) => {
         mutable.matchPlayers.push({
@@ -459,8 +478,8 @@ const movePlayer = async (payload: MatchMovePayload): Promise<void> => {
 }
 
 const matchesApi = {
-  autoArrange: autoArrangeMatches,
-  list: listMatches,
+  autoArrange: (round?: number) => autoArrangeMatches(round),
+  list: (round?: number) => listMatches(round),
   reset: resetMatches,
   move: movePlayer
 }
