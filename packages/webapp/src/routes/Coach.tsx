@@ -197,7 +197,7 @@ const CoachPage = () => {
     return (
       <div
         key={slotIndex}
-        className={`flex min-h-[40px] items-center justify-between rounded-md px-2 py-1 text-xs transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
+        className={`flex min-h-[52px] items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
           player
             ? 'bg-[hsl(var(--surface))] ring-1 ring-[hsl(var(--line)/.12)] hover:shadow-sm'
             : 'bg-[hsl(var(--surface-2))] ring-1 ring-[hsl(var(--line)/.12)] text-[hsl(var(--muted))]'
@@ -217,20 +217,20 @@ const CoachPage = () => {
                 event.dataTransfer.setData('application/x-player-id', player.id)
                 event.dataTransfer.effectAllowed = 'move'
               }}
-              className="cursor-grab active:cursor-grabbing text-xs font-semibold text-[hsl(var(--foreground))] truncate"
+              className="cursor-grab active:cursor-grabbing text-sm font-semibold text-[hsl(var(--foreground))] truncate"
             >
               {player.alias ?? player.name}
             </span>
             <button
               type="button"
               onClick={() => handleMove(player.id)}
-              className="rounded px-1.5 py-0.5 text-[10px] font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.85)] ring-1 ring-[hsl(var(--line)/.12)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none flex-shrink-0 ml-1"
+              className="rounded px-2 py-1 text-xs font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.85)] ring-1 ring-[hsl(var(--line)/.12)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none flex-shrink-0 ml-1"
             >
               Bænk
             </button>
           </>
         ) : (
-          <span className="text-[10px] text-[hsl(var(--muted))]">Tom</span>
+          <span className="text-xs text-[hsl(var(--muted))]">Tom plads</span>
         )}
       </div>
     )
@@ -245,7 +245,7 @@ const CoachPage = () => {
   }
 
   return (
-    <section className="mx-auto flex h-full max-w-6xl flex-col gap-6 pt-6">
+    <section className="flex h-full flex-col gap-6 pt-6">
       <header className="flex items-center justify-between mb-2">
         <div>
           <h1 className="text-2xl font-semibold">Kampprogram</h1>
@@ -304,50 +304,49 @@ const CoachPage = () => {
         </PageCard>
       )}
 
-      <div className="grid flex-1 gap-6 lg:grid-cols-[minmax(280px,340px)_1fr]">
+      <div className="grid flex-1 gap-4 lg:grid-cols-[minmax(200px,240px)_1fr]">
         {/* Bench */}
-        <PageCard className="space-y-3" onDragOver={(e) => e.preventDefault()} onDrop={onDropToBench}>
+        <PageCard className="space-y-2" onDragOver={(e) => e.preventDefault()} onDrop={onDropToBench}>
           <header className="flex items-center justify-between">
-            <h3 className="text-base font-medium">Bænk</h3>
-            <span className="rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-xs font-medium">
+            <h3 className="text-sm font-semibold">Bænk</h3>
+            <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-xs font-medium">
               {bench.length}
             </span>
           </header>
-          <div className="flex flex-col space-y-3 overflow-y-auto">
+          <div className="flex flex-col space-y-2 overflow-y-auto">
             {bench.length === 0 && (
-              <p className="rounded-md bg-[hsl(var(--surface-2))] px-3 py-6 text-center text-sm text-[hsl(var(--muted))] border-hair">
+              <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-4 text-center text-xs text-[hsl(var(--muted))] border-hair">
                 Ingen spillere på bænken
               </p>
             )}
             {bench.map((player) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--surface))] border-hair px-3 py-3 min-h-[56px] hover:shadow-sm cursor-grab active:cursor-grabbing transition-all"
+                className="flex items-center justify-between gap-2 rounded-md bg-[hsl(var(--surface))] border-hair px-2 py-2 min-h-[48px] hover:shadow-sm cursor-grab active:cursor-grabbing transition-all"
                 draggable
                 onDragStart={(event) => {
                   event.dataTransfer.setData('application/x-player-id', player.id)
                   event.dataTransfer.effectAllowed = 'move'
                 }}
               >
-                <div>
-                  <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{player.alias ?? player.name}</p>
-                  <p className="text-xs text-[hsl(var(--muted))]">
-                    Tjekket ind {new Date(player.checkInAt).toLocaleTimeString('da-DK')}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
+                  <p className="text-[10px] text-[hsl(var(--muted))] truncate">
+                    {new Date(player.checkInAt).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     type="button"
                     onClick={() => setMoveMenuPlayer(moveMenuPlayer === player.id ? null : player.id)}
-                    className="rounded-md px-3 py-1 text-xs font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2)/.7)] border-hair transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm"
+                    className="rounded px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2)/.7)] border-hair transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm"
                   >
                     Flyt
                   </button>
                   {moveMenuPlayer === player.id && (
-                    <div className="flex items-center gap-2 text-xs">
-                      <label className="text-[hsl(var(--muted))]">Bane</label>
+                    <div className="flex items-center gap-1 text-[10px]">
                       <select
-                        className="rounded-md border-hair bg-[hsl(var(--surface))] px-2 py-1 text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none"
+                        className="rounded border-hair bg-[hsl(var(--surface))] px-1 py-0.5 text-[hsl(var(--foreground))] focus:ring-1 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none"
                         defaultValue=""
                         onChange={(event) => {
                           const val = Number(event.target.value)
@@ -374,34 +373,34 @@ const CoachPage = () => {
           {matches.map((court) => (
             <PageCard
               key={court.courtIdx}
-              className="space-y-1.5 hover:shadow-md p-3"
+              className="space-y-2 hover:shadow-md p-4"
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => void onDropToCourt(event, court.courtIdx)}
             >
-              <header className="flex items-center justify-between mb-1">
-                <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">Bane {court.courtIdx}</h3>
-                <span className="text-[10px] text-[hsl(var(--muted))]">{court.slots.length}/{EMPTY_SLOTS}</span>
+              <header className="flex items-center justify-between mb-2">
+                <h3 className="text-base font-semibold text-[hsl(var(--foreground))]">Bane {court.courtIdx}</h3>
+                <span className="text-xs text-[hsl(var(--muted))]">{court.slots.length}/{EMPTY_SLOTS}</span>
               </header>
               
               {/* Court visualization: two halves with net divider */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 {/* Top half (slots 0-1) */}
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1.5">
                   {Array.from({ length: 2 }).map((_, idx) => renderPlayerSlot(court, idx))}
                 </div>
                 
                 {/* Net divider */}
-                <div className="relative flex items-center justify-center py-0.5">
+                <div className="relative flex items-center justify-center py-1">
                   <div className="absolute inset-0 flex items-center">
                     <div className="h-px w-full bg-[hsl(var(--line)/.3)]"></div>
                   </div>
-                  <div className="relative bg-[hsl(var(--surface))] px-1.5">
-                    <div className="h-0.5 w-6 rounded-full bg-[hsl(var(--primary)/.2)] ring-1 ring-[hsl(var(--primary)/.3)]"></div>
+                  <div className="relative bg-[hsl(var(--surface))] px-2">
+                    <div className="h-1 w-8 rounded-full bg-[hsl(var(--primary)/.2)] ring-1 ring-[hsl(var(--primary)/.3)]"></div>
                   </div>
                 </div>
                 
                 {/* Bottom half (slots 2-3) */}
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1.5">
                   {Array.from({ length: 2 }).map((_, idx) => renderPlayerSlot(court, idx + 2))}
                 </div>
               </div>

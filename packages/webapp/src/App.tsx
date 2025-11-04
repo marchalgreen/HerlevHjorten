@@ -74,7 +74,7 @@ const App = () => {
           <div className="hidden md:block">
             <Header />
           </div>
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-10 pt-6 md:px-8">
+          <div className="flex w-full flex-col gap-6 px-4 pb-10 pt-6 md:px-6">
             <Routes>
               <Route path="/players" element={<PlayersPage />} />
               <Route path="/check-in" element={<CheckInPage />} />
