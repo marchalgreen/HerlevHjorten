@@ -191,16 +191,26 @@ const CoachPage = () => {
     setMoveMenuPlayer(null)
   }
 
+  const getPlayerSlotBgColor = (gender: 'Herre' | 'Dame' | null | undefined) => {
+    if (gender === 'Herre') {
+      return 'bg-[hsl(205_60%_94%)]' // subtle light blue-tinted
+    }
+    if (gender === 'Dame') {
+      return 'bg-[hsl(340_55%_94%)]' // subtle light rose-tinted
+    }
+    return 'bg-[hsl(var(--surface))]' // neutral for no gender
+  }
+
   const renderPlayerSlot = (court: CourtWithPlayers, slotIndex: number) => {
     const entry = court.slots.find((slot: { slot: number; player: Player }) => slot.slot === slotIndex)
     const player = entry?.player
     return (
       <div
         key={slotIndex}
-        className={`flex min-h-[52px] items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
+        className={`flex min-h-[52px] items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-1 ring-[hsl(var(--line)/.12)] ${
           player
-            ? 'bg-[hsl(var(--surface))] ring-1 ring-[hsl(var(--line)/.12)] hover:shadow-sm'
-            : 'bg-[hsl(var(--surface-2))] ring-1 ring-[hsl(var(--line)/.12)] text-[hsl(var(--muted))]'
+            ? `${getPlayerSlotBgColor(player.gender)} hover:shadow-sm`
+            : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))]'
         }`}
         onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
           if (!player) event.preventDefault()
@@ -322,7 +332,7 @@ const CoachPage = () => {
             {bench.map((player) => (
               <div
                 key={player.id}
-                className="flex items-center justify-between gap-2 rounded-md bg-[hsl(var(--surface))] border-hair px-2 py-2 min-h-[48px] hover:shadow-sm cursor-grab active:cursor-grabbing transition-all"
+                className={`flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor(player.gender)}`}
                 draggable
                 onDragStart={(event) => {
                   event.dataTransfer.setData('application/x-player-id', player.id)
