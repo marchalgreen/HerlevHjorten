@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import type { Player } from '@badminton/common'
+import type { Player, PlayerGender, PlayerCategory } from '@badminton/common'
 import { Pencil, Plus, Trash2, UsersRound } from 'lucide-react'
 import api from '../api'
 import { Badge, Button, EmptyState, PageCard } from '../components/ui'
@@ -24,6 +24,8 @@ const PlayersPage = () => {
   const [formName, setFormName] = useState('')
   const [formAlias, setFormAlias] = useState('')
   const [formLevel, setFormLevel] = useState<string>('')
+  const [formGender, setFormGender] = useState<PlayerGender | ''>('')
+  const [formPrimaryCategory, setFormPrimaryCategory] = useState<PlayerCategory | ''>('')
   const [formActive, setFormActive] = useState(true)
   const { notify } = useToast()
 
@@ -61,6 +63,8 @@ const PlayersPage = () => {
     setFormName('')
     setFormAlias('')
     setFormLevel('')
+    setFormGender('')
+    setFormPrimaryCategory('')
     setFormActive(true)
     setCurrentPlayer(null)
   }
@@ -77,6 +81,8 @@ const PlayersPage = () => {
     setFormName(player.name)
     setFormAlias(player.alias ?? '')
     setFormLevel(player.level?.toString() ?? '')
+    setFormGender(player.gender ?? '')
+    setFormPrimaryCategory(player.primaryCategory ?? '')
     setFormActive(player.active)
     setIsSheetOpen(true)
   }
@@ -90,6 +96,8 @@ const PlayersPage = () => {
           name: formName.trim(),
           alias: formAlias.trim() || undefined,
           level: formLevel ? Number(formLevel) : undefined,
+          gender: formGender || undefined,
+          primaryCategory: formPrimaryCategory || undefined,
           active: formActive
         })
         notify({ variant: 'success', title: 'Spiller oprettet' })
@@ -100,6 +108,8 @@ const PlayersPage = () => {
             name: formName.trim(),
             alias: formAlias || null,
             level: formLevel ? Number(formLevel) : null,
+            gender: formGender || null,
+            primaryCategory: formPrimaryCategory || null,
             active: formActive
           }
         })
@@ -143,6 +153,22 @@ const PlayersPage = () => {
         sortable: true,
         sortValue: (row) => row.level ?? 0,
         accessor: (row: Player) => row.level ?? '–'
+      },
+      {
+        id: 'gender',
+        header: 'Køn',
+        align: 'center',
+        sortable: true,
+        sortValue: (row: Player) => row.gender ?? '',
+        accessor: (row: Player) => row.gender ?? '–'
+      },
+      {
+        id: 'primaryCategory',
+        header: 'Primær kategori',
+        align: 'center',
+        sortable: true,
+        sortValue: (row: Player) => row.primaryCategory ?? '',
+        accessor: (row: Player) => row.primaryCategory ?? '–'
       },
       {
         id: 'createdAt',
@@ -258,15 +284,38 @@ const PlayersPage = () => {
                 />
               </label>
               <label className="flex flex-col gap-2 text-sm">
-                <span className="font-medium text-[hsl(var(--foreground))]">Niveau (1-5)</span>
+                <span className="font-medium text-[hsl(var(--foreground))]">Niveau</span>
                 <input
                   type="number"
-                  min={1}
-                  max={5}
                   value={formLevel}
                   onChange={(event) => setFormLevel(event.target.value)}
                   className="rounded-md bg-[hsl(var(--surface))] px-3 py-2 ring-1 ring-[hsl(var(--line)/.14)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none text-[hsl(var(--foreground))]"
                 />
+              </label>
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium text-[hsl(var(--foreground))]">Køn</span>
+                <select
+                  value={formGender}
+                  onChange={(event) => setFormGender(event.target.value as PlayerGender | '')}
+                  className="rounded-md bg-[hsl(var(--surface))] px-3 py-2 ring-1 ring-[hsl(var(--line)/.14)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none text-[hsl(var(--foreground))]"
+                >
+                  <option value="">Vælg køn</option>
+                  <option value="Herre">Herre</option>
+                  <option value="Dame">Dame</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-2 text-sm">
+                <span className="font-medium text-[hsl(var(--foreground))]">Primær kategori</span>
+                <select
+                  value={formPrimaryCategory}
+                  onChange={(event) => setFormPrimaryCategory(event.target.value as PlayerCategory | '')}
+                  className="rounded-md bg-[hsl(var(--surface))] px-3 py-2 ring-1 ring-[hsl(var(--line)/.14)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none text-[hsl(var(--foreground))]"
+                >
+                  <option value="">Vælg kategori</option>
+                  <option value="Single">Single</option>
+                  <option value="Double">Double</option>
+                  <option value="Begge">Begge</option>
+                </select>
               </label>
               <label className="flex items-center gap-2 text-sm text-[hsl(var(--muted))] cursor-pointer">
                 <input

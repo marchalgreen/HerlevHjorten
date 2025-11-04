@@ -20,13 +20,17 @@ const normalisePlayer = (player: Player): Player => ({
   ...player,
   alias: player.alias ?? null,
   level: player.level ?? null,
+  gender: player.gender ?? null,
+  primaryCategory: player.primaryCategory ?? null,
   active: Boolean(player.active)
 })
 
 const playerCreateSchema = z.object({
   name: z.string().min(1),
   alias: z.string().min(1).optional(),
-  level: z.number().min(1).max(5).optional(),
+  level: z.number().optional(),
+  gender: z.enum(['Herre', 'Dame']).optional(),
+  primaryCategory: z.enum(['Single', 'Double', 'Begge']).optional(),
   active: z.boolean().optional()
 })
 
@@ -36,7 +40,9 @@ const playerUpdateSchema = z.object({
     .object({
       name: z.string().min(1).optional(),
       alias: z.string().nullable().optional(),
-      level: z.number().min(1).max(5).nullable().optional(),
+      level: z.number().nullable().optional(),
+      gender: z.enum(['Herre', 'Dame']).nullable().optional(),
+      primaryCategory: z.enum(['Single', 'Double', 'Begge']).nullable().optional(),
       active: z.boolean().optional()
     })
     .refine((value) => Object.keys(value).length > 0, 'patch must update mindst ét felt')
@@ -67,6 +73,8 @@ const createPlayer = async (input: PlayerCreateInput): Promise<Player> => {
       name: parsed.name.trim(),
       alias: parsed.alias ? parsed.alias.trim() : null,
       level: parsed.level ?? null,
+      gender: parsed.gender ?? null,
+      primaryCategory: parsed.primaryCategory ?? null,
       active: parsed.active ?? true,
       createdAt: new Date().toISOString()
     }
@@ -90,6 +98,8 @@ const updatePlayer = async (input: PlayerUpdateInput): Promise<Player> => {
       name: parsed.patch.name !== undefined ? parsed.patch.name.trim() : existing.name,
       alias: parsed.patch.alias !== undefined ? parsed.patch.alias : existing.alias,
       level: parsed.patch.level !== undefined ? parsed.patch.level : existing.level,
+      gender: parsed.patch.gender !== undefined ? parsed.patch.gender : existing.gender,
+      primaryCategory: parsed.patch.primaryCategory !== undefined ? parsed.patch.primaryCategory : existing.primaryCategory,
       active: parsed.patch.active !== undefined ? parsed.patch.active : existing.active
     }
     state.players[index] = updated

@@ -1,8 +1,13 @@
+export type PlayerGender = 'Herre' | 'Dame'
+export type PlayerCategory = 'Single' | 'Double' | 'Begge'
+
 export type Player = {
   id: string
   name: string
   alias?: string | null
   level?: number | null
+  gender?: PlayerGender | null
+  primaryCategory?: PlayerCategory | null
   active: boolean
   createdAt: string
 }
@@ -59,12 +64,14 @@ export type PlayerCreateInput = {
   name: string
   alias?: string
   level?: number
+  gender?: PlayerGender
+  primaryCategory?: PlayerCategory
   active?: boolean
 }
 
 export type PlayerUpdateInput = {
   id: string
-  patch: Partial<Pick<Player, 'name' | 'alias' | 'level' | 'active'>>
+  patch: Partial<Pick<Player, 'name' | 'alias' | 'level' | 'gender' | 'primaryCategory' | 'active'>>
 }
 
 export type MatchMovePayload = {

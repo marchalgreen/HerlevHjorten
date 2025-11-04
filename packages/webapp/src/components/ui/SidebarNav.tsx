@@ -54,24 +54,13 @@ export const SidebarNav = ({ items, orientation = 'vertical', size = 'sm' }: Sid
                 refs.current[index] = node
               }}
               to={item.to}
-              className={({ isActive }: { isActive: boolean }) =>
-                clsx(
-                  'btn-press group flex items-center rounded-full font-semibold transition-all ring-focus',
-                  size === 'lg' ? 'gap-4 px-5 py-3 text-base' : 'gap-3 px-4 py-2 text-sm',
-                  'hover:bg-[hsl(var(--surface-glass)/.9)]',
-                  isActive
-                    ? 'bg-accent text-[hsl(var(--primary-contrast))] shadow-md'
-                    : 'text-[hsl(var(--muted))]'
-                )
-              }
             >
-              <span className={clsx(
-                'flex items-center justify-center rounded-full bg-[hsl(var(--surface-glass)/.9)] text-[hsl(var(--foreground))] group-[.active]:bg-transparent',
-                size === 'lg' ? 'h-10 w-10' : 'h-8 w-8'
-              )}>
-                {item.icon}
-              </span>
-              <span>{item.label}</span>
+              {({ isActive }: { isActive: boolean }) => (
+                <div data-active={isActive ? 'true' : 'false'} className="sidebar-pill">
+                  {item.icon}
+                  <span>{item.label}</span>
+                </div>
+              )}
             </NavLink>
           </li>
         ))}
