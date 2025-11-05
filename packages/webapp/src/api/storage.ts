@@ -7,7 +7,7 @@ import type {
   MatchPlayer
 } from '@badminton/common'
 
-const STORAGE_KEY = 'badminton-klub-db-v1'
+const STORAGE_KEY = 'badminton-klub-db-v2'
 
 export type DatabaseState = {
   players: Player[]
@@ -140,7 +140,27 @@ export const loadState = (): DatabaseState => {
     const raw = storage.getItem(STORAGE_KEY)
     if (raw) {
       try {
-        cachedState = JSON.parse(raw) as DatabaseState
+        const parsed = JSON.parse(raw) as DatabaseState
+        // Migrate players that might be missing gender/primaryCategory
+        if (parsed.players && Array.isArray(parsed.players)) {
+          const seedMap = new Map(playerSeeds.map((seed) => [seed.name, seed]))
+          parsed.players = parsed.players.map((player) => {
+            // If player is missing gender or primaryCategory, try to restore from seed data
+            if (!player.gender || !player.primaryCategory) {
+              const seedData = seedMap.get(player.name)
+              if (seedData) {
+                return {
+                  ...player,
+                  gender: player.gender ?? seedData.gender ?? null,
+                  primaryCategory: player.primaryCategory ?? seedData.primaryCategory ?? null
+                }
+              }
+            }
+            return player
+          })
+        }
+        cachedState = parsed
+        persistState() // Save migrated data
         return cachedState
       } catch {
         // fall back to seed state
