@@ -297,20 +297,20 @@ const CoachPage = () => {
   return (
     <section className="flex h-full flex-col gap-6 pt-6">
       <header className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold">Kampprogram</h1>
-            <p className="mt-1 text-[hsl(var(--muted))]">Tjekket ind: {checkedIn.length}</p>
-            {checkedIn.length > 0 && (
-              <p className="mt-0.5 text-sm text-[hsl(var(--muted))]">
-                Herrer: {genderBreakdown.male} • Damer: {genderBreakdown.female}
-              </p>
-            )}
-          </div>
+        <div>
+          <h1 className="text-2xl font-semibold">Kampprogram</h1>
+          <p className="mt-1 text-[hsl(var(--muted))]">Tjekket ind: {checkedIn.length}</p>
+          {checkedIn.length > 0 && (
+            <p className="mt-0.5 text-sm text-[hsl(var(--muted))]">
+              Herrer: {genderBreakdown.male} • Damer: {genderBreakdown.female}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center">
           <select
             value={selectedRound}
             onChange={(e) => setSelectedRound(Number(e.target.value))}
-            className="rounded-md px-4 py-3 text-base font-medium bg-[hsl(var(--surface))] text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none cursor-pointer"
+            className="rounded-md px-5 py-3.5 text-lg font-medium bg-[hsl(var(--surface))] text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none cursor-pointer"
             disabled={!session}
           >
             <option value={1}>Runde 1</option>
