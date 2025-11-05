@@ -287,6 +287,53 @@ const getTopOpponents = async (
 }
 
 /**
+ * Gets comparison statistics between two players.
+ * @param playerId1 - First player ID
+ * @param playerId2 - Second player ID
+ * @returns Object with partner count and opponent count
+ */
+const getPlayerComparison = async (
+  playerId1: string,
+  playerId2: string
+): Promise<{ partnerCount: number; opponentCount: number }> => {
+  const state = getStateCopy()
+  let partnerCount = 0
+  let opponentCount = 0
+
+  state.statistics?.forEach((stat) => {
+    // Group matchPlayers by matchId
+    const matchGroups = new Map<string, MatchPlayer[]>()
+    stat.matchPlayers.forEach((mp) => {
+      if (!matchGroups.has(mp.matchId)) {
+        matchGroups.set(mp.matchId, [])
+      }
+      matchGroups.get(mp.matchId)!.push(mp)
+    })
+
+    matchGroups.forEach((matchPlayers) => {
+      const { team1, team2 } = getTeamStructure(matchPlayers)
+      const player1InTeam1 = team1.includes(playerId1)
+      const player1InTeam2 = team2.includes(playerId1)
+      const player2InTeam1 = team1.includes(playerId2)
+      const player2InTeam2 = team2.includes(playerId2)
+
+      // Check if both players are in the same match
+      if ((player1InTeam1 || player1InTeam2) && (player2InTeam1 || player2InTeam2)) {
+        // Both players are in the same match
+        const sameTeam = (player1InTeam1 && player2InTeam1) || (player1InTeam2 && player2InTeam2)
+        if (sameTeam) {
+          partnerCount++
+        } else {
+          opponentCount++
+        }
+      }
+    })
+  })
+
+  return { partnerCount, opponentCount }
+}
+
+/**
  * Gets comprehensive player statistics.
  * @param playerId - Player ID
  * @param filters - Optional filters (season, dateFrom, dateTo)
@@ -684,7 +731,8 @@ const statsApi = {
   getCheckInsBySeason,
   getAllSeasons,
   getSessionHistory,
-  generateDummyHistoricalData
+  generateDummyHistoricalData,
+  getPlayerComparison
 }
 
 export default statsApi
