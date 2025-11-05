@@ -21,6 +21,8 @@ const CoachPage = () => {
   const [moveMenuPlayer, setMoveMenuPlayer] = useState<string | null>(null)
   const [selectedRound, setSelectedRound] = useState<number>(1)
   const [unavailablePlayers, setUnavailablePlayers] = useState<Set<string>>(new Set())
+  const [dragOverInactive, setDragOverInactive] = useState(false)
+  const [dragOverBench, setDragOverBench] = useState(false)
 
   const loadSession = async () => {
     try {
@@ -243,7 +245,22 @@ const CoachPage = () => {
     const playerId = event.dataTransfer.getData('application/x-player-id')
     if (!playerId) return
     event.preventDefault()
+    // First move to bench if they're on a court
     await handleMove(playerId)
+    // If they were marked as unavailable/inactive, reactivate them
+    if (unavailablePlayers.has(playerId)) {
+      handleMarkAvailable(playerId)
+    }
+  }
+
+  const onDropToInactive = async (event: React.DragEvent<HTMLDivElement>) => {
+    const playerId = event.dataTransfer.getData('application/x-player-id')
+    if (!playerId) return
+    event.preventDefault()
+    // First move to bench if they're on a court
+    await handleMove(playerId)
+    // Then mark as unavailable/inactive
+    handleMarkUnavailable(playerId)
   }
 
   const onDropToSlot = async (
@@ -477,7 +494,22 @@ const CoachPage = () => {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(200px,240px)_1fr] lg:items-start">
         {/* Bench */}
-        <PageCard className="space-y-2" onDragOver={(e) => e.preventDefault()} onDrop={onDropToBench}>
+        <PageCard 
+          className={`space-y-2 transition-all duration-200 ${
+            dragOverBench 
+              ? 'ring-2 ring-[hsl(var(--primary)/.4)] bg-[hsl(var(--primary)/.05)]' 
+              : ''
+          }`}
+          onDragOver={(e) => {
+            e.preventDefault()
+            setDragOverBench(true)
+          }}
+          onDragLeave={() => setDragOverBench(false)}
+          onDrop={(e) => {
+            setDragOverBench(false)
+            onDropToBench(e)
+          }}
+        >
           <header className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">BÆNK</h3>
             <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-xs font-medium">
@@ -487,7 +519,7 @@ const CoachPage = () => {
           <div className="flex flex-col space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
             {bench.length === 0 && (
               <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-4 text-center text-xs text-[hsl(var(--muted))] border-hair">
-                Ingen spillere på bænken
+                Træk spillere her for at aktivere dem
               </p>
             )}
             {bench.map((player) => (
@@ -545,9 +577,24 @@ const CoachPage = () => {
           </div>
           
           {/* Inactive Players Section */}
-          {inactivePlayers.length > 0 && (
-            <>
-              <div className="mt-4 pt-4 border-t border-[hsl(var(--line)/.12)]">
+          <div 
+            className={`mt-4 pt-4 border-t transition-all duration-200 ${
+              dragOverInactive 
+                ? 'border-[hsl(var(--destructive)/.4)] bg-[hsl(var(--destructive)/.05)]' 
+                : 'border-[hsl(var(--line)/.12)]'
+            }`}
+            onDragOver={(e) => {
+              e.preventDefault()
+              setDragOverInactive(true)
+            }}
+            onDragLeave={() => setDragOverInactive(false)}
+            onDrop={(e) => {
+              setDragOverInactive(false)
+              onDropToInactive(e)
+            }}
+          >
+            {inactivePlayers.length > 0 ? (
+              <>
                 <header className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
                     Inaktive / Kun 1 runde
@@ -635,9 +682,23 @@ const CoachPage = () => {
                     )
                   })}
                 </div>
+              </>
+            ) : (
+              <div className="py-4">
+                <header className="flex items-center justify-between mb-2">
+                  <h4 className="text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
+                    Inaktive / Kun 1 runde
+                  </h4>
+                  <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--muted))]">
+                    0
+                  </span>
+                </header>
+                <p className="text-[10px] text-[hsl(var(--muted))] text-center py-2 rounded-md bg-[hsl(var(--surface-2))] border-hair">
+                  Træk spillere her for at markere dem som inaktive
+                </p>
               </div>
-            </>
-          )}
+            )}
+          </div>
         </PageCard>
 
         {/* Courts */}
