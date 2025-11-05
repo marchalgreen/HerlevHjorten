@@ -248,16 +248,16 @@ const CheckInPage = () => {
     return (
       <section className="mx-auto flex h-full max-w-4xl items-center justify-center p-6">
         <PageCard className="w-full max-w-xl text-center">
-          <EmptyState
-            icon={<UsersRound />}
-            title="Ingen aktiv træning"
-            helper="Start en træning i Kampprogrammet for at tjekke spillere ind."
-            action={
-              <Button variant="primary" onClick={refreshSession}>
-                Opdater
-              </Button>
-            }
-          />
+        <EmptyState
+          icon={<UsersRound />}
+          title="Ingen aktiv træning"
+          helper="Start en træning i Kampprogrammet for at tjekke spillere ind."
+          action={
+            <Button variant="primary" onClick={refreshSession}>
+              Opdater
+            </Button>
+          }
+        />
         </PageCard>
       </section>
     )
@@ -344,13 +344,13 @@ const CheckInPage = () => {
                 )
               })
             )}
-          </div>
+      </div>
         </PageCard>
 
         {/* Players overview */}
-        <PageCard className="space-y-6">
+      <PageCard className="space-y-6">
           <div className="flex flex-col gap-4">
-            <TableSearch value={search} onChange={setSearch} placeholder="Søg efter spiller" />
+          <TableSearch value={search} onChange={setSearch} placeholder="Søg efter spiller" />
             <div className="flex flex-col gap-2">
               <div className="flex gap-2 flex-wrap">
                 {LETTER_FILTERS_ROW1.map((letter) => (
@@ -371,33 +371,33 @@ const CheckInPage = () => {
               </div>
               <div className="flex gap-2 flex-wrap">
                 {LETTER_FILTERS_ROW2.map((letter) => (
-                  <button
-                    key={letter}
-                    type="button"
-                    onClick={() => setFilterLetter(letter)}
-                    className={clsx(
+              <button
+                key={letter}
+                type="button"
+                onClick={() => setFilterLetter(letter)}
+                className={clsx(
                       'rounded-full px-3 py-1 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
-                      filterLetter === letter
+                  filterLetter === letter
                         ? 'bg-accent text-white shadow-[0_2px_8px_hsl(var(--line)/.12)]'
                         : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] hover:text-foreground border-hair'
-                    )}
-                  >
-                    {letter}
-                  </button>
-                ))}
+                )}
+              >
+                {letter}
+              </button>
+            ))}
               </div>
-            </div>
           </div>
+        </div>
 
           <div className="flex flex-col space-y-2">
-            {filteredPlayers.length === 0 ? (
-              <EmptyState
-                icon={<UsersRound />}
-                title="Ingen spillere matcher"
-                helper="Prøv en anden søgning eller vælg et andet bogstav."
-              />
-            ) : (
-              filteredPlayers.map((player) => {
+          {filteredPlayers.length === 0 ? (
+            <EmptyState
+              icon={<UsersRound />}
+              title="Ingen spillere matcher"
+              helper="Prøv en anden søgning eller vælg et andet bogstav."
+            />
+          ) : (
+            filteredPlayers.map((player) => {
               const oneRoundOnly = oneRoundOnlyPlayers.has(player.id)
               const isJustCheckedIn = justCheckedIn.has(player.id)
               const isAnimatingOut = animatingOut.has(player.id)
@@ -478,8 +478,8 @@ const CheckInPage = () => {
               )
             })
           )}
-          </div>
-        </PageCard>
+        </div>
+      </PageCard>
       </div>
     </section>
   )

@@ -224,7 +224,7 @@ const removeCheckIn = async (input: { playerId: string }) => {
   }
   updateState((current: DatabaseState) => {
     current.checkIns.splice(checkInIndex, 1)
-  })
+    })
 }
 
 const checkInsApi = {
@@ -370,7 +370,7 @@ const autoArrangeMatches = async (round?: number): Promise<AutoArrangeResult> =>
           const pair = [matchPlayerIds[i], matchPlayerIds[j]].sort().join('|')
           previousMatchups.add(pair)
         }
-      }
+  }
     })
   }
 
@@ -674,13 +674,13 @@ const autoArrangeMatches = async (round?: number): Promise<AutoArrangeResult> =>
       } else {
         // 2v2 match: use slots 0, 1, 2, 3
         playerIds.forEach((playerId: string, slot: number) => {
-          mutable.matchPlayers.push({
-            id: createId(),
-            matchId,
-            playerId,
-            slot
-          })
+        mutable.matchPlayers.push({
+          id: createId(),
+          matchId,
+          playerId,
+          slot
         })
+      })
       }
     })
   })

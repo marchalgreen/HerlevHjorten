@@ -57,8 +57,8 @@ export const SidebarNav = ({ items, orientation = 'vertical', size = 'sm' }: Sid
             >
               {({ isActive }: { isActive: boolean }) => (
                 <div data-active={isActive ? 'true' : 'false'} className="sidebar-pill">
-                  {item.icon}
-                  <span>{item.label}</span>
+                {item.icon}
+              <span>{item.label}</span>
                 </div>
               )}
             </NavLink>

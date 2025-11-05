@@ -94,11 +94,19 @@ const CoachPage = () => {
         return true
       })
       .sort((a, b) => {
-        // Sort by Niveau (level) ascending (lowest first)
-        // If level is null/undefined, treat as 0 and put at the end
-        const levelA = a.level ?? 0
-        const levelB = b.level ?? 0
-        return levelA - levelB
+        // Primary sort: Gender (Herre, Dame, then null/undefined)
+        const genderOrder: Record<string, number> = { Herre: 1, Dame: 2 }
+        const genderA = genderOrder[a.gender ?? ''] ?? 3
+        const genderB = genderOrder[b.gender ?? ''] ?? 3
+        if (genderA !== genderB) {
+          return genderA - genderB
+        }
+        
+        // Secondary sort: PlayingCategory (Begge, Double, Single, then null/undefined)
+        const categoryOrder: Record<string, number> = { Begge: 1, Double: 2, Single: 3 }
+        const categoryA = categoryOrder[a.primaryCategory ?? ''] ?? 4
+        const categoryB = categoryOrder[b.primaryCategory ?? ''] ?? 4
+        return categoryA - categoryB
       }),
     [checkedIn, assignedIds, selectedRound]
   )
@@ -262,16 +270,16 @@ const CoachPage = () => {
         {player ? (
           <>
             <div className="flex flex-col gap-1 min-w-0 flex-1">
-              <span
-                draggable
+            <span
+              draggable
                 onDragStart={(event: React.DragEvent) => {
-                  event.dataTransfer.setData('application/x-player-id', player.id)
-                  event.dataTransfer.effectAllowed = 'move'
-                }}
+                event.dataTransfer.setData('application/x-player-id', player.id)
+                event.dataTransfer.effectAllowed = 'move'
+              }}
                 className="cursor-grab active:cursor-grabbing text-sm font-semibold text-[hsl(var(--foreground))] truncate"
-              >
-                {player.alias ?? player.name}
-              </span>
+            >
+              {player.alias ?? player.name}
+            </span>
               <div className="flex items-center gap-1.5">
                 {getCategoryBadge(player.primaryCategory)}
                 <span className="text-xs text-[hsl(var(--muted))]">Niveau {player.level ?? '–'}</span>
@@ -336,39 +344,39 @@ const CoachPage = () => {
           )}
           {error && <span className="block text-sm text-[hsl(var(--destructive))]">{error}</span>}
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleAutoMatch}
-              disabled={!session || bench.length === 0}
+          <button
+            type="button"
+            onClick={handleAutoMatch}
+            disabled={!session || bench.length === 0}
               className="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none bg-[hsl(var(--surface-glass)/.85)] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.95)] ring-1 ring-[hsl(var(--line)/.12)] disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-sm"
-            >
-              Auto-match
-            </button>
+          >
+            Auto-match
+          </button>
+          <button
+            type="button"
+            onClick={handleResetMatches}
+            disabled={!session}
+              className="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none bg-transparent text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/.08)] ring-1 ring-[hsl(var(--destructive)/.3)] disabled:opacity-40 disabled:cursor-not-allowed hover:ring-[hsl(var(--destructive)/.4)] focus:ring-[hsl(var(--destructive)/.4)] focus:ring-2"
+          >
+            Nulstil kampe
+          </button>
+          {session ? (
             <button
               type="button"
-              onClick={handleResetMatches}
-              disabled={!session}
-              className="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none bg-transparent text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/.08)] ring-1 ring-[hsl(var(--destructive)/.3)] disabled:opacity-40 disabled:cursor-not-allowed hover:ring-[hsl(var(--destructive)/.4)] focus:ring-[hsl(var(--destructive)/.4)] focus:ring-2"
-            >
-              Nulstil kampe
-            </button>
-            {session ? (
-              <button
-                type="button"
-                onClick={handleEndTraining}
+              onClick={handleEndTraining}
                 className="rounded-md px-4 py-2 text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] ring-1 ring-[hsl(var(--line)/.12)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm"
-              >
-                Afslut træning
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleStartTraining}
+            >
+              Afslut træning
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStartTraining}
                 className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-focus hover:shadow-sm"
-              >
-                Start træning
-              </button>
-            )}
+            >
+              Start træning
+            </button>
+          )}
           </div>
         </div>
       </header>
