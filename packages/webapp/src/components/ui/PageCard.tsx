@@ -5,6 +5,10 @@ export type PageCardProps = HTMLAttributes<HTMLDivElement> & {
   hover?: boolean
 }
 
+/**
+ * PageCard component — glass-morphism card with optional hover effect.
+ * @remarks Renders a card with backdrop blur and optional translate-y hover.
+ */
 export const PageCard = ({ className, hover = true, ...props }: PageCardProps) => (
   <div
     className={clsx(

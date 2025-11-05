@@ -11,6 +11,11 @@ type Props = {
   className?: string
 }
 
+/**
+ * SidebarItem component — navigation link with active state.
+ * @remarks A11y: Uses aria-current="page" when active.
+ * Active state inferred from route if not explicitly provided.
+ */
 export function SidebarItem({ to, icon, label, active, className }: Props) {
   const location = useLocation()
   

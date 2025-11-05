@@ -10,8 +10,14 @@ import api from '../api'
 import { PageCard } from '../components/ui'
 import { useToast } from '../components/ui/Toast'
 
+/** Default number of slots per court (can be extended to 5-8). */
 const EMPTY_SLOTS = 4
 
+/**
+ * Match program page — manages court assignments and player matching for training sessions.
+ * @remarks Renders court layout with drag-and-drop, handles auto-matching algorithm,
+ * and tracks duplicate matchups across rounds. Delegates data operations to api.matches.
+ */
 const MatchProgramPage = () => {
   const [session, setSession] = useState<TrainingSession | null>(null)
   const [checkedIn, setCheckedIn] = useState<CheckedInPlayer[]>([])
@@ -32,7 +38,10 @@ const MatchProgramPage = () => {
   const [popupPosition, setPopupPosition] = useState({ x: 16, y: 16 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  // WHY: Track extended capacity per court (4, 5, 6, 7, or 8 slots)
+  const [extendedCapacityCourts, setExtendedCapacityCourts] = useState<Map<number, number>>(new Map())
 
+  /** Loads active training session from API. */
   const loadSession = useCallback(async () => {
     try {
       const active = await api.session.getActive()
@@ -42,6 +51,7 @@ const MatchProgramPage = () => {
     }
   }, [])
 
+  /** Loads checked-in players for current session. */
   const loadCheckIns = async () => {
     if (!session) {
       setCheckedIn([])
@@ -55,6 +65,7 @@ const MatchProgramPage = () => {
     }
   }
 
+  /** Loads court assignments for selected round. */
   const loadMatches = async () => {
     if (!session) {
       setMatches([])
@@ -68,6 +79,7 @@ const MatchProgramPage = () => {
     }
   }
 
+  /** Initializes page state — loads session and players. */
   const hydrate = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -75,8 +87,10 @@ const MatchProgramPage = () => {
     setLoading(false)
   }, [loadSession])
 
+  // WHY: Initialize page on mount; deps are stable callbacks
   useEffect(() => { void hydrate() }, [hydrate])
 
+  // WHY: Reload data when session or round changes; clear if no session
   useEffect(() => {
     if (!session) {
       setMatches([])
@@ -88,12 +102,12 @@ const MatchProgramPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.id, selectedRound])
 
-  // Close dropdown when round changes
+  // WHY: Close dropdown when round changes to avoid stale state
   useEffect(() => {
     setMoveMenuPlayer(null)
   }, [selectedRound])
 
-  // Close dropdown when clicking outside
+  // WHY: Close dropdown when clicking outside — uses event delegation
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (moveMenuPlayer && !(event.target as Element).closest('[data-flyt-menu]')) {
@@ -109,6 +123,7 @@ const MatchProgramPage = () => {
     }
   }, [moveMenuPlayer])
 
+  /** Memoized Set of player IDs currently assigned to courts. */
   const assignedIds = useMemo(() => {
     const ids = new Set<string>()
     matches.forEach((court: CourtWithPlayers) => {
@@ -117,6 +132,7 @@ const MatchProgramPage = () => {
     return ids
   }, [matches])
 
+  /** Memoized bench players — excludes assigned, one-round-only (rounds 2+), and unavailable players. */
   const bench = useMemo(
     () => checkedIn
       .filter((player) => {
@@ -146,6 +162,7 @@ const MatchProgramPage = () => {
     [checkedIn, assignedIds, selectedRound, unavailablePlayers]
   )
 
+  /** Memoized inactive players — includes one-round-only (rounds 2+) and unavailable players. */
   const inactivePlayers = useMemo(
     () => checkedIn
       .filter((player) => {
@@ -175,10 +192,12 @@ const MatchProgramPage = () => {
     [checkedIn, assignedIds, selectedRound, unavailablePlayers]
   )
 
+  /** Marks player as unavailable/inactive. */
   const handleMarkUnavailable = (playerId: string) => {
     setUnavailablePlayers((prev) => new Set(prev).add(playerId))
   }
 
+  /** Marks player as available (removes from unavailable set). */
   const handleMarkAvailable = (playerId: string) => {
     setUnavailablePlayers((prev) => {
       const newSet = new Set(prev)
@@ -193,7 +212,10 @@ const MatchProgramPage = () => {
     return { male, female }
   }, [checkedIn])
 
-  // Load previous round matches when viewing a previous round
+  /**
+   * Loads matches for a previous round (for duplicate detection).
+   * @param round - Round number to load
+   */
   const loadPreviousRound = useCallback(async (round: number) => {
     if (!session || round >= selectedRound || round < 1) return
     if (previousRoundsMatches[round]) return // Already loaded
@@ -206,7 +228,11 @@ const MatchProgramPage = () => {
     }
   }, [session, selectedRound, previousRoundsMatches])
 
-  // Check if 3+ players on a court have played together in previous rounds
+  /**
+   * Checks if 3+ players on a court have played together in previous rounds.
+   * @param court - Court to check for duplicates
+   * @returns true if duplicate matchup found (3+ same players)
+   */
   const hasDuplicateMatchup = useCallback(async (court: CourtWithPlayers): Promise<boolean> => {
     if (selectedRound <= 1) return false // No previous rounds to check
     
@@ -266,7 +292,7 @@ const MatchProgramPage = () => {
   const [courtsWithDuplicatesSet, setCourtsWithDuplicatesSet] = useState<Set<number>>(new Set())
   const [duplicatePlayersMap, setDuplicatePlayersMap] = useState<Map<number, Set<string>>>(new Map())
 
-  // Check for duplicates when matches or selectedRound changes
+  // WHY: Check for duplicate matchups when matches or round changes — loads previous rounds as needed
   useEffect(() => {
     if (selectedRound <= 1) {
       setCourtsWithDuplicatesSet(new Set())
@@ -350,6 +376,7 @@ const MatchProgramPage = () => {
     void checkDuplicates()
   }, [matches, selectedRound, previousRoundsMatches])
 
+  /** Starts a new training session or gets existing active session. */
   const handleStartTraining = async () => {
     try {
       const active = await api.session.startOrGetActive()
@@ -360,6 +387,7 @@ const MatchProgramPage = () => {
     }
   }
 
+  /** Ends active training session. */
   const handleEndTraining = async () => {
     if (!session) return
     try {
@@ -371,7 +399,7 @@ const MatchProgramPage = () => {
     }
   }
 
-  // Popup drag handlers
+  /** Handles mouse down on popup header for dragging. */
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button')) return // Don't drag if clicking buttons
     setIsDragging(true)
@@ -382,6 +410,7 @@ const MatchProgramPage = () => {
     })
   }
 
+  // WHY: Track mouse move/up events for popup dragging — constrains to viewport
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return
@@ -413,6 +442,7 @@ const MatchProgramPage = () => {
     }
   }, [isDragging, dragOffset])
 
+  /** Triggers auto-matching algorithm for selected round. */
   const handleAutoMatch = async () => {
     if (!session) return
     try {
@@ -428,6 +458,7 @@ const MatchProgramPage = () => {
     }
   }
 
+  /** Resets all court assignments for current session. */
   const handleResetMatches = async () => {
     if (!session) return
     try {
@@ -438,6 +469,12 @@ const MatchProgramPage = () => {
     }
   }
 
+  /**
+   * Moves player to court/slot or removes from court.
+   * @param playerId - Player ID to move
+   * @param courtIdx - Target court index (undefined = remove from court)
+   * @param slot - Target slot index (required if courtIdx provided)
+   */
   const handleMove = async (playerId: string, courtIdx?: number, slot?: number) => {
     if (!session) return
     try {
@@ -449,6 +486,7 @@ const MatchProgramPage = () => {
     }
   }
 
+  /** Handles drop to bench — moves player to bench and marks as available. */
   const onDropToBench = async (event: React.DragEvent<HTMLDivElement>) => {
     const playerId = event.dataTransfer.getData('application/x-player-id')
     if (!playerId) return
@@ -461,6 +499,7 @@ const MatchProgramPage = () => {
     }
   }
 
+  /** Handles drop to inactive — moves player to bench and marks as unavailable. */
   const onDropToInactive = async (event: React.DragEvent<HTMLDivElement>) => {
     const playerId = event.dataTransfer.getData('application/x-player-id')
     if (!playerId) return
@@ -471,6 +510,12 @@ const MatchProgramPage = () => {
     handleMarkUnavailable(playerId)
   }
 
+  /**
+   * Handles drop to court slot — supports swapping if slot is occupied.
+   * @param event - Drag event
+   * @param courtIdx - Target court index
+   * @param slot - Target slot index
+   */
   const onDropToSlot = async (
     event: React.DragEvent<HTMLElement>,
     courtIdx: number,
@@ -521,6 +566,7 @@ const MatchProgramPage = () => {
     }
   }
 
+  /** Handles drop to court area — prevents automatic placement, requires slot selection. */
   const onDropToCourt = async (event: React.DragEvent<HTMLDivElement>, _courtIdx: number) => {
     // Only allow dropping to specific slots, not to the entire court
     // This prevents automatic placement
@@ -528,11 +574,15 @@ const MatchProgramPage = () => {
     setDragOverCourt(null)
   }
 
+  /** Finds first available slot in court (respects extended capacity). */
   const getFirstFreeSlot = (court: CourtWithPlayers) => {
     const occupied = new Set(court.slots.map((entry: { slot: number; player: Player }) => entry.slot))
-    return [0, 1, 2, 3].find((idx: number) => !occupied.has(idx))
+    const maxSlots = extendedCapacityCourts.get(court.courtIdx) || 4
+    const slots = Array.from({ length: maxSlots }, (_, i) => i)
+    return slots.find((idx: number) => !occupied.has(idx))
   }
 
+  /** @deprecated Quick assign handler — currently unused. */
   const _handleQuickAssign = async (playerId: string, courtIdx: number) => {
     const court = matches.find((c) => c.courtIdx === courtIdx)
     if (!court) return
@@ -545,6 +595,7 @@ const MatchProgramPage = () => {
     setMoveMenuPlayer(null)
   }
 
+  /** Returns background color class based on player gender. */
   const getPlayerSlotBgColor = (gender: 'Herre' | 'Dame' | null | undefined) => {
     if (gender === 'Herre') {
       return 'bg-[hsl(205_60%_94%)]' // subtle light blue-tinted
@@ -555,6 +606,7 @@ const MatchProgramPage = () => {
     return 'bg-[hsl(var(--surface))]' // neutral for no gender
   }
 
+  /** Renders category badge (S/D/B) for player primary category. */
   const getCategoryBadge = (category: 'Single' | 'Double' | 'Begge' | null | undefined) => {
     if (!category) return null
     const labels: Record<'Single' | 'Double' | 'Begge', string> = {
@@ -574,6 +626,12 @@ const MatchProgramPage = () => {
     )
   }
 
+  /**
+   * Renders a player slot with drag-and-drop support and swap detection.
+   * @param court - Court data
+   * @param slotIndex - Slot index to render
+   * @returns Slot JSX
+   */
   const renderPlayerSlot = (court: CourtWithPlayers, slotIndex: number) => {
     const entry = court.slots.find((slot: { slot: number; player: Player }) => slot.slot === slotIndex)
     const player = entry?.player
@@ -1002,30 +1060,120 @@ const MatchProgramPage = () => {
                     </span>
                   )}
                 </div>
-                <span className="text-xs text-[hsl(var(--muted))]">{court.slots.length}/{EMPTY_SLOTS}</span>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex items-center gap-2">
+                    {/* Capacity Selector - shown when extended capacity is enabled */}
+                    {extendedCapacityCourts.get(court.courtIdx) && extendedCapacityCourts.get(court.courtIdx)! > 4 && (
+                      <select
+                        value={extendedCapacityCourts.get(court.courtIdx) || 8}
+                        onChange={(e) => {
+                          const capacity = Number(e.target.value)
+                          setExtendedCapacityCourts((prev) => {
+                            const newMap = new Map(prev)
+                            newMap.set(court.courtIdx, capacity)
+                            return newMap
+                          })
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-5 w-8 rounded border-0 bg-[hsl(var(--surface-2))] text-[10px] font-semibold text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)] focus:ring-1 focus:ring-[hsl(var(--primary))] text-center leading-[20px]"
+                        style={{
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%23666' d='M4 6L1 3h6z'/%3E%3C/svg%3E")`,
+                          backgroundRepeat: 'no-repeat',
+                          backgroundPosition: 'right 2px center',
+                          backgroundSize: '8px 8px',
+                          appearance: 'none',
+                          paddingRight: '10px',
+                          paddingLeft: '0px',
+                          textAlign: 'center',
+                          textAlignLast: 'center'
+                        }}
+                      >
+                        <option value={5}>5</option>
+                        <option value={6}>6</option>
+                        <option value={7}>7</option>
+                        <option value={8}>8</option>
+                      </select>
+                    )}
+                    
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const currentCapacity = extendedCapacityCourts.get(court.courtIdx)
+                        if (currentCapacity && currentCapacity > 4) {
+                          // Turn off extended capacity
+                          setExtendedCapacityCourts((prev) => {
+                            const newMap = new Map(prev)
+                            newMap.delete(court.courtIdx)
+                            return newMap
+                          })
+                        } else {
+                          // Turn on extended capacity (default to 8)
+                          setExtendedCapacityCourts((prev) => {
+                            const newMap = new Map(prev)
+                            newMap.set(court.courtIdx, 8)
+                            return newMap
+                          })
+                        }
+                      }}
+                      className={`relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 items-center justify-start ${
+                        extendedCapacityCourts.get(court.courtIdx) && extendedCapacityCourts.get(court.courtIdx)! > 4
+                          ? 'bg-[hsl(var(--primary))]'
+                          : 'bg-[hsl(var(--surface-2))]'
+                      }`}
+                      role="switch"
+                      aria-checked={!!(extendedCapacityCourts.get(court.courtIdx) && extendedCapacityCourts.get(court.courtIdx)! > 4)}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          extendedCapacityCourts.get(court.courtIdx) && extendedCapacityCourts.get(court.courtIdx)! > 4
+                            ? 'translate-x-3'
+                            : 'translate-x-0.5'
+                        }`}
+                        style={{
+                          marginTop: '0',
+                          marginBottom: '0'
+                        }}
+                      />
+                    </button>
+                  </div>
+                  <span className="text-xs text-[hsl(var(--muted))]">{court.slots.length}/{extendedCapacityCourts.get(court.courtIdx) || EMPTY_SLOTS}</span>
+                </div>
               </header>
               
               {/* Court visualization: two halves with net divider */}
               <div className="flex flex-col gap-2">
-                {/* Top half (slots 0-1) */}
-                <div className="flex flex-col gap-1.5">
-                  {Array.from({ length: 2 }).map((_, idx) => renderPlayerSlot(court, idx))}
-                </div>
-                
-                {/* Net divider */}
-                <div className="relative flex items-center justify-center py-1">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="h-px w-full bg-[hsl(var(--line)/.3)]"></div>
-                  </div>
-                  <div className="relative bg-[hsl(var(--surface))] px-2">
-                    <div className="h-1 w-8 rounded-full bg-[hsl(var(--primary)/.2)] ring-1 ring-[hsl(var(--primary)/.3)]"></div>
-                  </div>
-                </div>
-                
-                {/* Bottom half (slots 2-3) */}
-                <div className="flex flex-col gap-1.5">
-                  {Array.from({ length: 2 }).map((_, idx) => renderPlayerSlot(court, idx + 2))}
-                </div>
+                {(() => {
+                  const maxCapacity = extendedCapacityCourts.get(court.courtIdx) || 4
+                  const slotsPerSide = Math.ceil(maxCapacity / 2)
+                  const topSlots = slotsPerSide
+                  const bottomSlots = maxCapacity - topSlots
+                  
+                  return (
+                    <>
+                      {/* Top half */}
+                      <div className="flex flex-col gap-1.5">
+                        {Array.from({ length: topSlots }).map((_, idx) => renderPlayerSlot(court, idx))}
+                      </div>
+                      
+                      {/* Net divider */}
+                      <div className="relative flex items-center justify-center py-1">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="h-px w-full bg-[hsl(var(--line)/.3)]"></div>
+                        </div>
+                        <div className="relative bg-[hsl(var(--surface))] px-2">
+                          <div className="h-1 w-8 rounded-full bg-[hsl(var(--primary)/.2)] ring-1 ring-[hsl(var(--primary)/.3)]"></div>
+                        </div>
+                      </div>
+                      
+                      {/* Bottom half */}
+                      <div className="flex flex-col gap-1.5">
+                        {Array.from({ length: bottomSlots }).map((_, idx) => renderPlayerSlot(court, idx + topSlots))}
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
             </PageCard>
           ))}

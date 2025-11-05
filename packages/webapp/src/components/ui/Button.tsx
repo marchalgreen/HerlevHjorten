@@ -5,6 +5,7 @@ import { clsx } from 'clsx'
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive'
 export type ButtonSize = 'sm' | 'md'
 
+/** Button component props. */
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant
   size?: ButtonSize
@@ -33,6 +34,11 @@ const sizeClasses: Record<ButtonSize, string> = {
   md: 'h-11 px-5 text-base rounded-lg'
 }
 
+/**
+ * Button component — accessible button with variants and loading state.
+ * @remarks Supports primary, secondary, ghost, and destructive variants.
+ * Shows loading spinner when loading prop is true.
+ */
 /* eslint-disable react/prop-types */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', loading = false, children, disabled, ...props }, ref) => (

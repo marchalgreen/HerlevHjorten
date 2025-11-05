@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Player, PlayerGender, PlayerCategory } from '@herlev-hjorten/common'
 import { Pencil, Plus, Trash2, UsersRound } from 'lucide-react'
 import api from '../api'
@@ -12,6 +12,11 @@ const formatDate = (iso: string) =>
     timeStyle: 'short'
   }).format(new Date(iso))
 
+/**
+ * Players page — manages player CRUD operations and listing.
+ * @remarks Renders player table with search/sort, handles create/edit forms,
+ * and delegates data operations to api.players.
+ */
 const PlayersPage = () => {
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,8 +32,12 @@ const PlayersPage = () => {
   const [formGender, setFormGender] = useState<PlayerGender | ''>('')
   const [formPrimaryCategory, setFormPrimaryCategory] = useState<PlayerCategory | ''>('')
   const [formActive, setFormActive] = useState(true)
+  const [sort, setSort] = useState<{ columnId: string; direction: 'asc' | 'desc' } | undefined>({ columnId: 'name', direction: 'asc' })
+  const scrollPositionRef = useRef<number>(0)
+  const shouldRestoreScrollRef = useRef(false)
   const { notify } = useToast()
 
+  /** Loads players from API with optional filters. */
   const loadPlayers = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -42,14 +51,28 @@ const PlayersPage = () => {
       setError(err.message ?? 'Kunne ikke hente spillere')
     } finally {
       setLoading(false)
+      // Restore scroll position after loading completes
+      if (shouldRestoreScrollRef.current) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const tableContainer = document.querySelector('[data-table-container]') as HTMLElement
+            if (tableContainer && scrollPositionRef.current > 0) {
+              tableContainer.scrollTop = scrollPositionRef.current
+            }
+            shouldRestoreScrollRef.current = false
+          })
+        })
+      }
     }
   }, [search, showInactive])
 
+  // WHY: Reload players when showInactive filter changes; search is debounced via loadPlayers
   useEffect(() => {
     void loadPlayers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showInactive])
 
+  /** Memoized filtered players list — applies search term to name/alias. */
   const filteredPlayers = useMemo(() => {
     const term = search.trim().toLowerCase()
     if (!term) return players
@@ -59,6 +82,7 @@ const PlayersPage = () => {
     })
   }, [players, search])
 
+  /** Resets form state to initial values. */
   const resetForm = () => {
     setFormName('')
     setFormAlias('')
@@ -69,12 +93,14 @@ const PlayersPage = () => {
     setCurrentPlayer(null)
   }
 
+  /** Opens create player form dialog. */
   const openCreate = () => {
     setDialogMode('create')
     resetForm()
     setIsSheetOpen(true)
   }
 
+  /** Opens edit player form dialog with player data pre-filled. */
   const openEdit = (player: Player) => {
     setDialogMode('edit')
     setCurrentPlayer(player)
@@ -87,6 +113,7 @@ const PlayersPage = () => {
     setIsSheetOpen(true)
   }
 
+  /** Handles form submission for create/edit player. */
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!formName.trim()) return
@@ -122,16 +149,47 @@ const PlayersPage = () => {
     }
   }
 
+  /** Toggles player active status. */
   const toggleActive = useCallback(async (player: Player) => {
     try {
+      // Save scroll position before update
+      const tableContainer = document.querySelector('[data-table-container]') as HTMLElement
+      if (tableContainer) {
+        scrollPositionRef.current = tableContainer.scrollTop
+        shouldRestoreScrollRef.current = true
+      }
+      
       await api.players.update({ id: player.id, patch: { active: !player.active } })
       await loadPlayers()
+      
       notify({ variant: 'success', title: player.active ? 'Spiller deaktiveret' : 'Spiller aktiveret' })
     } catch (err: any) {
       setError(err.message ?? 'Kunne ikke opdatere spiller')
+      shouldRestoreScrollRef.current = false
     }
   }, [loadPlayers, notify])
 
+  /** Updates player primary category. */
+  const updatePrimaryCategory = useCallback(async (player: Player, category: PlayerCategory | null) => {
+    try {
+      // Save scroll position before update
+      const tableContainer = document.querySelector('[data-table-container]') as HTMLElement
+      if (tableContainer) {
+        scrollPositionRef.current = tableContainer.scrollTop
+        shouldRestoreScrollRef.current = true
+      }
+      
+      await api.players.update({ id: player.id, patch: { primaryCategory: category } })
+      await loadPlayers()
+      
+      notify({ variant: 'success', title: 'Kategori opdateret' })
+    } catch (err: any) {
+      setError(err.message ?? 'Kunne ikke opdatere kategori')
+      shouldRestoreScrollRef.current = false
+    }
+  }, [loadPlayers, notify])
+
+  /** Memoized table column definitions with sort/filter logic. */
   const columns: Column<Player>[] = useMemo(
     () => [
       {
@@ -168,7 +226,31 @@ const PlayersPage = () => {
         align: 'center',
         sortable: true,
         sortValue: (row: Player) => row.primaryCategory ?? '',
-        accessor: (row: Player) => row.primaryCategory ?? '–'
+        cell: (row: Player) => (
+          <div className="flex items-center justify-center gap-1">
+            {(['Single', 'Double', 'Begge'] as PlayerCategory[]).map((category) => {
+              const isSelected = row.primaryCategory === category
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    updatePrimaryCategory(row, isSelected ? null : category)
+                  }}
+                  className={`px-2 py-1 text-xs font-medium rounded transition-all duration-200 ${
+                    isSelected
+                      ? 'bg-[hsl(var(--primary))] text-white ring-1 ring-[hsl(var(--primary)/.3)]'
+                      : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] hover:bg-[hsl(var(--surface-glass)/.85)] hover:text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)]'
+                  }`}
+                  title={isSelected ? 'Klik for at fjerne' : `Klik for at sætte til ${category}`}
+                >
+                  {category === 'Single' ? 'S' : category === 'Double' ? 'D' : 'B'}
+                </button>
+              )
+            })}
+          </div>
+        )
       },
       {
         id: 'createdAt',
@@ -201,7 +283,7 @@ const PlayersPage = () => {
         )
       }
     ],
-    [toggleActive]
+    [toggleActive, updatePrimaryCategory]
   )
 
   return (
@@ -244,6 +326,8 @@ const PlayersPage = () => {
             data={filteredPlayers}
             columns={columns}
             initialSort={{ columnId: 'name', direction: 'asc' }}
+            sort={sort}
+            onSortChange={setSort}
             emptyState={
               <EmptyState
                 icon={<UsersRound />}
@@ -257,6 +341,7 @@ const PlayersPage = () => {
       </PageCard>
 
       {isSheetOpen && (
+        /* A11y: Dialog pattern — modal form with backdrop and role="dialog" */
         <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm transition-opacity duration-200 motion-reduce:transition-none" role="dialog" aria-modal="true">
           <div className="h-full w-full max-w-md ring-1 ring-[hsl(var(--line)/.12)] bg-[hsl(var(--surface)/.98)] backdrop-blur-md p-6 shadow-[0_2px_8px_hsl(var(--line)/.12)]">
             <div className="flex items-start justify-between mb-6">

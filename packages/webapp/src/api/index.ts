@@ -15,6 +15,11 @@ import type {
 import { createId, getStateCopy, loadState, updateState } from './storage'
 import type { DatabaseState } from './storage'
 
+/**
+ * Normalizes player data — ensures nullable fields are null (not undefined).
+ * @param player - Player to normalize
+ * @returns Normalized player
+ */
 const normalisePlayer = (player: Player): Player => ({
   ...player,
   alias: player.alias ?? null,
@@ -24,6 +29,7 @@ const normalisePlayer = (player: Player): Player => ({
   active: Boolean(player.active)
 })
 
+/** Zod schema for player creation input validation. */
 const playerCreateSchema = z.object({
   name: z.string().min(1),
   alias: z.string().min(1).optional(),
@@ -33,6 +39,7 @@ const playerCreateSchema = z.object({
   active: z.boolean().optional()
 })
 
+/** Zod schema for player update input validation. */
 const playerUpdateSchema = z.object({
   id: z.string().min(1),
   patch: z
@@ -47,6 +54,11 @@ const playerUpdateSchema = z.object({
     .refine((value) => Object.keys(value).length > 0, 'patch must update mindst ét felt')
 })
 
+/**
+ * Lists players with optional filters (search, active status).
+ * @param filters - Optional filters (q for search, active for status)
+ * @returns Array of normalized players
+ */
 const listPlayers = async (filters?: PlayerListFilters): Promise<Player[]> => {
   const state = getStateCopy()
   const term = filters?.q?.trim().toLowerCase()
@@ -63,6 +75,11 @@ const listPlayers = async (filters?: PlayerListFilters): Promise<Player[]> => {
     .sort((a: Player, b: Player) => a.name.localeCompare(b.name, 'da'))
 }
 
+/**
+ * Creates a new player.
+ * @param input - Player creation input
+ * @returns Created and normalized player
+ */
 const createPlayer = async (input: PlayerCreateInput): Promise<Player> => {
   const parsed = playerCreateSchema.parse(input)
   let created!: Player
@@ -82,6 +99,12 @@ const createPlayer = async (input: PlayerCreateInput): Promise<Player> => {
   return normalisePlayer(created)
 }
 
+/**
+ * Updates an existing player.
+ * @param input - Player update input (id + patch)
+ * @returns Updated and normalized player
+ * @throws Error if player not found
+ */
 const updatePlayer = async (input: PlayerUpdateInput): Promise<Player> => {
   const parsed = playerUpdateSchema.parse(input)
   let updated!: Player
@@ -106,12 +129,17 @@ const updatePlayer = async (input: PlayerUpdateInput): Promise<Player> => {
   return normalisePlayer(updated)
 }
 
+/** Players API — CRUD operations for players. */
 const playersApi = {
   list: listPlayers,
   create: createPlayer,
   update: updatePlayer
 }
 
+/**
+ * Gets the active training session (if any).
+ * @returns Active session or null
+ */
 const getActiveSession = async (): Promise<TrainingSession | null> => {
   const state = loadState()
   const active = state.sessions
@@ -120,6 +148,11 @@ const getActiveSession = async (): Promise<TrainingSession | null> => {
   return active ?? null
 }
 
+/**
+ * Ensures an active session exists (throws if none).
+ * @returns Active session
+ * @throws Error if no active session
+ */
 const ensureActiveSession = async (): Promise<TrainingSession> => {
   const active = await getActiveSession()
   if (!active) {
@@ -128,6 +161,10 @@ const ensureActiveSession = async (): Promise<TrainingSession> => {
   return active
 }
 
+/**
+ * Starts a new session or returns existing active session.
+ * @returns Active session
+ */
 const startOrGetActiveSession = async (): Promise<TrainingSession> => {
   const active = await getActiveSession()
   if (active) return active
@@ -145,6 +182,10 @@ const startOrGetActiveSession = async (): Promise<TrainingSession> => {
   return session
 }
 
+/**
+ * Ends the active session and marks all related matches as ended.
+ * @throws Error if no active session
+ */
 const endActiveSession = async (): Promise<void> => {
   updateState((state: DatabaseState) => {
     const active = state.sessions.find((session) => session.status === 'active')
@@ -160,12 +201,19 @@ const endActiveSession = async (): Promise<void> => {
   })
 }
 
+/** Session API — manages training sessions. */
 const sessionApi = {
   startOrGetActive: startOrGetActiveSession,
   getActive: getActiveSession,
   endActive: endActiveSession
 }
 
+/**
+ * Adds a player check-in for the active session.
+ * @param input - Check-in input (playerId, optional maxRounds)
+ * @returns Created check-in
+ * @throws Error if player not found, inactive, or already checked in
+ */
 const addCheckIn = async (input: { playerId: string; maxRounds?: number }) => {
   const session = await ensureActiveSession()
   const state = loadState()
@@ -195,6 +243,11 @@ const addCheckIn = async (input: { playerId: string; maxRounds?: number }) => {
   return checkIn
 }
 
+/**
+ * Lists checked-in players for the active session.
+ * @returns Array of checked-in players with full player data
+ * @throws Error if no active session
+ */
 const listActiveCheckIns = async (): Promise<CheckedInPlayer[]> => {
   const session = await ensureActiveSession()
   const state = loadState()
@@ -212,6 +265,11 @@ const listActiveCheckIns = async (): Promise<CheckedInPlayer[]> => {
     })
 }
 
+/**
+ * Removes a player check-in for the active session.
+ * @param input - Check-in input (playerId)
+ * @throws Error if player not checked in or no active session
+ */
 const removeCheckIn = async (input: { playerId: string }) => {
   const session = await ensureActiveSession()
   const state = loadState()
@@ -226,12 +284,18 @@ const removeCheckIn = async (input: { playerId: string }) => {
     })
 }
 
+/** Check-ins API — manages player check-ins for training sessions. */
 const checkInsApi = {
   add: addCheckIn,
   remove: removeCheckIn,
   listActive: listActiveCheckIns
 }
 
+/**
+ * Lists court assignments for the active session (optionally filtered by round).
+ * @param round - Optional round number (1-4)
+ * @returns Array of courts with player slots
+ */
 const listMatches = async (round?: number): Promise<CourtWithPlayers[]> => {
   const state = loadState()
   const session = await getActiveSession()
@@ -285,6 +349,10 @@ const listMatches = async (round?: number): Promise<CourtWithPlayers[]> => {
   }))
 }
 
+/**
+ * Resets all court assignments for the active session.
+ * @throws Error if no active session
+ */
 const resetMatches = async (): Promise<void> => {
   const session = await ensureActiveSession()
   updateState((state: DatabaseState) => {
@@ -294,6 +362,14 @@ const resetMatches = async (): Promise<void> => {
   })
 }
 
+/**
+ * Auto-arranges players into balanced matches using smart algorithm.
+ * @param round - Optional round number (1-4) for duplicate detection
+ * @returns Result with filled courts count and benched players count
+ * @remarks For rounds 2+, avoids repeating previous matchups (3+ same players).
+ * Prioritizes Double players in 2v2 matches, balances levels, and avoids
+ * duplicate partners/opponents from earlier rounds.
+ */
 const autoArrangeMatches = async (round?: number): Promise<AutoArrangeResult> => {
   const session = await ensureActiveSession()
   const state = loadState()
@@ -688,12 +764,19 @@ const autoArrangeMatches = async (round?: number): Promise<AutoArrangeResult> =>
   }
 }
 
+/**
+ * Moves a player to a court/slot or removes from court (supports swapping).
+ * @param payload - Move payload (playerId, toCourtIdx, toSlot, optional swapWithPlayerId)
+ * @param round - Optional round number (defaults to 1)
+ * @throws Error if player not checked in, slot occupied, or court full
+ * @remarks Supports swapping: if target slot is occupied, swaps players.
+ */
 const movePlayer = async (payload: MatchMovePayload, round?: number): Promise<void> => {
   const parsed = z
     .object({
       playerId: z.string().min(1),
       toCourtIdx: z.number().int().min(1).max(8).optional(),
-      toSlot: z.number().int().min(0).max(3).optional(),
+      toSlot: z.number().int().min(0).max(7).optional(),
       round: z.number().int().min(1).max(4).optional(),
       swapWithPlayerId: z.string().optional()
     })
@@ -876,7 +959,18 @@ const movePlayer = async (payload: MatchMovePayload, round?: number): Promise<vo
     }
 
     const effectiveCount = existingSlots.length - (currentMatch?.id === targetMatch.id ? 1 : 0)
-    if (!slotTaken && effectiveCount >= 4) {
+    // Check if court has extended capacity (any slot >= 4 indicates extended capacity)
+    // Determine max capacity: if any slot >= 4 exists, check the highest slot to determine capacity
+    const hasExtendedCapacity = existingSlots.some((mp) => mp.slot >= 4)
+    let maxCapacity = 4
+    if (hasExtendedCapacity) {
+      // If any player is in slot 4+, check the highest slot to determine if it's 5, 6, 7, or 8
+      const maxSlot = Math.max(...existingSlots.map((mp) => mp.slot))
+      // If max slot is 4, could be 5 capacity; if 5, could be 6; if 6, could be 7; if 7, must be 8
+      // For safety, if slot >= 4 exists, allow up to 8 (we'll validate based on actual slot being added)
+      maxCapacity = 8
+    }
+    if (!slotTaken && effectiveCount >= maxCapacity) {
       throw new Error('Banen er fuld')
     }
 
@@ -906,6 +1000,7 @@ const movePlayer = async (payload: MatchMovePayload, round?: number): Promise<vo
   })
 }
 
+/** Matches API — manages court assignments and player matching. */
 const matchesApi = {
   autoArrange: (round?: number) => autoArrangeMatches(round),
   list: (round?: number) => listMatches(round),
@@ -913,6 +1008,7 @@ const matchesApi = {
   move: movePlayer
 }
 
+/** Main API client — exports all API modules. */
 const api = {
   players: playersApi,
   session: sessionApi,

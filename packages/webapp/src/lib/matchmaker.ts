@@ -14,8 +14,15 @@ export type MatchmakerResult = {
   leftoverPlayerIds: string[]
 }
 
+/** Default number of slots per court. */
 const DEFAULT_SLOTS = 4
 
+/**
+ * Chunks players array into groups of specified size.
+ * @param players - Array of player IDs
+ * @param size - Chunk size
+ * @returns Array of player ID chunks
+ */
 export const chunkPlayers = (players: string[], size: number): string[][] => {
   if (size <= 0) return []
   const chunks: string[][] = []
@@ -25,6 +32,14 @@ export const chunkPlayers = (players: string[], size: number): string[][] => {
   return chunks
 }
 
+/**
+ * Builds court assignments from bench players.
+ * @param benchPlayerIds - Array of player IDs on bench
+ * @param availableCourtIdxs - Array of available court indices
+ * @param slotsPerCourt - Number of slots per court (default: 4)
+ * @returns Assignments and leftover players
+ * @remarks Simple assignment algorithm — chunks players into groups and assigns to courts.
+ */
 export const buildAssignments = ({
   benchPlayerIds,
   availableCourtIdxs,

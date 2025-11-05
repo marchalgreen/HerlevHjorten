@@ -14,6 +14,10 @@ export type SidebarNavProps = {
   size?: 'sm' | 'lg'
 }
 
+/**
+ * SidebarNav component — navigation with keyboard support (arrow keys).
+ * @remarks A11y: Roving tabindex pattern — arrow keys navigate between items.
+ */
 export const SidebarNav = ({ items, orientation = 'vertical', size: _size = 'sm' }: SidebarNavProps) => {
   const location = useLocation()
   const refs = useRef<(HTMLAnchorElement | null)[]>([])
@@ -44,6 +48,7 @@ export const SidebarNav = ({ items, orientation = 'vertical', size: _size = 'sm'
     }
   }
 
+  // A11y: Navigation landmark with keyboard support (arrow keys for roving tabindex)
   return (
     <div role="navigation" aria-label="Primær navigation" onKeyDown={handleKeyDown}>
       <ul className={clsx('flex gap-3', orientation === 'vertical' ? 'flex-col' : 'flex-row')}>

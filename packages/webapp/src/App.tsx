@@ -1,10 +1,14 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import PlayersPage from './routes/Players'
+import PlayersPage from './routes/PlayersDB'
 import CheckInPage from './routes/CheckIn'
 import MatchProgramPage from './routes/MatchProgram'
 import { SidebarItem } from './components/navigation/SidebarItem'
 import { UserCheck, UsersRound, Grid2x2 } from 'lucide-react'
 
+/**
+ * Header component — app branding and primary navigation.
+ * @remarks Renders logo and centered nav; uses absolute positioning for layout.
+ */
 const Header = () => {
   return (
     <header className="relative flex items-center ring-1 ring-[hsl(var(--line)/.12)] bg-[hsl(var(--surface)/.7)] px-6 py-4 backdrop-blur shadow-[inset_0_-1px_0_hsl(var(--line)/.08)]">
@@ -21,6 +25,7 @@ const Header = () => {
       </div>
 
       {/* Center section: Navigation - absolutely positioned and centered */}
+      {/* A11y: Navigation landmark with aria-label for screen readers */}
       <nav 
         aria-label="Primær navigation" 
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
@@ -39,6 +44,10 @@ const Header = () => {
   )
 }
 
+/**
+ * Main app component — router and layout wrapper.
+ * @remarks Sets up HashRouter and renders header + main content area.
+ */
 const App = () => {
   return (
     <HashRouter>

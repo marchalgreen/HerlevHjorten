@@ -13,6 +13,7 @@ export type ToastOptions = {
 
 type ToastRecord = ToastOptions & { id: number }
 
+/** Toast context value. */
 type ToastContextValue = {
   notify: (options: ToastOptions) => void
 }
@@ -33,6 +34,11 @@ const variantIcon: Record<ToastVariant, React.ReactElement> = {
   danger: React.createElement(XCircle, { size: 18 })
 }
 
+/**
+ * ToastProvider component — provides toast notification context.
+ * @remarks Renders toasts in fixed bottom-left position with auto-dismiss.
+ * Supports success, warning, danger, and default variants.
+ */
 export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [toasts, setToasts] = useState<ToastRecord[]>([])
 
@@ -87,6 +93,11 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   )
 }
 
+/**
+ * useToast hook — returns toast notification function.
+ * @returns Object with notify function
+ * @throws Error if used outside ToastProvider
+ */
 export const useToast = () => {
   const ctx = useContext(ToastContext)
   if (!ctx) throw new Error('useToast must be used within ToastProvider')

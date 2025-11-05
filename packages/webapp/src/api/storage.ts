@@ -7,8 +7,10 @@ import type {
   MatchPlayer
 } from '@herlev-hjorten/common'
 
+/** LocalStorage key for database state. */
 const STORAGE_KEY = 'herlev-hjorten-db-v2'
 
+/** In-memory database state structure. */
 export type DatabaseState = {
   players: Player[]
   sessions: TrainingSession[]
@@ -18,6 +20,7 @@ export type DatabaseState = {
   matchPlayers: MatchPlayer[]
 }
 
+/** Seed data for initial player population. */
 const playerSeeds: Array<{ name: string; level: number; gender: 'Herre' | 'Dame'; primaryCategory: 'Single' | 'Double' | 'Begge' }> = [
   { name: 'Kristian Simoni', level: 245, gender: 'Herre', primaryCategory: 'Begge' },
   { name: 'Phillip Ørbæk', level: 320, gender: 'Herre', primaryCategory: 'Double' },
@@ -91,6 +94,10 @@ const playerSeeds: Array<{ name: string; level: number; gender: 'Herre' | 'Dame'
   { name: 'Kristine Nørgaard Pedersen', level: 5132, gender: 'Dame', primaryCategory: 'Begge' }
 ]
 
+/**
+ * Generates a unique ID (UUID if available, otherwise random string).
+ * @returns Unique ID string
+ */
 const createId = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
@@ -98,6 +105,10 @@ const createId = () => {
   return Math.random().toString(36).slice(2)
 }
 
+/**
+ * Creates initial database state with seed players and 8 courts.
+ * @returns Fresh database state
+ */
 const createSeedState = (): DatabaseState => {
   const now = new Date().toISOString()
   return {
@@ -122,8 +133,13 @@ const createSeedState = (): DatabaseState => {
   }
 }
 
+/** Cached database state (singleton pattern). */
 let cachedState: DatabaseState | null = null
 
+/**
+ * Gets localStorage instance (returns null in SSR or if unavailable).
+ * @returns localStorage instance or null
+ */
 const getStorage = () => {
   if (typeof window === 'undefined') return null
   try {
@@ -133,6 +149,11 @@ const getStorage = () => {
   }
 }
 
+/**
+ * Loads database state from localStorage or creates seed state.
+ * @returns Database state
+ * @remarks Migrates players missing gender/primaryCategory from seed data.
+ */
 export const loadState = (): DatabaseState => {
   if (cachedState) return cachedState
   const storage = getStorage()
@@ -172,6 +193,10 @@ export const loadState = (): DatabaseState => {
   return cachedState
 }
 
+/**
+ * Persists current database state to localStorage.
+ * @remarks No-op if localStorage unavailable or state is null.
+ */
 export const persistState = () => {
   const storage = getStorage()
   if (storage && cachedState) {
@@ -179,17 +204,31 @@ export const persistState = () => {
   }
 }
 
+/**
+ * Updates database state and persists to localStorage.
+ * @param updater - Function that mutates state
+ * @remarks Loads state, applies updater, then persists atomically.
+ */
 export const updateState = (updater: (state: DatabaseState) => void) => {
   const state = loadState()
   updater(state)
   persistState()
 }
 
+/**
+ * Resets database to seed state and persists.
+ * @remarks Clears all sessions, check-ins, and matches.
+ */
 export const resetState = () => {
   cachedState = createSeedState()
   persistState()
 }
 
+/**
+ * Returns a deep copy of current database state (for safe reading).
+ * @returns Copy of database state
+ * @remarks Use this for read operations that shouldn't mutate cached state.
+ */
 export const getStateCopy = (): DatabaseState => {
   const state = loadState()
   return {

@@ -9,6 +9,10 @@ export type EmptyStateProps = {
   className?: string
 }
 
+/**
+ * EmptyState component — empty state UI with icon, title, helper text, and optional action.
+ * @remarks Used when no data is available (e.g., no players, no matches).
+ */
 export const EmptyState = ({ icon, title, helper, action, className }: EmptyStateProps) => (
   <div className={clsx('flex flex-col items-center gap-3 text-center card-glass-inactive rounded-lg p-10', className)}>
     <div className="rounded-full bg-[hsl(var(--surface)/.6)] p-4 text-accent">{icon}</div>

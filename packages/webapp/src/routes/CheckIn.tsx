@@ -7,10 +7,15 @@ import { Button, PageCard, EmptyState } from '../components/ui'
 import { TableSearch } from '../components/ui/Table'
 import { useToast } from '../components/ui/Toast'
 
-// Split letters into two balanced rows (15 items each)
+// WHY: Split letters into two balanced rows (15 items each) for better layout
 const LETTER_FILTERS_ROW1 = ['Alle', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ'.split('').slice(0, 14)]
 const LETTER_FILTERS_ROW2 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ'.split('').slice(14)
 
+/**
+ * Returns background color class based on player gender.
+ * @param gender - Player gender ('Herre', 'Dame', or null/undefined)
+ * @returns Tailwind class for gender-specific background color
+ */
 const getInitialsBgColor = (gender: 'Herre' | 'Dame' | null | undefined) => {
   if (gender === 'Herre') {
     return 'bg-[hsl(205_60%_96%)]' // subtle light blue-tinted
@@ -21,6 +26,11 @@ const getInitialsBgColor = (gender: 'Herre' | 'Dame' | null | undefined) => {
   return 'bg-[hsl(var(--surface-2))]' // neutral gray for no gender
 }
 
+/**
+ * Renders category badge (S/D/B) for player primary category.
+ * @param category - Player primary category ('Single', 'Double', 'Begge', or null)
+ * @returns Badge JSX or null
+ */
 const getCategoryBadge = (category: 'Single' | 'Double' | 'Begge' | null | undefined) => {
   if (!category) return null
   const labels: Record<'Single' | 'Double' | 'Begge', string> = {
@@ -40,6 +50,11 @@ const getCategoryBadge = (category: 'Single' | 'Double' | 'Begge' | null | undef
   )
 }
 
+/**
+ * Check-in page — manages player check-in/out for active training session.
+ * @remarks Renders active session UI, filters players, and handles check-in/out
+ * with animations. Delegates data operations to api.checkIns.
+ */
 const CheckInPage = () => {
   const [players, setPlayers] = useState<Player[]>([])
   const [checkedIn, setCheckedIn] = useState<CheckedInPlayer[]>([])
@@ -54,6 +69,7 @@ const CheckInPage = () => {
   const [animatingIn, setAnimatingIn] = useState<Set<string>>(new Set())
   const { notify } = useToast()
 
+  /** Reloads active training session from API. */
   const refreshSession = useCallback(async () => {
     try {
       const active = await api.session.getActive()
@@ -63,6 +79,7 @@ const CheckInPage = () => {
     }
   }, [])
 
+  /** Starts a new training session or gets existing active session. */
   const handleStartTraining = useCallback(async () => {
     try {
       setError(null)
@@ -75,6 +92,7 @@ const CheckInPage = () => {
     }
   }, [notify])
 
+  /** Loads all active players from API. */
   const loadPlayers = useCallback(async () => {
     try {
       const result = await api.players.list({ active: true })
@@ -84,6 +102,7 @@ const CheckInPage = () => {
     }
   }, [])
 
+  /** Loads checked-in players for current session. */
   const loadCheckIns = useCallback(async () => {
     if (!session) return
     try {
@@ -94,6 +113,7 @@ const CheckInPage = () => {
     }
   }, [session])
 
+  // WHY: Initialize session and players on mount; deps are stable callbacks
   useEffect(() => {
     const init = async () => {
       setLoading(true)
@@ -105,6 +125,7 @@ const CheckInPage = () => {
     void init()
   }, [refreshSession, loadPlayers])
 
+  // WHY: Reload check-ins when session changes; clear if no session
   useEffect(() => {
     if (!session) {
       setCheckedIn([])
@@ -113,6 +134,7 @@ const CheckInPage = () => {
     void loadCheckIns()
   }, [session, loadCheckIns])
 
+  /** Memoized Set of checked-in player IDs for fast lookup. */
   const checkedInIds = useMemo(() => new Set(checkedIn.map((player) => player.id)), [checkedIn])
 
   const genderBreakdown = useMemo(() => {
@@ -121,6 +143,7 @@ const CheckInPage = () => {
     return { male, female }
   }, [checkedIn])
 
+  /** Memoized filtered players list — excludes checked-in players, applies search/letter filters. */
   const filteredPlayers = useMemo(() => {
     const term = search.trim().toLowerCase()
     return players.filter((player) => {
@@ -136,17 +159,22 @@ const CheckInPage = () => {
     })
   }, [players, search, filterLetter, checkedInIds])
 
+  /**
+   * Handles player check-in with animation feedback.
+   * @param player - Player to check in
+   * @param maxRounds - Optional max rounds (1 for "kun 1 runde")
+   */
   const handleCheckIn = useCallback(
     async (player: Player, maxRounds?: number) => {
       if (!session) return
       setError(null)
       try {
-        // Add animation state for moving out of main list
+        // PERF: Add animation state for moving out of main list
         setAnimatingOut((prev) => new Set(prev).add(player.id))
         // Add visual feedback immediately
         setJustCheckedIn((prev) => new Set(prev).add(player.id))
         
-        // Wait for exit animation
+        // WHY: Wait for exit animation to complete before API call
         await new Promise(resolve => setTimeout(resolve, 300))
         
         await api.checkIns.add({ playerId: player.id, maxRounds })
@@ -194,6 +222,7 @@ const CheckInPage = () => {
     [loadCheckIns, notify, session]
   )
 
+  /** Demo function — checks in 28 random players (4 with "kun 1 runde"). */
   const handleDemoCheckIn = useCallback(async () => {
     if (!session) return
     setError(null)
@@ -237,15 +266,19 @@ const CheckInPage = () => {
     }
   }, [session, players, checkedInIds, loadCheckIns, notify])
 
+  /**
+   * Handles player check-out with animation feedback.
+   * @param player - Player to check out
+   */
   const handleCheckOut = useCallback(
     async (player: Player) => {
       if (!session) return
       setError(null)
       try {
-        // Add animation state for moving out of checked-in section
+        // PERF: Add animation state for moving out of checked-in section
         setAnimatingOut((prev) => new Set(prev).add(player.id))
         
-        // Wait for exit animation
+        // WHY: Wait for exit animation to complete before API call
         await new Promise(resolve => setTimeout(resolve, 300))
         
         await api.checkIns.remove({ playerId: player.id })
