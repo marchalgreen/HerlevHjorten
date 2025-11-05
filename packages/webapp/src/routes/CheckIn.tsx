@@ -23,10 +23,10 @@ const getInitials = (name: string) =>
 
 const getInitialsBgColor = (gender: 'Herre' | 'Dame' | null | undefined) => {
   if (gender === 'Herre') {
-    return 'bg-[hsl(205_60%_94%)]' // subtle light blue-tinted
+    return 'bg-[hsl(205_60%_96%)]' // subtle light blue-tinted
   }
   if (gender === 'Dame') {
-    return 'bg-[hsl(340_55%_94%)]' // subtle light rose-tinted
+    return 'bg-[hsl(340_55%_96%)]' // subtle light rose-tinted
   }
   return 'bg-[hsl(var(--surface-2))]' // neutral gray for no gender
 }
@@ -292,8 +292,11 @@ const CheckInPage = () => {
               </span>
             </header>
             <div className="flex flex-col space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
-              {checkedIn.map((player) => {
-                const initials = getInitials(player.name)
+              {[...checkedIn].sort((a, b) => {
+                const firstNameA = a.name.split(' ')[0] || ''
+                const firstNameB = b.name.split(' ')[0] || ''
+                return firstNameA.localeCompare(firstNameB, 'da')
+              }).map((player) => {
                 const isOneRoundOnly = player.maxRounds === 1
                 const isAnimatingOut = animatingOut.has(player.id)
                 const isAnimatingIn = animatingIn.has(player.id)
@@ -301,7 +304,8 @@ const CheckInPage = () => {
                   <div
                     key={player.id}
                     className={clsx(
-                      'flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-1 ring-[hsl(var(--line)/.12)] bg-[hsl(206_88%_92%)]',
+                      'flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-1 ring-[hsl(var(--line)/.12)]',
+                      getInitialsBgColor(player.gender),
                       isAnimatingOut && 'opacity-0 scale-95 translate-x-4 pointer-events-none',
                       isAnimatingIn && 'opacity-0 scale-95 -translate-x-4'
                     )}
@@ -309,13 +313,8 @@ const CheckInPage = () => {
                       animation: isAnimatingIn ? 'slideInFromLeft 0.3s ease-out forwards' : undefined
                     }}
                   >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className={clsx(
-                        'flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)] flex-shrink-0',
-                        getInitialsBgColor(player.gender)
-                      )}>
-                        {initials}
-                      </div>
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {getCategoryBadge(player.primaryCategory)}
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">
                           {player.name}
@@ -326,12 +325,6 @@ const CheckInPage = () => {
                             <span className="ml-1.5 text-[10px] text-[hsl(var(--muted))]">• Kun 1 runde</span>
                           )}
                         </p>
-                        <div className="flex items-center gap-1.5">
-                          {getCategoryBadge(player.primaryCategory)}
-                          <p className="text-[10px] text-[hsl(var(--muted))] truncate">
-                            Niveau {player.level ?? '–'}
-                          </p>
-                        </div>
                       </div>
                     </div>
                     <Button
@@ -404,7 +397,6 @@ const CheckInPage = () => {
               const isJustCheckedIn = justCheckedIn.has(player.id)
               const isAnimatingOut = animatingOut.has(player.id)
               const isAnimatingIn = animatingIn.has(player.id)
-              const initials = getInitials(player.name)
               
               return (
                 <div
@@ -416,25 +408,21 @@ const CheckInPage = () => {
                     newSet.delete(player.id)
                     setOneRoundOnlyPlayers(newSet)
                   }}
-                    className={clsx(
-                      'border-hair flex min-h-[56px] items-center justify-between gap-3 rounded-lg px-3 py-2.5',
-                      'transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
-                      'card-glass-active cursor-pointer hover:shadow-sm hover:ring-[hsl(var(--accent)/.15)]',
-                      isJustCheckedIn && 'bg-[hsl(206_88%_75%)] ring-2 ring-[hsl(206_88%_60%)] scale-[1.02] shadow-lg',
-                      isAnimatingOut && 'opacity-0 scale-95 -translate-x-4 pointer-events-none',
-                      isAnimatingIn && 'opacity-0 scale-95 translate-x-4'
-                    )}
-                    style={{
-                      animation: isAnimatingIn ? 'slideInFromRight 0.3s ease-out forwards' : undefined
-                    }}
+                  className={clsx(
+                    'border-hair flex min-h-[56px] items-center justify-between gap-3 rounded-lg px-3 py-2.5',
+                    'transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
+                    'cursor-pointer hover:shadow-sm hover:ring-[hsl(var(--accent)/.15)] ring-1 ring-[hsl(var(--line)/.12)]',
+                    getInitialsBgColor(player.gender),
+                    isJustCheckedIn && 'ring-2 ring-[hsl(206_88%_60%)] scale-[1.02] shadow-lg',
+                    isAnimatingOut && 'opacity-0 scale-95 -translate-x-4 pointer-events-none',
+                    isAnimatingIn && 'opacity-0 scale-95 translate-x-4'
+                  )}
+                  style={{
+                    animation: isAnimatingIn ? 'slideInFromRight 0.3s ease-out forwards' : undefined
+                  }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={clsx(
-                      'flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)] flex-shrink-0',
-                      getInitialsBgColor(player.gender)
-                    )}>
-                      {initials}
-                    </div>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    {getCategoryBadge(player.primaryCategory)}
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">
                         {player.name}
@@ -446,7 +434,7 @@ const CheckInPage = () => {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <label 
-                        className="flex items-center gap-1.5 cursor-pointer"
+                        className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-[hsl(var(--surface-2)/.5)] transition-colors"
                         onClick={(e) => e.stopPropagation()} // Prevent row click from triggering
                       >
                         <input
@@ -461,9 +449,9 @@ const CheckInPage = () => {
                             }
                             setOneRoundOnlyPlayers(newSet)
                           }}
-                          className="w-3.5 h-3.5 rounded ring-1 ring-[hsl(var(--line)/.12)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none cursor-pointer"
+                          className="w-4 h-4 rounded ring-1 ring-[hsl(var(--line)/.12)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none cursor-pointer flex-shrink-0"
                         />
-                        <span className="text-[10px] text-[hsl(var(--muted))] whitespace-nowrap">Kun 1 runde</span>
+                        <span className="text-xs text-[hsl(var(--muted))] whitespace-nowrap font-medium">Kun 1 runde</span>
                       </label>
                     <Button
                       variant="primary"
