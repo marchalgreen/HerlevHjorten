@@ -23,6 +23,8 @@ const CoachPage = () => {
   const [unavailablePlayers, setUnavailablePlayers] = useState<Set<string>>(new Set())
   const [dragOverInactive, setDragOverInactive] = useState(false)
   const [dragOverBench, setDragOverBench] = useState(false)
+  const [dragOverCourt, setDragOverCourt] = useState<number | null>(null)
+  const [dragOverSlot, setDragOverSlot] = useState<{ courtIdx: number; slot: number } | null>(null)
 
   const loadSession = async () => {
     try {
@@ -275,14 +277,10 @@ const CoachPage = () => {
   }
 
   const onDropToCourt = async (event: React.DragEvent<HTMLDivElement>, courtIdx: number) => {
-    const playerId = event.dataTransfer.getData('application/x-player-id')
-    if (!playerId) return
+    // Only allow dropping to specific slots, not to the entire court
+    // This prevents automatic placement
     event.preventDefault()
-    const court = matches.find((c) => c.courtIdx === courtIdx)
-    if (!court) return
-    const slot = getFirstFreeSlot(court)
-    if (slot === undefined) return
-    await handleMove(playerId, courtIdx, slot)
+    setDragOverCourt(null)
   }
 
   const getFirstFreeSlot = (court: CourtWithPlayers) => {
@@ -334,19 +332,36 @@ const CoachPage = () => {
   const renderPlayerSlot = (court: CourtWithPlayers, slotIndex: number) => {
     const entry = court.slots.find((slot: { slot: number; player: Player }) => slot.slot === slotIndex)
     const player = entry?.player
+    const isDragOver = dragOverSlot?.courtIdx === court.courtIdx && dragOverSlot?.slot === slotIndex
+    const isCourtHovered = dragOverCourt === court.courtIdx && !player
+    
     return (
       <div
         key={slotIndex}
-        className={`flex min-h-[52px] items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-1 ring-[hsl(var(--line)/.12)] ${
+        className={`flex min-h-[52px] items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-1 ${
           player
-            ? `${getPlayerSlotBgColor(player.gender)} hover:shadow-sm`
-            : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))]'
+            ? `${getPlayerSlotBgColor(player.gender)} hover:shadow-sm ring-[hsl(var(--line)/.12)]`
+            : isDragOver
+            ? 'bg-[hsl(var(--primary)/.15)] ring-2 ring-[hsl(var(--primary)/.5)] shadow-md'
+            : isCourtHovered
+            ? 'bg-[hsl(var(--primary)/.08)] ring-[hsl(var(--primary)/.3)]'
+            : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] ring-[hsl(var(--line)/.12)]'
         }`}
         onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
-          if (!player) event.preventDefault()
+          if (!player) {
+            event.preventDefault()
+            setDragOverSlot({ courtIdx: court.courtIdx, slot: slotIndex })
+          }
+        }}
+        onDragLeave={() => {
+          setDragOverSlot(null)
         }}
         onDrop={(event: React.DragEvent<HTMLDivElement>) => {
-          if (!player) void onDropToSlot(event, court.courtIdx, slotIndex)
+          if (!player) {
+            setDragOverSlot(null)
+            setDragOverCourt(null)
+            void onDropToSlot(event, court.courtIdx, slotIndex)
+          }
         }}
       >
         {player ? (
@@ -706,8 +721,19 @@ const CoachPage = () => {
           {matches.map((court) => (
             <PageCard
               key={court.courtIdx}
-              className="space-y-2 hover:shadow-md p-4"
-              onDragOver={(event) => event.preventDefault()}
+              className={`space-y-2 hover:shadow-md p-4 transition-all duration-200 ${
+                dragOverCourt === court.courtIdx
+                  ? 'ring-2 ring-[hsl(var(--primary)/.4)] bg-[hsl(var(--primary)/.05)] shadow-lg'
+                  : ''
+              }`}
+              onDragOver={(event) => {
+                event.preventDefault()
+                setDragOverCourt(court.courtIdx)
+              }}
+              onDragLeave={() => {
+                setDragOverCourt(null)
+                setDragOverSlot(null)
+              }}
               onDrop={(event) => void onDropToCourt(event, court.courtIdx)}
             >
               <header className="flex items-center justify-between mb-2">
