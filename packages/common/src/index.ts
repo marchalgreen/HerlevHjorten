@@ -89,6 +89,38 @@ export type AutoArrangeResult = {
   benched: number
 }
 
+export type StatisticsSnapshot = {
+  id: string
+  sessionId: string
+  sessionDate: string
+  season: string
+  matches: Match[]
+  matchPlayers: MatchPlayer[]
+  checkIns: CheckIn[]
+  createdAt: string
+}
+
+export type PlayerStatistics = {
+  playerId: string
+  totalCheckIns: number
+  checkInsBySeason: Record<string, number>
+  totalMatches: number
+  matchesBySeason: Record<string, number>
+  partners: Array<{ playerId: string; count: number; names: string }>
+  opponents: Array<{ playerId: string; count: number; names: string }>
+  preferredCategory: 'Single' | 'Double' | 'Mixed' | null
+  averageLevelDifference: number | null
+  mostPlayedCourt: number | null
+  lastPlayedDate: string | null
+}
+
+export type StatisticsFilters = {
+  playerId?: string
+  season?: string
+  dateFrom?: string
+  dateTo?: string
+}
+
 export type RendererApi = {
   players: {
     list(filters?: PlayerListFilters): Promise<Player[]>

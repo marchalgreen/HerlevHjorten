@@ -14,6 +14,7 @@ import type {
 } from '@herlev-hjorten/common'
 import { createId, getStateCopy, loadState, updateState } from './storage'
 import type { DatabaseState } from './storage'
+import statsApi from './stats'
 
 /**
  * Normalizes player data — ensures nullable fields are null (not undefined).
@@ -185,13 +186,16 @@ const startOrGetActiveSession = async (): Promise<TrainingSession> => {
 /**
  * Ends the active session and marks all related matches as ended.
  * @throws Error if no active session
+ * @remarks Automatically creates a statistics snapshot when session ends.
  */
 const endActiveSession = async (): Promise<void> => {
+  let sessionId: string | null = null
   updateState((state: DatabaseState) => {
     const active = state.sessions.find((session) => session.status === 'active')
     if (!active) {
       throw new Error('Ingen aktiv træning')
     }
+    sessionId = active.id
     active.status = 'ended'
     const matches = state.matches.filter((match: Match) => match.sessionId === active.id)
     const endedAt = new Date().toISOString()
@@ -199,6 +203,16 @@ const endActiveSession = async (): Promise<void> => {
       match.endedAt = endedAt
     })
   })
+
+  // Create statistics snapshot after session is marked as ended
+  if (sessionId) {
+    try {
+      await statsApi.snapshotSession(sessionId)
+    } catch (err) {
+      // Log error but don't fail the session ending
+      console.error('Failed to create statistics snapshot:', err)
+    }
+  }
 }
 
 /** Session API — manages training sessions. */

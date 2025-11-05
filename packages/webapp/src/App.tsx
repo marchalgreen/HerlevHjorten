@@ -2,8 +2,9 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import PlayersPage from './routes/PlayersDB'
 import CheckInPage from './routes/CheckIn'
 import MatchProgramPage from './routes/MatchProgram'
+import StatisticsPage from './routes/Statistics'
 import { SidebarItem } from './components/navigation/SidebarItem'
-import { UserCheck, UsersRound, Grid2x2 } from 'lucide-react'
+import { UserCheck, UsersRound, Grid2x2, BarChart3 } from 'lucide-react'
 
 /**
  * Header component — app branding and primary navigation.
@@ -29,11 +30,12 @@ const Header = () => {
       <nav 
         aria-label="Primær navigation" 
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
-        style={{ width: '496px' }}
+        style={{ width: '620px' }}
       >
         <SidebarItem to="/check-in" icon={<UserCheck />} label="Indtjekning" />
         <SidebarItem to="/match-program" icon={<Grid2x2 />} label="Kampprogram" />
         <SidebarItem to="/players" icon={<UsersRound />} label="Spillere" />
+        <SidebarItem to="/statistics" icon={<BarChart3 />} label="Statistik" />
       </nav>
 
       {/* Right section: Spacer for balance */}
@@ -59,6 +61,7 @@ const App = () => {
               <Route path="/players" element={<PlayersPage />} />
               <Route path="/check-in" element={<CheckInPage />} />
               <Route path="/match-program" element={<MatchProgramPage />} />
+              <Route path="/statistics" element={<StatisticsPage />} />
               <Route path="*" element={<Navigate to="/check-in" replace />} />
             </Routes>
           </div>

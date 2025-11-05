@@ -343,7 +343,7 @@ const CheckInPage = () => {
               {/* Title and description */}
               <div className="space-y-3">
                 <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] tracking-tight">
-                  Velkommen til træningssessionen
+                  Velkommen til dagens træning
                 </h1>
                 <p className="mx-auto max-w-md text-base leading-relaxed text-[hsl(var(--muted))]">
                   Start en ny træning for at begynde at tjekke spillere ind og arrangere kampe. 

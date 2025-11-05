@@ -4,7 +4,8 @@ import type {
   CheckIn,
   Court,
   Match,
-  MatchPlayer
+  MatchPlayer,
+  StatisticsSnapshot
 } from '@herlev-hjorten/common'
 
 /** LocalStorage key for database state. */
@@ -18,6 +19,7 @@ export type DatabaseState = {
   courts: Court[]
   matches: Match[]
   matchPlayers: MatchPlayer[]
+  statistics?: StatisticsSnapshot[]
 }
 
 /** Seed data for initial player population. */
@@ -129,7 +131,8 @@ const createSeedState = (): DatabaseState => {
       idx: i + 1
     })),
     matches: [],
-    matchPlayers: []
+    matchPlayers: [],
+    statistics: []
   }
 }
 
@@ -150,9 +153,48 @@ const getStorage = () => {
 }
 
 /**
+ * Migrates historical statistics from ended sessions.
+ * @param state - Database state to migrate
+ * @remarks Creates statistics snapshots for all ended sessions that don't have snapshots yet.
+ */
+const migrateHistoricalStatistics = (state: DatabaseState): void => {
+  if (!state.statistics) {
+    state.statistics = []
+  }
+
+  const existingSessionIds = new Set(state.statistics.map((s) => s.sessionId))
+  const endedSessions = state.sessions.filter((s) => s.status === 'ended' && !existingSessionIds.has(s.id))
+
+  for (const session of endedSessions) {
+    const sessionDate = new Date(session.date)
+    const year = sessionDate.getFullYear()
+    const season = year.toString()
+
+    const sessionMatches = state.matches.filter((m) => m.sessionId === session.id)
+    const sessionMatchPlayers = state.matchPlayers.filter((mp) =>
+      sessionMatches.some((m) => m.id === mp.matchId)
+    )
+    const sessionCheckIns = state.checkIns.filter((c) => c.sessionId === session.id)
+
+    const snapshot: StatisticsSnapshot = {
+      id: createId(),
+      sessionId: session.id,
+      sessionDate: session.date,
+      season,
+      matches: sessionMatches.map((m) => ({ ...m })),
+      matchPlayers: sessionMatchPlayers.map((mp) => ({ ...mp })),
+      checkIns: sessionCheckIns.map((c) => ({ ...c })),
+      createdAt: new Date().toISOString()
+    }
+
+    state.statistics.push(snapshot)
+  }
+}
+
+/**
  * Loads database state from localStorage or creates seed state.
  * @returns Database state
- * @remarks Migrates players missing gender/primaryCategory from seed data.
+ * @remarks Migrates players missing gender/primaryCategory from seed data and backfills statistics.
  */
 export const loadState = (): DatabaseState => {
   if (cachedState) return cachedState
@@ -162,6 +204,10 @@ export const loadState = (): DatabaseState => {
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as DatabaseState
+        // Ensure statistics array exists
+        if (!parsed.statistics) {
+          parsed.statistics = []
+        }
         // Migrate players that might be missing gender/primaryCategory
         if (parsed.players && Array.isArray(parsed.players)) {
           const seedMap = new Map(playerSeeds.map((seed) => [seed.name, seed]))
@@ -180,6 +226,8 @@ export const loadState = (): DatabaseState => {
             return player
           })
         }
+        // Backfill statistics from ended sessions
+        migrateHistoricalStatistics(parsed)
         cachedState = parsed
         persistState() // Save migrated data
         return cachedState
@@ -237,7 +285,13 @@ export const getStateCopy = (): DatabaseState => {
     checkIns: state.checkIns.map((checkIn) => ({ ...checkIn })),
     courts: state.courts.map((court) => ({ ...court })),
     matches: state.matches.map((match) => ({ ...match })),
-    matchPlayers: state.matchPlayers.map((matchPlayer) => ({ ...matchPlayer }))
+    matchPlayers: state.matchPlayers.map((matchPlayer) => ({ ...matchPlayer })),
+    statistics: (state.statistics ?? []).map((stat) => ({
+      ...stat,
+      matches: stat.matches.map((m) => ({ ...m })),
+      matchPlayers: stat.matchPlayers.map((mp) => ({ ...mp })),
+      checkIns: stat.checkIns.map((c) => ({ ...c }))
+    }))
   }
 }
 
