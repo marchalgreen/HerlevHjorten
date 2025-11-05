@@ -537,7 +537,7 @@ const CoachPage = () => {
               {bench.length}
             </span>
           </header>
-          <div className="flex flex-col space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
+          <div className="flex flex-col space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
             {bench.length === 0 && (
               <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-4 text-center text-xs text-[hsl(var(--muted))] border-hair">
                 Træk spillere her for at aktivere dem
@@ -555,12 +555,15 @@ const CoachPage = () => {
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 mt-1">
                     {getCategoryBadge(player.primaryCategory)}
                     <p className="text-[10px] text-[hsl(var(--muted))] truncate">
                       Rangliste: {player.level ?? '–'}
                     </p>
                   </div>
+                </div>
+                <div className="w-[70px] flex-shrink-0" aria-hidden="true">
+                  {/* Spacer to match inactive card width */}
                 </div>
               </div>
             ))}
@@ -609,7 +612,7 @@ const CoachPage = () => {
                       >
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 mt-1">
                             {getCategoryBadge(player.primaryCategory)}
                             {isOneRoundOnly && !isUnavailable && (
                               <span className="text-[10px] font-normal text-[hsl(var(--muted))]">Kun 1 runde</span>
@@ -619,8 +622,8 @@ const CoachPage = () => {
                             )}
                           </div>
                         </div>
-                        {isUnavailable && (
-                          <div className="flex items-center gap-1 flex-shrink-0">
+                        <div className="w-[70px] flex-shrink-0 flex items-center justify-end">
+                          {isUnavailable && (
                             <button
                               type="button"
                               onClick={() => handleMarkAvailable(player.id)}
@@ -629,8 +632,8 @@ const CoachPage = () => {
                             >
                               Aktiver
                             </button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     )
                   })}
