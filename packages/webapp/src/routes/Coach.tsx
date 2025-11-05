@@ -77,6 +77,27 @@ const CoachPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.id, selectedRound])
 
+  // Close dropdown when round changes
+  useEffect(() => {
+    setMoveMenuPlayer(null)
+  }, [selectedRound])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moveMenuPlayer && !(event.target as Element).closest('[data-flyt-menu]')) {
+        setMoveMenuPlayer(null)
+      }
+    }
+
+    if (moveMenuPlayer) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [moveMenuPlayer])
+
   const assignedIds = useMemo(() => {
     const ids = new Set<string>()
     matches.forEach((court: CourtWithPlayers) => {
@@ -335,7 +356,7 @@ const CoachPage = () => {
                 onClick={() => handleMove(player.id)}
                 className="rounded px-2 py-1 text-xs font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.85)] ring-1 ring-[hsl(var(--line)/.12)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none"
               >
-                Bænk
+                BÆNK
               </button>
               {selectedRound > 1 && (
                 <button
@@ -458,7 +479,7 @@ const CoachPage = () => {
         {/* Bench */}
         <PageCard className="space-y-2" onDragOver={(e) => e.preventDefault()} onDrop={onDropToBench}>
           <header className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Bænk</h3>
+            <h3 className="text-sm font-semibold">BÆNK</h3>
             <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-xs font-medium">
               {bench.length}
             </span>
@@ -488,13 +509,13 @@ const CoachPage = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
+                <div className="flex items-center gap-1 flex-shrink-0" data-flyt-menu>
                   <button
                     type="button"
                     onClick={() => setMoveMenuPlayer(moveMenuPlayer === player.id ? null : player.id)}
                     className="rounded px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2)/.7)] border-hair transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm"
                   >
-                    Flyt
+                    FLYT
                   </button>
                   {moveMenuPlayer === player.id && (
                     <div className="flex items-center gap-1 text-[10px]">
@@ -503,7 +524,10 @@ const CoachPage = () => {
                         defaultValue=""
                         onChange={(event) => {
                           const val = Number(event.target.value)
-                          if (!Number.isNaN(val)) void handleQuickAssign(player.id, val)
+                          if (!Number.isNaN(val)) {
+                            void handleQuickAssign(player.id, val)
+                            setMoveMenuPlayer(null)
+                          }
                         }}
                       >
                         <option value="">Vælg</option>
@@ -563,7 +587,7 @@ const CoachPage = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
+                        <div className="flex items-center gap-1 flex-shrink-0" data-flyt-menu>
                           {isUnavailable && (
                             <button
                               type="button"
@@ -579,7 +603,7 @@ const CoachPage = () => {
                             onClick={() => setMoveMenuPlayer(moveMenuPlayer === player.id ? null : player.id)}
                             className="rounded px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2)/.7)] border-hair transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm"
                           >
-                            Flyt
+                            FLYT
                           </button>
                           {moveMenuPlayer === player.id && (
                             <div className="flex items-center gap-1 text-[10px]">
@@ -593,6 +617,7 @@ const CoachPage = () => {
                                     if (isUnavailable) {
                                       handleMarkAvailable(player.id)
                                     }
+                                    setMoveMenuPlayer(null)
                                   }
                                 }}
                               >
