@@ -595,15 +595,34 @@ const MatchProgramPage = () => {
     setMoveMenuPlayer(null)
   }
 
-  /** Returns background color class based on player gender. */
-  const getPlayerSlotBgColor = (gender: 'Herre' | 'Dame' | null | undefined) => {
-    if (gender === 'Herre') {
-      return 'bg-[hsl(205_60%_94%)]' // subtle light blue-tinted
+  /**
+   * Generates a consistent, subtle accent color for a player based on their name.
+   * This provides visual distinction without gender-based stereotypes.
+   * @param name - Player name (used for consistent hashing)
+   * @returns Object with Tailwind class and inline style for left border accent
+   */
+  const getPlayerAccentColor = (name: string) => {
+    // Simple hash function to get consistent color per name
+    let hash = 0
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash)
     }
-    if (gender === 'Dame') {
-      return 'bg-[hsl(340_55%_94%)]' // subtle light rose-tinted
+    
+    // Use a palette of friendly, non-gendered colors (avoiding red/pink)
+    // Colors are: blue, teal, green, cyan, indigo, purple, amber, emerald
+    const hues = [200, 180, 150, 190, 240, 270, 45, 160]
+    const hue = hues[Math.abs(hash) % hues.length]
+    
+    // Return both class and inline style for reliable rendering
+    return {
+      className: 'border-l-2',
+      style: { borderLeftColor: `hsl(${hue}, 50%, 65%)` }
     }
-    return 'bg-[hsl(var(--surface))]' // neutral for no gender
+  }
+
+  /** Returns neutral background color for all players. */
+  const getPlayerSlotBgColor = () => {
+    return 'bg-[hsl(var(--surface-2))]'
   }
 
   /** Renders category badge (S/D/B) for player primary category. */
@@ -640,6 +659,7 @@ const MatchProgramPage = () => {
     const isDragOverOccupied = isDragOver && !!player
     const isRecentlySwapped = player && recentlySwappedPlayers.has(player.id)
     const isDuplicatePlayer = player && duplicatePlayersMap.get(court.courtIdx)?.has(player.id)
+    const accentColor = player ? getPlayerAccentColor(player.name) : null
     
     return (
       <div
@@ -667,17 +687,18 @@ const MatchProgramPage = () => {
         }}
         className={`flex min-h-[52px] items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
           isRecentlySwapped
-            ? `${getPlayerSlotBgColor(player.gender)} animate-swap-in ring-2 ring-[hsl(var(--primary)/.5)] shadow-lg border-2 border-transparent`
+            ? `${getPlayerSlotBgColor()} ${accentColor?.className || ''} animate-swap-in ring-2 ring-[hsl(var(--primary)/.5)] shadow-lg border-2 border-transparent`
             : isDragOverOccupied && player
-            ? `${getPlayerSlotBgColor(player.gender)} ring-2 ring-[hsl(var(--primary)/.6)] shadow-lg border-2 border-[hsl(var(--primary)/.4)]`
+            ? `${getPlayerSlotBgColor()} ${accentColor?.className || ''} ring-2 ring-[hsl(var(--primary)/.6)] shadow-lg border-2 border-[hsl(var(--primary)/.4)]`
             : player
-            ? `${getPlayerSlotBgColor(player.gender)} hover:shadow-sm ring-1 ring-[hsl(var(--line)/.12)] cursor-grab active:cursor-grabbing border-2 border-transparent`
+            ? `${getPlayerSlotBgColor()} ${accentColor?.className || ''} hover:shadow-sm ring-1 ring-[hsl(var(--line)/.12)] cursor-grab active:cursor-grabbing border-2 border-transparent`
             : isDragOver
             ? 'bg-[hsl(var(--primary)/.15)] ring-2 ring-[hsl(var(--primary)/.5)] shadow-md border-2 border-transparent'
             : isCourtHovered
             ? 'bg-[hsl(var(--primary)/.08)] ring-1 ring-[hsl(var(--primary)/.3)] border-2 border-transparent'
             : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] ring-1 ring-[hsl(var(--line)/.12)] border-2 border-transparent'
         }`}
+        style={accentColor?.style}
         onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
           // Allow drag over even if slot is occupied (for swapping)
           event.preventDefault()
@@ -894,10 +915,13 @@ const MatchProgramPage = () => {
                 Træk spillere her for at aktivere dem
               </p>
             )}
-            {bench.map((player) => (
+            {bench.map((player) => {
+              const accentColor = getPlayerAccentColor(player.name)
+              return (
               <div
                 key={player.id}
-                className={`flex items-center gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor(player.gender)}`}
+                className={`flex items-center gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${accentColor.className}`}
+                style={accentColor.style}
                 draggable
                 onDragStart={(event) => {
                   event.dataTransfer.setData('application/x-player-id', player.id)
@@ -925,7 +949,8 @@ const MatchProgramPage = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
             
             {/* Inactive Players Section */}
             <div 
@@ -958,10 +983,12 @@ const MatchProgramPage = () => {
                     {inactivePlayers.map((player) => {
                       const isOneRoundOnly = selectedRound > 1 && player.maxRounds === 1
                       const isUnavailable = unavailablePlayers.has(player.id)
+                      const accentColor = getPlayerAccentColor(player.name)
                       return (
                         <div
                           key={player.id}
-                          className={`flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor(player.gender)}`}
+                          className={`flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${accentColor.className}`}
+                          style={accentColor.style}
                         draggable
                         onDragStart={(event) => {
                           event.dataTransfer.setData('application/x-player-id', player.id)
@@ -1249,14 +1276,16 @@ const MatchProgramPage = () => {
                             {Array.from({ length: 4 }).map((_, slotIdx) => {
                               const entry = court.slots.find((slot) => slot.slot === slotIdx)
                               const player = entry?.player
+                              const accentColor = player ? getPlayerAccentColor(player.name) : null
                               return (
                                 <div
                                   key={slotIdx}
                                   className={`flex min-h-[36px] items-center rounded-md px-2 py-1 text-xs ring-1 ${
                                     player
-                                      ? `${getPlayerSlotBgColor(player.gender)} ring-[hsl(var(--line)/.12)]`
+                                      ? `${getPlayerSlotBgColor()} ${accentColor?.className || ''} ring-[hsl(var(--line)/.12)]`
                                       : 'bg-[hsl(var(--surface-2))] ring-[hsl(var(--line)/.12)]'
                                   }`}
+                                  style={accentColor?.style}
                                 >
                                   {player ? (
                                     <span className="text-xs font-medium text-[hsl(var(--foreground))] truncate">

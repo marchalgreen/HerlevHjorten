@@ -228,19 +228,19 @@ const StatisticsPage = () => {
               <button
                 type="button"
                 onClick={() => setShowSearch(!showSearch)}
-                className="h-8 rounded-full px-3 text-sm font-medium bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] border-hair transition-colors motion-reduce:transition-none flex items-center gap-2 focus-visible:ring-focus"
+                className="rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-2 py-1 text-xs transition-colors motion-reduce:transition-none flex items-center gap-1.5 focus-visible:ring-focus"
                 title="Skift spiller"
               >
-                <Search className="w-4 h-4" />
+                <Search className="w-3 h-3" />
                 Skift
               </button>
               <button
                 type="button"
                 onClick={() => setShowComparisonSearch(!showComparisonSearch)}
-                className={`h-8 rounded-full px-3 text-sm font-medium border-hair transition-colors motion-reduce:transition-none flex items-center gap-2 focus-visible:ring-focus ${
+                className={`rounded-full border-hair px-2 py-1 text-xs transition-colors motion-reduce:transition-none flex items-center gap-1.5 focus-visible:ring-focus ${
                   showComparisonSearch || comparisonPlayer
-                    ? 'bg-[hsl(var(--surface))] text-[hsl(var(--foreground))] shadow-sm'
-                    : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]'
+                    ? 'bg-[hsl(var(--surface))] text-[hsl(var(--foreground))] border-hair shadow-sm'
+                    : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))]'
                 }`}
                 title="Sammenlign med anden spiller"
               >
@@ -420,25 +420,68 @@ const StatisticsPage = () => {
       )}
 
       {/* Statistics Display */}
-      {selectedPlayer && statistics && (
+      {selectedPlayer && (
         <div className="space-y-6">
-
-          {/* KPI Tiles */}
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {loadingStats ? (
+            <>
+              {/* KPI Skeletons */}
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="card-glass-active border-hair rounded-lg p-4 md:p-5 shadow-sm">
+                    <div className="flex flex-col justify-between gap-1">
+                      <div className="h-4 w-24 bg-[hsl(var(--surface-2))] rounded animate-pulse" />
+                      <div className="h-8 w-16 bg-[hsl(var(--surface-2))] rounded animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Season List Skeleton */}
+              <div className="card-glass-active border-hair rounded-lg p-4 md:p-5 shadow-sm">
+                <div className="space-y-3">
+                  <div className="h-5 w-48 bg-[hsl(var(--surface-2))] rounded animate-pulse" />
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-10 bg-[hsl(var(--surface-2))] rounded-md animate-pulse" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {/* Top Lists Skeletons */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[1, 2].map((i) => (
+                  <div key={i} className="card-glass-active border-hair rounded-lg p-4 md:p-5 shadow-sm">
+                    <div className="space-y-3">
+                      <div className="h-5 w-32 bg-[hsl(var(--surface-2))] rounded animate-pulse" />
+                      <div className="space-y-2">
+                        {[1, 2, 3, 4, 5].map((j) => (
+                          <div key={j} className="h-10 bg-[hsl(var(--surface-2))] rounded-md animate-pulse" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : statistics ? (
+            <>
+              {/* KPI Tiles */}
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="card-glass-active border-hair rounded-lg p-4 md:p-5 shadow-sm">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col justify-between gap-1">
                 <span className="text-sm text-[hsl(var(--muted))]">Indtjekninger</span>
                 <span className="text-2xl font-semibold text-[hsl(var(--foreground))]">{statistics.totalCheckIns}</span>
+                <span className="text-sm text-[hsl(var(--muted))]">Total</span>
               </div>
             </div>
             <div className="card-glass-active border-hair rounded-lg p-4 md:p-5 shadow-sm">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col justify-between gap-1">
                 <span className="text-sm text-[hsl(var(--muted))]">Kampe</span>
                 <span className="text-2xl font-semibold text-[hsl(var(--foreground))]">{statistics.totalMatches}</span>
+                <span className="text-sm text-[hsl(var(--muted))]">Total</span>
               </div>
             </div>
             <div className="card-glass-active border-hair rounded-lg p-4 md:p-5 shadow-sm">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col justify-between gap-1">
                 <span className="text-sm text-[hsl(var(--muted))]">Sidst spillet</span>
                 <span className="text-2xl font-semibold text-[hsl(var(--foreground))]">
                   {formatDate(statistics.lastPlayedDate)}
@@ -446,7 +489,7 @@ const StatisticsPage = () => {
               </div>
             </div>
             <div className="card-glass-active border-hair rounded-lg p-4 md:p-5 shadow-sm">
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col justify-between gap-1">
                 <span className="text-sm text-[hsl(var(--muted))]">Mest spillede kategori</span>
                 <span className="text-2xl font-semibold text-[hsl(var(--foreground))]">
                   {statistics.preferredCategory ?? 'Ingen'}
@@ -464,9 +507,9 @@ const StatisticsPage = () => {
                   {Object.entries(statistics.checkInsBySeason)
                     .sort(([a], [b]) => b.localeCompare(a))
                     .map(([season, count]) => (
-                      <div key={season} className="flex items-center justify-between rounded-md bg-[hsl(var(--surface))] border-hair px-3 py-2">
+                      <div key={season} className="flex items-center justify-between rounded-md bg-[hsl(var(--surface))] border-hair px-3 py-2 hover:shadow-sm transition-shadow motion-reduce:transition-none">
                         <span className="text-sm text-[hsl(var(--foreground))]">Sæson {season}</span>
-                        <span className="rounded-full px-2 py-1 text-xs font-semibold bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair">
+                        <span className="rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-2 py-1 text-xs">
                           {String(count)} {Number(count) === 1 ? 'gang' : 'gange'}
                         </span>
                       </div>
@@ -492,12 +535,12 @@ const StatisticsPage = () => {
                         className="flex items-center justify-between rounded-md bg-[hsl(var(--surface))] border-hair px-3 py-2"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="h-6 w-6 grid place-items-center rounded-full bg-[hsl(var(--surface-2))] text-xs font-semibold text-[hsl(var(--muted))] border-hair flex-shrink-0">
+                          <div className="h-6 w-6 grid place-items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair text-xs font-semibold flex-shrink-0">
                             {index + 1}
                           </div>
                           <span className="font-medium text-[hsl(var(--foreground))] truncate">{partner.names}</span>
                         </div>
-                        <span className="rounded-full px-2 py-1 text-xs font-semibold bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair flex-shrink-0 ml-2">
+                        <span className="rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-2 py-1 text-xs flex-shrink-0 ml-2">
                           {partner.count} {partner.count === 1 ? 'gang' : 'gange'}
                         </span>
                       </div>
@@ -521,12 +564,12 @@ const StatisticsPage = () => {
                         className="flex items-center justify-between rounded-md bg-[hsl(var(--surface))] border-hair px-3 py-2"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="h-6 w-6 grid place-items-center rounded-full bg-[hsl(var(--surface-2))] text-xs font-semibold text-[hsl(var(--muted))] border-hair flex-shrink-0">
+                          <div className="h-6 w-6 grid place-items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair text-xs font-semibold flex-shrink-0">
                             {index + 1}
                           </div>
                           <span className="font-medium text-[hsl(var(--foreground))] truncate">{opponent.names}</span>
                         </div>
-                        <span className="rounded-full px-2 py-1 text-xs font-semibold bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair flex-shrink-0 ml-2">
+                        <span className="rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-2 py-1 text-xs flex-shrink-0 ml-2">
                           {opponent.count} {opponent.count === 1 ? 'gang' : 'gange'}
                         </span>
                       </div>
@@ -574,16 +617,9 @@ const StatisticsPage = () => {
               </div>
             </div>
           </div>
+            </>
+          ) : null}
         </div>
-      )}
-
-      {/* Loading Stats Indicator */}
-      {selectedPlayer && loadingStats && (
-        <PageCard>
-          <div className="flex items-center justify-center py-8">
-            <p className="text-[hsl(var(--muted))]">Indlæser statistik...</p>
-          </div>
-        </PageCard>
       )}
 
       {/* Empty State */}

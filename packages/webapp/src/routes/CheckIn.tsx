@@ -12,18 +12,36 @@ const LETTER_FILTERS_ROW1 = ['Alle', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ'.split
 const LETTER_FILTERS_ROW2 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ'.split('').slice(14)
 
 /**
- * Returns background color class based on player gender.
- * @param gender - Player gender ('Herre', 'Dame', or null/undefined)
- * @returns Tailwind class for gender-specific background color
+ * Generates a consistent, subtle accent color for a player based on their name.
+ * This provides visual distinction without gender-based stereotypes.
+ * @param name - Player name (used for consistent hashing)
+ * @returns Object with Tailwind class and inline style for left border accent
  */
-const getInitialsBgColor = (gender: 'Herre' | 'Dame' | null | undefined) => {
-  if (gender === 'Herre') {
-    return 'bg-[hsl(205_60%_96%)]' // subtle light blue-tinted
+const getPlayerAccentColor = (name: string) => {
+  // Simple hash function to get consistent color per name
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
   }
-  if (gender === 'Dame') {
-    return 'bg-[hsl(340_55%_96%)]' // subtle light rose-tinted
+  
+  // Use a palette of friendly, non-gendered colors (avoiding red/pink)
+  // Colors are: blue, teal, green, cyan, indigo, purple, amber, emerald
+  const hues = [200, 180, 150, 190, 240, 270, 45, 160]
+  const hue = hues[Math.abs(hash) % hues.length]
+  
+  // Return both class and inline style for reliable rendering
+  return {
+    className: 'border-l-2',
+    style: { borderLeftColor: `hsl(${hue}, 50%, 65%)` }
   }
-  return 'bg-[hsl(var(--surface-2))]' // neutral gray for no gender
+}
+
+/**
+ * Returns neutral background color for all players.
+ * Visual distinction is now provided by accent borders, not backgrounds.
+ */
+const getPlayerBgColor = () => {
+  return 'bg-[hsl(var(--surface-2))]'
 }
 
 /**
@@ -427,16 +445,19 @@ const CheckInPage = () => {
                 const isOneRoundOnly = player.maxRounds === 1
                 const isAnimatingOut = animatingOut.has(player.id)
                 const isAnimatingIn = animatingIn.has(player.id)
+                const accentColor = getPlayerAccentColor(player.name)
                 return (
                   <div
                     key={player.id}
                     className={clsx(
                       'flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-1 ring-[hsl(var(--line)/.12)]',
-                      getInitialsBgColor(player.gender),
+                      getPlayerBgColor(),
+                      accentColor.className,
                       isAnimatingOut && 'opacity-0 scale-95 translate-x-4 pointer-events-none',
                       isAnimatingIn && 'opacity-0 scale-95 -translate-x-4'
                     )}
                     style={{
+                      ...accentColor.style,
                       animation: isAnimatingIn ? 'slideInFromLeft 0.3s ease-out forwards' : undefined
                     }}
                   >
@@ -529,6 +550,7 @@ const CheckInPage = () => {
               const isAnimatingOut = animatingOut.has(player.id)
               const isAnimatingIn = animatingIn.has(player.id)
               
+              const accentColor = getPlayerAccentColor(player.name)
               return (
                 <div
                   key={player.id}
@@ -543,12 +565,14 @@ const CheckInPage = () => {
                     'border-hair flex min-h-[56px] items-center justify-between gap-3 rounded-lg px-3 py-2.5',
                     'transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
                     'cursor-pointer hover:shadow-sm hover:ring-[hsl(var(--accent)/.15)] ring-1 ring-[hsl(var(--line)/.12)]',
-                    getInitialsBgColor(player.gender),
+                    getPlayerBgColor(),
+                    accentColor.className,
                     isJustCheckedIn && 'ring-2 ring-[hsl(206_88%_60%)] scale-[1.02] shadow-lg',
                     isAnimatingOut && 'opacity-0 scale-95 -translate-x-4 pointer-events-none',
                     isAnimatingIn && 'opacity-0 scale-95 translate-x-4'
                   )}
                   style={{
+                    ...accentColor.style,
                     animation: isAnimatingIn ? 'slideInFromRight 0.3s ease-out forwards' : undefined
                   }}
                 >
