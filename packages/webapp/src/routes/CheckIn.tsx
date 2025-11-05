@@ -204,6 +204,49 @@ const CheckInPage = () => {
     [loadCheckIns, notify, session]
   )
 
+  const handleDemoCheckIn = useCallback(async () => {
+    if (!session) return
+    setError(null)
+    
+    try {
+      // Get all available players (not already checked in)
+      const availablePlayers = players.filter((player) => !checkedInIds.has(player.id))
+      
+      if (availablePlayers.length < 28) {
+        setError(`Kun ${availablePlayers.length} spillere tilgængelige. Der skal være mindst 28 spillere.`)
+        return
+      }
+      
+      // Randomly shuffle and select 28 players
+      const shuffled = [...availablePlayers].sort(() => Math.random() - 0.5)
+      const selectedPlayers = shuffled.slice(0, 28)
+      
+      // Select 4 random players for "Kun 1 runde"
+      const oneRoundPlayers = selectedPlayers.slice(0, 4)
+      const regularPlayers = selectedPlayers.slice(4)
+      
+      // Check in all players
+      for (const player of oneRoundPlayers) {
+        await api.checkIns.add({ playerId: player.id, maxRounds: 1 })
+      }
+      
+      for (const player of regularPlayers) {
+        await api.checkIns.add({ playerId: player.id })
+      }
+      
+      // Reload check-ins
+      await loadCheckIns()
+      
+      notify({ 
+        variant: 'success', 
+        title: 'Demo indtjekning gennemført', 
+        description: `28 spillere tjekket ind (4 med "Kun 1 runde")` 
+      })
+    } catch (err: any) {
+      setError(err.message ?? 'Kunne ikke gennemføre demo indtjekning')
+    }
+  }, [session, players, checkedInIds, loadCheckIns, notify])
+
   const handleCheckOut = useCallback(
     async (player: Player) => {
       if (!session) return
@@ -310,7 +353,19 @@ const CheckInPage = () => {
   return (
     <section className="flex flex-col gap-6 pt-6">
       <header className="mb-2">
-        <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">Indtjekning</h1>
+        <div className="grid grid-cols-1 lg:grid-cols-[35%_65%] gap-4 items-center mb-2">
+          <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">Indtjekning</h1>
+          <div className="flex justify-end">
+            <Button
+              variant="secondary"
+              onClick={handleDemoCheckIn}
+              disabled={!session || players.filter((p) => !checkedInIds.has(p.id)).length < 28}
+              className="border-2 border-dashed border-[hsl(var(--primary)/.4)] bg-[hsl(var(--primary)/.05)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/.1)] hover:border-[hsl(var(--primary)/.6)] text-sm font-medium whitespace-nowrap"
+            >
+              🎭 DEMO: Tjek 28 tilfældige spillere ind (4 med "Kun 1 runde")
+            </Button>
+          </div>
+        </div>
         <p className="mt-1 text-base text-[hsl(var(--muted))]">
           Aktiv træning: {new Date(session.date).toLocaleDateString('da-DK')}
         </p>
