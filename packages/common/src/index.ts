@@ -26,6 +26,7 @@ export type CheckIn = {
   sessionId: string
   playerId: string
   createdAt: string
+  maxRounds?: number | null
 }
 
 export type Court = {
@@ -54,7 +55,7 @@ export type CourtWithPlayers = {
   slots: Array<{ slot: number; player: Player }>
 }
 
-export type CheckedInPlayer = Player & { checkInAt: string }
+export type CheckedInPlayer = Player & { checkInAt: string; maxRounds?: number | null }
 
 export type PlayerListFilters = {
   q?: string
@@ -99,7 +100,7 @@ export type RendererApi = {
     getActive(): Promise<TrainingSession | null>
   }
   checkIns: {
-    add(input: { playerId: string }): Promise<CheckIn>
+    add(input: { playerId: string; maxRounds?: number }): Promise<CheckIn>
     remove(input: { playerId: string }): Promise<void>
     listActive(): Promise<CheckedInPlayer[]>
   }

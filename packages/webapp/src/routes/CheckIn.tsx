@@ -39,6 +39,7 @@ const CheckInPage = () => {
   const [search, setSearch] = useState('')
   const [filterLetter, setFilterLetter] = useState('Alle')
   const [error, setError] = useState<string | null>(null)
+  const [oneRoundOnlyPlayers, setOneRoundOnlyPlayers] = useState<Set<string>>(new Set())
   const { notify } = useToast()
 
   const refreshSession = useCallback(async () => {
@@ -104,13 +105,14 @@ const CheckInPage = () => {
   }, [players, search, filterLetter])
 
   const handleCheckIn = useCallback(
-    async (player: Player) => {
+    async (player: Player, maxRounds?: number) => {
       if (!session) return
       setError(null)
       try {
-        await api.checkIns.add({ playerId: player.id })
+        await api.checkIns.add({ playerId: player.id, maxRounds })
         await loadCheckIns()
-        notify({ variant: 'success', title: 'Spiller tjekket ind', description: player.name })
+        const roundsText = maxRounds === 1 ? ' (kun 1 runde)' : ''
+        notify({ variant: 'success', title: 'Spiller tjekket ind', description: `${player.name}${roundsText}` })
       } catch (err: any) {
         setError(err.message ?? 'Kunne ikke tjekke ind')
       }
@@ -221,7 +223,11 @@ const CheckInPage = () => {
           ) : (
             filteredPlayers.map((player) => {
               const isChecked = checkedInIds.has(player.id)
+              const checkedInPlayer = checkedIn.find((p) => p.id === player.id)
+              const isOneRoundOnly = checkedInPlayer?.maxRounds === 1
+              const oneRoundOnly = oneRoundOnlyPlayers.has(player.id)
               const initials = getInitials(player.name)
+              
               return (
                 <div
                   key={player.id}
@@ -242,15 +248,47 @@ const CheckInPage = () => {
                       <p className="text-base font-semibold text-[hsl(var(--foreground))]">{player.name}</p>
                       <p className="text-sm text-[hsl(var(--muted))]">
                         {player.alias ?? 'Ingen kaldenavn'} · Niveau {player.level ?? '–'}
+                        {isOneRoundOnly && (
+                          <span className="ml-2 text-xs text-[hsl(var(--muted))]">• Kun 1 runde</span>
+                        )}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant={isChecked ? 'success' : 'muted'}>{isChecked ? 'Tjekket ind' : 'Klar'}</Badge>
+                    {!isChecked && (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={oneRoundOnly}
+                          onChange={(e) => {
+                            const newSet = new Set(oneRoundOnlyPlayers)
+                            if (e.target.checked) {
+                              newSet.add(player.id)
+                            } else {
+                              newSet.delete(player.id)
+                            }
+                            setOneRoundOnlyPlayers(newSet)
+                          }}
+                          className="w-4 h-4 rounded ring-1 ring-[hsl(var(--line)/.12)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none cursor-pointer"
+                        />
+                        <span className="text-xs text-[hsl(var(--muted))]">Kun 1 runde</span>
+                      </label>
+                    )}
+                    {isChecked && <Badge variant="success">Tjekket ind</Badge>}
                     <Button
                       variant={isChecked ? 'secondary' : 'primary'}
                       size="sm"
-                      onClick={() => (isChecked ? handleCheckOut(player) : handleCheckIn(player))}
+                      onClick={() => {
+                        if (isChecked) {
+                          handleCheckOut(player)
+                        } else {
+                          handleCheckIn(player, oneRoundOnly ? 1 : undefined)
+                          // Clear the checkbox after check-in
+                          const newSet = new Set(oneRoundOnlyPlayers)
+                          newSet.delete(player.id)
+                          setOneRoundOnlyPlayers(newSet)
+                        }
+                      }}
                       className={clsx(!isChecked && 'ring-2 ring-[hsl(var(--accent)/.2)]')}
                     >
                       {isChecked ? 'Check ud' : 'Check ind'}

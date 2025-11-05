@@ -167,7 +167,7 @@ const sessionApi = {
   endActive: endActiveSession
 }
 
-const addCheckIn = async (input: { playerId: string }) => {
+const addCheckIn = async (input: { playerId: string; maxRounds?: number }) => {
   const session = await ensureActiveSession()
   const state = loadState()
   const player = state.players.find((item) => item.id === input.playerId)
@@ -187,7 +187,8 @@ const addCheckIn = async (input: { playerId: string }) => {
     id: createId(),
     sessionId: session.id,
     playerId: input.playerId,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    maxRounds: input.maxRounds ?? null
   }
   updateState((current: DatabaseState) => {
     current.checkIns.push(checkIn)
@@ -206,7 +207,8 @@ const listActiveCheckIns = async (): Promise<CheckedInPlayer[]> => {
       if (!player) throw new Error('Manglende spillerdata')
       return {
         ...normalisePlayer(player),
-        checkInAt: checkIn.createdAt
+        checkInAt: checkIn.createdAt,
+        maxRounds: checkIn.maxRounds ?? null
       }
     })
 }

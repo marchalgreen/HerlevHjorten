@@ -86,7 +86,13 @@ const CoachPage = () => {
 
   const bench = useMemo(
     () => checkedIn
-      .filter((player) => !assignedIds.has(player.id))
+      .filter((player) => {
+        // Exclude players already assigned to a court
+        if (assignedIds.has(player.id)) return false
+        // Exclude players who only want to play 1 round if we're viewing rounds 2 or 3
+        if (selectedRound > 1 && player.maxRounds === 1) return false
+        return true
+      })
       .sort((a, b) => {
         // Sort by Niveau (level) ascending (lowest first)
         // If level is null/undefined, treat as 0 and put at the end
@@ -94,7 +100,7 @@ const CoachPage = () => {
         const levelB = b.level ?? 0
         return levelA - levelB
       }),
-    [checkedIn, assignedIds]
+    [checkedIn, assignedIds, selectedRound]
   )
 
   const genderBreakdown = useMemo(() => {
