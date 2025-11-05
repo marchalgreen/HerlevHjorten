@@ -785,7 +785,7 @@ const MatchProgramPage = () => {
       <div className="grid gap-4 lg:grid-cols-[minmax(200px,240px)_1fr] lg:items-start">
         {/* Bench */}
         <PageCard 
-          className={`space-y-2 transition-all duration-200 ${
+          className={`space-y-2 transition-all duration-200 !pr-1 ${
             dragOverBench 
               ? 'ring-2 ring-[hsl(var(--primary)/.4)] bg-[hsl(var(--primary)/.05)]' 
               : ''
@@ -806,7 +806,7 @@ const MatchProgramPage = () => {
               {bench.length}
             </span>
           </header>
-          <div className="flex flex-col space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
+          <div className="flex flex-col space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto pr-1">
             {bench.length === 0 && (
               <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-4 text-center text-xs text-[hsl(var(--muted))] border-hair">
                 Træk spillere her for at aktivere dem
@@ -833,93 +833,93 @@ const MatchProgramPage = () => {
                 </div>
               </div>
             ))}
-          </div>
-          
-          {/* Inactive Players Section */}
-          <div 
-            className={`mt-4 pt-4 border-t transition-all duration-200 ${
-              dragOverInactive 
-                ? 'border-[hsl(var(--destructive)/.4)] bg-[hsl(var(--destructive)/.05)]' 
-                : 'border-[hsl(var(--line)/.12)]'
-            }`}
-            onDragOver={(e) => {
-              e.preventDefault()
-              setDragOverInactive(true)
-            }}
-            onDragLeave={() => setDragOverInactive(false)}
-            onDrop={(e) => {
-              setDragOverInactive(false)
-              onDropToInactive(e)
-            }}
-          >
-            {inactivePlayers.length > 0 ? (
-              <>
-                <header className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
-                    Inaktive / Kun 1 runde
-                  </h4>
-                  <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--muted))]">
-                    {inactivePlayers.length}
-                  </span>
-                </header>
-                <div className="flex flex-col space-y-2">
-                  {inactivePlayers.map((player) => {
-                    const isOneRoundOnly = selectedRound > 1 && player.maxRounds === 1
-                    const isUnavailable = unavailablePlayers.has(player.id)
-                    return (
-                      <div
-                        key={player.id}
-                        className={`flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor(player.gender)}`}
-                        draggable
-                        onDragStart={(event) => {
-                          event.dataTransfer.setData('application/x-player-id', player.id)
-                          event.dataTransfer.effectAllowed = 'move'
-                        }}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
-                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                            {getCategoryBadge(player.primaryCategory)}
-                            {isOneRoundOnly && !isUnavailable && (
-                              <span className="text-[10px] font-normal text-[hsl(var(--muted))] whitespace-nowrap">Kun 1 runde</span>
-                            )}
+            
+            {/* Inactive Players Section */}
+            <div 
+              className={`mt-4 pt-4 border-t transition-all duration-200 ${
+                dragOverInactive 
+                  ? 'border-[hsl(var(--destructive)/.4)] bg-[hsl(var(--destructive)/.05)]' 
+                  : 'border-[hsl(var(--line)/.12)]'
+              }`}
+              onDragOver={(e) => {
+                e.preventDefault()
+                setDragOverInactive(true)
+              }}
+              onDragLeave={() => setDragOverInactive(false)}
+              onDrop={(e) => {
+                setDragOverInactive(false)
+                onDropToInactive(e)
+              }}
+            >
+              {inactivePlayers.length > 0 ? (
+                <>
+                  <header className="flex items-center justify-between mb-2">
+                    <h4 className="text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
+                      Inaktive / Kun 1 runde
+                    </h4>
+                    <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--muted))]">
+                      {inactivePlayers.length}
+                    </span>
+                  </header>
+                  <div className="flex flex-col space-y-2">
+                    {inactivePlayers.map((player) => {
+                      const isOneRoundOnly = selectedRound > 1 && player.maxRounds === 1
+                      const isUnavailable = unavailablePlayers.has(player.id)
+                      return (
+                        <div
+                          key={player.id}
+                          className={`flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor(player.gender)}`}
+                          draggable
+                          onDragStart={(event) => {
+                            event.dataTransfer.setData('application/x-player-id', player.id)
+                            event.dataTransfer.effectAllowed = 'move'
+                          }}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              {getCategoryBadge(player.primaryCategory)}
+                              {isOneRoundOnly && !isUnavailable && (
+                                <span className="text-[10px] font-normal text-[hsl(var(--muted))] whitespace-nowrap">Kun 1 runde</span>
+                              )}
+                              {isUnavailable && (
+                                <span className="text-[10px] font-normal text-[hsl(var(--destructive))] whitespace-nowrap">Inaktiv</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="w-[70px] flex-shrink-0 flex items-center justify-end">
                             {isUnavailable && (
-                              <span className="text-[10px] font-normal text-[hsl(var(--destructive))] whitespace-nowrap">Inaktiv</span>
+                              <button
+                                type="button"
+                                onClick={() => handleMarkAvailable(player.id)}
+                                className="rounded px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/.1)] ring-1 ring-[hsl(var(--success)/.2)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm"
+                                title="Gendan til bænk"
+                              >
+                                Aktiver
+                              </button>
                             )}
                           </div>
                         </div>
-                        <div className="w-[70px] flex-shrink-0 flex items-center justify-end">
-                          {isUnavailable && (
-                            <button
-                              type="button"
-                              onClick={() => handleMarkAvailable(player.id)}
-                              className="rounded px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/.1)] ring-1 ring-[hsl(var(--success)/.2)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm"
-                              title="Gendan til bænk"
-                            >
-                              Aktiver
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="py-4">
+                  <header className="flex items-center justify-between mb-2">
+                    <h4 className="text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
+                      Inaktive / Kun 1 runde
+                    </h4>
+                    <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--muted))]">
+                      0
+                    </span>
+                  </header>
+                  <p className="text-[10px] text-[hsl(var(--muted))] text-center py-2 rounded-md bg-[hsl(var(--surface-2))] border-hair">
+                    Træk spillere her for at markere dem som inaktive
+                  </p>
                 </div>
-              </>
-            ) : (
-              <div className="py-4">
-                <header className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
-                    Inaktive / Kun 1 runde
-                  </h4>
-                  <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--muted))]">
-                    0
-                  </span>
-                </header>
-                <p className="text-[10px] text-[hsl(var(--muted))] text-center py-2 rounded-md bg-[hsl(var(--surface-2))] border-hair">
-                  Træk spillere her for at markere dem som inaktive
-                </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </PageCard>
 
