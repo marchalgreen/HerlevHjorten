@@ -595,37 +595,30 @@ const MatchProgramPage = () => {
     setMoveMenuPlayer(null)
   }
 
-  /**
-   * Generates a consistent, subtle accent color for a player based on their name.
-   * This provides visual distinction without gender-based stereotypes.
-   * @param name - Player name (used for consistent hashing)
-   * @returns Object with Tailwind class and inline style for left border accent
-   */
-  const getPlayerAccentColor = (name: string) => {
-    // Simple hash function to get consistent color per name
-    let hash = 0
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    
-    // Use a palette of friendly, non-gendered colors (avoiding red/pink)
-    // Colors are: blue, teal, green, cyan, indigo, purple, amber, emerald
-    const hues = [200, 180, 150, 190, 240, 270, 45, 160]
-    const hue = hues[Math.abs(hash) % hues.length]
-    
-    // Return both class and inline style for reliable rendering
-    return {
-      className: 'border-l-2',
-      style: { borderLeftColor: `hsl(${hue}, 50%, 65%)` }
-    }
-  }
-
   /** Returns neutral background color for all players. */
   const getPlayerSlotBgColor = () => {
     return 'bg-[hsl(var(--surface-2))]'
   }
 
-  /** Renders category badge (S/D/B) for player primary category. */
+  /**
+   * Gets category letter (S/D/B) for data-cat attribute.
+   * @param category - Player primary category ('Single', 'Double', 'Begge', or null)
+   * @returns 'S', 'D', 'B', or null
+   */
+  const getCategoryLetter = (category: 'Single' | 'Double' | 'Begge' | null | undefined): 'S' | 'D' | 'B' | null => {
+    if (!category) return null
+    if (category === 'Single') return 'S'
+    if (category === 'Double') return 'D'
+    if (category === 'Begge') return 'B'
+    return null
+  }
+
+  /**
+   * Renders category badge (S/D/B) for player primary category.
+   * Neutral style with optional category ring for visual cue.
+   * @param category - Player primary category ('Single', 'Double', 'Begge', or null)
+   * @returns Badge JSX or null
+   */
   const getCategoryBadge = (category: 'Single' | 'Double' | 'Begge' | null | undefined) => {
     if (!category) return null
     const labels: Record<'Single' | 'Double' | 'Begge', string> = {
@@ -633,13 +626,13 @@ const MatchProgramPage = () => {
       Double: 'D',
       Begge: 'B'
     }
-    const colors: Record<'Single' | 'Double' | 'Begge', string> = {
-      Single: 'bg-[hsl(205_70%_85%)] text-[hsl(205_70%_25%)]',
-      Double: 'bg-[hsl(280_60%_85%)] text-[hsl(280_60%_25%)]',
-      Begge: 'bg-[hsl(160_50%_85%)] text-[hsl(160_50%_25%)]'
-    }
+    const catLetter = getCategoryLetter(category)
     return (
-      <span className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold w-5 h-5 ${colors[category]}`} title={category}>
+      <span 
+        className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold w-5 h-5 bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair ${catLetter ? 'cat-ring' : ''}`}
+        data-cat={catLetter || undefined}
+        title={category}
+      >
         {labels[category]}
       </span>
     )
@@ -659,7 +652,7 @@ const MatchProgramPage = () => {
     const isDragOverOccupied = isDragOver && !!player
     const isRecentlySwapped = player && recentlySwappedPlayers.has(player.id)
     const isDuplicatePlayer = player && duplicatePlayersMap.get(court.courtIdx)?.has(player.id)
-    const accentColor = player ? getPlayerAccentColor(player.name) : null
+    const catLetter = player ? getCategoryLetter(player.primaryCategory) : null
     
     return (
       <div
@@ -687,18 +680,18 @@ const MatchProgramPage = () => {
         }}
         className={`flex min-h-[52px] items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
           isRecentlySwapped
-            ? `${getPlayerSlotBgColor()} ${accentColor?.className || ''} animate-swap-in ring-2 ring-[hsl(var(--primary)/.5)] shadow-lg border-2 border-transparent`
+            ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} animate-swap-in ring-2 ring-[hsl(var(--primary)/.5)] shadow-lg border-2 border-transparent`
             : isDragOverOccupied && player
-            ? `${getPlayerSlotBgColor()} ${accentColor?.className || ''} ring-2 ring-[hsl(var(--primary)/.6)] shadow-lg border-2 border-[hsl(var(--primary)/.4)]`
+            ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} ring-2 ring-[hsl(var(--primary)/.6)] shadow-lg border-2 border-[hsl(var(--primary)/.4)]`
             : player
-            ? `${getPlayerSlotBgColor()} ${accentColor?.className || ''} hover:shadow-sm ring-1 ring-[hsl(var(--line)/.12)] cursor-grab active:cursor-grabbing border-2 border-transparent`
+            ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} hover:shadow-sm ring-1 ring-[hsl(var(--line)/.12)] cursor-grab active:cursor-grabbing border-2 border-transparent`
             : isDragOver
             ? 'bg-[hsl(var(--primary)/.15)] ring-2 ring-[hsl(var(--primary)/.5)] shadow-md border-2 border-transparent'
             : isCourtHovered
             ? 'bg-[hsl(var(--primary)/.08)] ring-1 ring-[hsl(var(--primary)/.3)] border-2 border-transparent'
             : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] ring-1 ring-[hsl(var(--line)/.12)] border-2 border-transparent'
         }`}
-        style={accentColor?.style}
+        data-cat={catLetter || undefined}
         onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
           // Allow drag over even if slot is occupied (for swapping)
           event.preventDefault()
@@ -746,22 +739,7 @@ const MatchProgramPage = () => {
               </button>
             </div>
           </>
-        ) : (
-          <>
-            <div className="flex flex-col gap-1 min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold text-[hsl(var(--muted))]">Tom plads</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="inline-flex items-center justify-center rounded-full w-5 h-5 opacity-0"></span>
-                <span className="text-xs text-[hsl(var(--muted))] opacity-0">Rangliste: –</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0 ml-1">
-              <span className="opacity-0 text-xs font-medium px-2 py-1">BÆNK</span>
-            </div>
-          </>
-        )}
+        ) : null}
       </div>
     )
   }
@@ -916,12 +894,12 @@ const MatchProgramPage = () => {
               </p>
             )}
             {bench.map((player) => {
-              const accentColor = getPlayerAccentColor(player.name)
+              const catLetter = getCategoryLetter(player.primaryCategory)
               return (
               <div
                 key={player.id}
-                className={`flex items-center gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${accentColor.className}`}
-                style={accentColor.style}
+                className={`flex items-center gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                data-cat={catLetter || undefined}
                 draggable
                 onDragStart={(event) => {
                   event.dataTransfer.setData('application/x-player-id', player.id)
@@ -983,12 +961,12 @@ const MatchProgramPage = () => {
                     {inactivePlayers.map((player) => {
                       const isOneRoundOnly = selectedRound > 1 && player.maxRounds === 1
                       const isUnavailable = unavailablePlayers.has(player.id)
-                      const accentColor = getPlayerAccentColor(player.name)
+                      const catLetter = getCategoryLetter(player.primaryCategory)
                       return (
                         <div
                           key={player.id}
-                          className={`flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${accentColor.className}`}
-                          style={accentColor.style}
+                          className={`flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                          data-cat={catLetter || undefined}
                         draggable
                         onDragStart={(event) => {
                           event.dataTransfer.setData('application/x-player-id', player.id)
@@ -1276,24 +1254,22 @@ const MatchProgramPage = () => {
                             {Array.from({ length: 4 }).map((_, slotIdx) => {
                               const entry = court.slots.find((slot) => slot.slot === slotIdx)
                               const player = entry?.player
-                              const accentColor = player ? getPlayerAccentColor(player.name) : null
+                              const catLetter = player ? getCategoryLetter(player.primaryCategory) : null
                               return (
                                 <div
                                   key={slotIdx}
                                   className={`flex min-h-[36px] items-center rounded-md px-2 py-1 text-xs ring-1 ${
                                     player
-                                      ? `${getPlayerSlotBgColor()} ${accentColor?.className || ''} ring-[hsl(var(--line)/.12)]`
+                                      ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} ring-[hsl(var(--line)/.12)]`
                                       : 'bg-[hsl(var(--surface-2))] ring-[hsl(var(--line)/.12)]'
                                   }`}
-                                  style={accentColor?.style}
+                                  data-cat={catLetter || undefined}
                                 >
                                   {player ? (
                                     <span className="text-xs font-medium text-[hsl(var(--foreground))] truncate">
                                       {player.alias ?? player.name}
                                     </span>
-                                  ) : (
-                                    <span className="text-[10px] text-[hsl(var(--muted))]">Tom</span>
-                                  )}
+                                  ) : null}
                                 </div>
                               )
                             })}

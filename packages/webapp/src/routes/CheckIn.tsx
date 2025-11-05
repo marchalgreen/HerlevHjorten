@@ -12,40 +12,28 @@ const LETTER_FILTERS_ROW1 = ['Alle', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ'.split
 const LETTER_FILTERS_ROW2 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ'.split('').slice(14)
 
 /**
- * Generates a consistent, subtle accent color for a player based on their name.
- * This provides visual distinction without gender-based stereotypes.
- * @param name - Player name (used for consistent hashing)
- * @returns Object with Tailwind class and inline style for left border accent
- */
-const getPlayerAccentColor = (name: string) => {
-  // Simple hash function to get consistent color per name
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  
-  // Use a palette of friendly, non-gendered colors (avoiding red/pink)
-  // Colors are: blue, teal, green, cyan, indigo, purple, amber, emerald
-  const hues = [200, 180, 150, 190, 240, 270, 45, 160]
-  const hue = hues[Math.abs(hash) % hues.length]
-  
-  // Return both class and inline style for reliable rendering
-  return {
-    className: 'border-l-2',
-    style: { borderLeftColor: `hsl(${hue}, 50%, 65%)` }
-  }
-}
-
-/**
  * Returns neutral background color for all players.
- * Visual distinction is now provided by accent borders, not backgrounds.
  */
 const getPlayerBgColor = () => {
   return 'bg-[hsl(var(--surface-2))]'
 }
 
 /**
+ * Gets category letter (S/D/B) for data-cat attribute.
+ * @param category - Player primary category ('Single', 'Double', 'Begge', or null)
+ * @returns 'S', 'D', 'B', or null
+ */
+const getCategoryLetter = (category: 'Single' | 'Double' | 'Begge' | null | undefined): 'S' | 'D' | 'B' | null => {
+  if (!category) return null
+  if (category === 'Single') return 'S'
+  if (category === 'Double') return 'D'
+  if (category === 'Begge') return 'B'
+  return null
+}
+
+/**
  * Renders category badge (S/D/B) for player primary category.
+ * Neutral style with optional category ring for visual cue.
  * @param category - Player primary category ('Single', 'Double', 'Begge', or null)
  * @returns Badge JSX or null
  */
@@ -56,13 +44,13 @@ const getCategoryBadge = (category: 'Single' | 'Double' | 'Begge' | null | undef
     Double: 'D',
     Begge: 'B'
   }
-  const colors: Record<'Single' | 'Double' | 'Begge', string> = {
-    Single: 'bg-[hsl(205_70%_85%)] text-[hsl(205_70%_25%)]',
-    Double: 'bg-[hsl(280_60%_85%)] text-[hsl(280_60%_25%)]',
-    Begge: 'bg-[hsl(160_50%_85%)] text-[hsl(160_50%_25%)]'
-  }
+  const catLetter = getCategoryLetter(category)
   return (
-    <span className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold w-5 h-5 ${colors[category]}`} title={category}>
+    <span 
+      className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold w-5 h-5 bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair ${catLetter ? 'cat-ring' : ''}`}
+      data-cat={catLetter || undefined}
+      title={category}
+    >
       {labels[category]}
     </span>
   )
@@ -445,19 +433,19 @@ const CheckInPage = () => {
                 const isOneRoundOnly = player.maxRounds === 1
                 const isAnimatingOut = animatingOut.has(player.id)
                 const isAnimatingIn = animatingIn.has(player.id)
-                const accentColor = getPlayerAccentColor(player.name)
+                const catLetter = getCategoryLetter(player.primaryCategory)
                 return (
                   <div
                     key={player.id}
                     className={clsx(
                       'flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-1 ring-[hsl(var(--line)/.12)]',
                       getPlayerBgColor(),
-                      accentColor.className,
+                      catLetter && 'cat-rail',
                       isAnimatingOut && 'opacity-0 scale-95 translate-x-4 pointer-events-none',
                       isAnimatingIn && 'opacity-0 scale-95 -translate-x-4'
                     )}
+                    data-cat={catLetter || undefined}
                     style={{
-                      ...accentColor.style,
                       animation: isAnimatingIn ? 'slideInFromLeft 0.3s ease-out forwards' : undefined
                     }}
                   >
@@ -549,8 +537,8 @@ const CheckInPage = () => {
               const isJustCheckedIn = justCheckedIn.has(player.id)
               const isAnimatingOut = animatingOut.has(player.id)
               const isAnimatingIn = animatingIn.has(player.id)
+              const catLetter = getCategoryLetter(player.primaryCategory)
               
-              const accentColor = getPlayerAccentColor(player.name)
               return (
                 <div
                   key={player.id}
@@ -566,13 +554,13 @@ const CheckInPage = () => {
                     'transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
                     'cursor-pointer hover:shadow-sm hover:ring-[hsl(var(--accent)/.15)] ring-1 ring-[hsl(var(--line)/.12)]',
                     getPlayerBgColor(),
-                    accentColor.className,
+                    catLetter && 'cat-rail',
                     isJustCheckedIn && 'ring-2 ring-[hsl(206_88%_60%)] scale-[1.02] shadow-lg',
                     isAnimatingOut && 'opacity-0 scale-95 -translate-x-4 pointer-events-none',
                     isAnimatingIn && 'opacity-0 scale-95 translate-x-4'
                   )}
+                  data-cat={catLetter || undefined}
                   style={{
-                    ...accentColor.style,
                     animation: isAnimatingIn ? 'slideInFromRight 0.3s ease-out forwards' : undefined
                   }}
                 >
