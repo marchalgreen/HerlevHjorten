@@ -429,17 +429,24 @@ const MatchProgramPage = () => {
 
   return (
     <section className="flex h-full flex-col gap-6 pt-6">
-      <header className="relative flex items-start justify-between mb-2">
+      <header className="relative flex items-center justify-between mb-4">
         <div className="flex-1">
           <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">Kampprogram</h1>
-          <p className="mt-1 text-base text-[hsl(var(--muted))]">Tjekket ind: {checkedIn.length}</p>
-          {checkedIn.length > 0 && (
-            <p className="mt-0.5 text-base text-[hsl(var(--muted))]">
-              Herrer: {genderBreakdown.male} • Damer: {genderBreakdown.female}
-            </p>
-          )}
+          <p className="text-base text-[hsl(var(--muted))] mt-1">
+            {session ? (
+              <>
+                Tjekket ind: {checkedIn.length}
+                {checkedIn.length > 0 && (
+                  <> <span className="font-bold text-[hsl(var(--foreground))]">•</span> {genderBreakdown.male} Herrer & {genderBreakdown.female} Damer</>
+                )}
+              </>
+            ) : (
+              'Start en træning for at begynde at matche spillere'
+            )}
+          </p>
+          {error && <span className="mt-2 inline-block text-sm text-[hsl(var(--destructive))]">{error}</span>}
         </div>
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 flex items-center">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center">
           <div className="relative">
             <select
               value={selectedRound}
@@ -460,41 +467,40 @@ const MatchProgramPage = () => {
           </div>
         </div>
         <div className="flex-1 flex flex-col gap-2 items-end">
-          {error && <span className="block text-sm text-[hsl(var(--destructive))]">{error}</span>}
           <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleAutoMatch}
-            disabled={!session || bench.length === 0}
+            <button
+              type="button"
+              onClick={handleAutoMatch}
+              disabled={!session || bench.length === 0}
               className="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none bg-[hsl(var(--surface-glass)/.85)] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.95)] ring-1 ring-[hsl(var(--line)/.12)] disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-sm"
-          >
-            Auto-match
-          </button>
-          <button
-            type="button"
-            onClick={handleResetMatches}
-            disabled={!session}
+            >
+              Auto-match
+            </button>
+            <button
+              type="button"
+              onClick={handleResetMatches}
+              disabled={!session}
               className="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none bg-transparent text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/.08)] ring-1 ring-[hsl(var(--destructive)/.3)] disabled:opacity-40 disabled:cursor-not-allowed hover:ring-[hsl(var(--destructive)/.4)] focus:ring-[hsl(var(--destructive)/.4)] focus:ring-2"
-          >
-            Nulstil kampe
-          </button>
-          {session ? (
-            <button
-              type="button"
-              onClick={handleEndTraining}
+            >
+              Nulstil kampe
+            </button>
+            {session ? (
+              <button
+                type="button"
+                onClick={handleEndTraining}
                 className="rounded-md px-4 py-2 text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] ring-1 ring-[hsl(var(--line)/.12)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm"
-            >
-              Afslut træning
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleStartTraining}
+              >
+                Afslut træning
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleStartTraining}
                 className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-focus hover:shadow-sm"
-            >
-              Start træning
-            </button>
-          )}
+              >
+                Start træning
+              </button>
+            )}
           </div>
         </div>
       </header>

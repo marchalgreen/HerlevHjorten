@@ -207,7 +207,7 @@ const PlayersPage = () => {
   return (
     <section className="flex flex-col gap-6 pt-6">
       <header className="flex items-center justify-between mb-4">
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">Spillere</h1>
           <p className="text-base text-[hsl(var(--muted))] mt-1">Administrer medlemslisten og deres status.</p>
           {error && (

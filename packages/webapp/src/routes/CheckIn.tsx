@@ -352,32 +352,35 @@ const CheckInPage = () => {
 
   return (
     <section className="flex flex-col gap-6 pt-6">
-      <header className="mb-2">
-        <div className="grid grid-cols-1 lg:grid-cols-[35%_65%] gap-4 items-center mb-2">
+      <header className="flex items-center justify-between mb-4">
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">Indtjekning</h1>
-          <div className="flex justify-end">
+          <p className="text-base text-[hsl(var(--muted))] mt-1">
+            {session ? (
+              <>
+                Aktiv træning: {new Date(session.date).toLocaleDateString('da-DK')}
+                {checkedIn.length > 0 && (
+                  <> <span className="font-bold text-[hsl(var(--foreground))]">•</span> Indtjekkede spillere: {checkedIn.length} <span className="font-bold text-[hsl(var(--foreground))]">•</span> {genderBreakdown.male} Herrer & {genderBreakdown.female} Damer</>
+                )}
+              </>
+            ) : (
+              'Start en træning for at begynde indtjekning'
+            )}
+          </p>
+          {error && <span className="mt-2 inline-block text-sm text-[hsl(var(--destructive))]">{error}</span>}
+        </div>
+        <div className="flex gap-2">
+          {session && (
             <Button
               variant="secondary"
               onClick={handleDemoCheckIn}
-              disabled={!session || players.filter((p) => !checkedInIds.has(p.id)).length < 28}
+              disabled={players.filter((p) => !checkedInIds.has(p.id)).length < 28}
               className="border-2 border-dashed border-[hsl(var(--primary)/.4)] bg-[hsl(var(--primary)/.05)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/.1)] hover:border-[hsl(var(--primary)/.6)] text-sm font-medium whitespace-nowrap"
             >
               🎭 DEMO: Tjek 28 tilfældige spillere ind (4 med "Kun 1 runde")
             </Button>
-          </div>
+          )}
         </div>
-        <p className="mt-1 text-base text-[hsl(var(--muted))]">
-          Aktiv træning: {new Date(session.date).toLocaleDateString('da-DK')}
-        </p>
-        {checkedIn.length > 0 && (
-          <div className="mt-1">
-            <p className="text-base text-[hsl(var(--muted))]">Indtjekkede spillere: {checkedIn.length}</p>
-            <p className="text-base text-[hsl(var(--muted))]">
-              Herrer: {genderBreakdown.male} • Damer: {genderBreakdown.female}
-            </p>
-          </div>
-        )}
-        {error && <span className="mt-2 inline-block text-sm text-[hsl(var(--destructive))]">{error}</span>}
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[35%_65%] lg:items-start">
