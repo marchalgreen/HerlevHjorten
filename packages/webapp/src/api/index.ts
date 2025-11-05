@@ -12,7 +12,7 @@ import type {
   PlayerUpdateInput,
   TrainingSession
 } from '@herlev-hjorten/common'
-import { createId, getStateCopy, loadState, updateState } from './storage'
+import { createId, createBackup, restoreFromBackup, hasBackup, getStateCopy, loadState, updateState } from './storage'
 import type { DatabaseState } from './storage'
 import statsApi from './stats'
 
@@ -1029,5 +1029,14 @@ const api = {
   checkIns: checkInsApi,
   matches: matchesApi
 }
+
+/** Database backup/restore functions. */
+const database = {
+  createBackup,
+  restoreFromBackup,
+  hasBackup
+}
+
+api.database = database
 
 export default api

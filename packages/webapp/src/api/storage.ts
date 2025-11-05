@@ -11,6 +11,9 @@ import type {
 /** LocalStorage key for database state. */
 const STORAGE_KEY = 'herlev-hjorten-db-v2'
 
+/** LocalStorage key for database backup. */
+const BACKUP_STORAGE_KEY = 'herlev-hjorten-db-v2-backup'
+
 /** In-memory database state structure. */
 export type DatabaseState = {
   players: Player[]
@@ -212,24 +215,31 @@ export const loadState = (): DatabaseState => {
         }
         // Migrate players that might be missing gender/primaryCategory
         // NOTE: Only restore from seed if field is explicitly null/undefined (preserves user-set values)
+        // CRITICAL: Never overwrite user-set values - if a value exists (even if it's a string), preserve it
         if (parsed.players && Array.isArray(parsed.players)) {
           const seedMap = new Map(playerSeeds.map((seed) => [seed.name, seed]))
           parsed.players = parsed.players.map((player) => {
             // Only restore if field is explicitly null/undefined (not if user has set it)
-            const needsGender = player.gender === null || player.gender === undefined
-            const needsCategory = player.primaryCategory === null || player.primaryCategory === undefined
+            // Check if value exists and is a valid string (not empty string) - if so, user has set it
+            const hasUserSetGender = player.gender !== null && player.gender !== undefined && player.gender !== ''
+            const hasUserSetCategory = player.primaryCategory !== null && player.primaryCategory !== undefined && player.primaryCategory !== ''
+            
+            // Only restore from seed if user has NOT set the value
+            const needsGender = !hasUserSetGender
+            const needsCategory = !hasUserSetCategory
             
             if (needsGender || needsCategory) {
               const seedData = seedMap.get(player.name)
               if (seedData) {
                 return {
                   ...player,
-                  // Only set if currently null/undefined (preserves user-set values)
-                  gender: player.gender !== null && player.gender !== undefined ? player.gender : (seedData.gender ?? null),
-                  primaryCategory: player.primaryCategory !== null && player.primaryCategory !== undefined ? player.primaryCategory : (seedData.primaryCategory ?? null)
+                  // Only set if user has NOT set it (preserves user-set values)
+                  gender: hasUserSetGender ? player.gender : (seedData.gender ?? null),
+                  primaryCategory: hasUserSetCategory ? player.primaryCategory : (seedData.primaryCategory ?? null)
                 }
               }
             }
+            // Return player as-is - user values are already set and should not be touched
             return player
           })
         }
@@ -313,6 +323,58 @@ export const getStateCopy = (): DatabaseState => {
       checkIns: stat.checkIns.map((c) => ({ ...c }))
     }))
   }
+}
+
+/**
+ * Creates a backup of the current database state.
+ * @remarks Saves current state to a separate localStorage key for rollback purposes.
+ */
+export const createBackup = (): void => {
+  const state = loadState()
+  const storage = getStorage()
+  if (storage) {
+    try {
+      storage.setItem(BACKUP_STORAGE_KEY, JSON.stringify(state))
+    } catch (err) {
+      console.error('Failed to create backup:', err)
+    }
+  }
+}
+
+/**
+ * Restores database state from backup.
+ * @remarks Restores the state saved by createBackup().
+ * @returns true if backup was restored, false if no backup exists
+ */
+export const restoreFromBackup = (): boolean => {
+  const storage = getStorage()
+  if (storage) {
+    const backup = storage.getItem(BACKUP_STORAGE_KEY)
+    if (backup) {
+      try {
+        const parsed = JSON.parse(backup) as DatabaseState
+        cachedState = parsed
+        persistState()
+        return true
+      } catch (err) {
+        console.error('Failed to restore from backup:', err)
+        return false
+      }
+    }
+  }
+  return false
+}
+
+/**
+ * Checks if a backup exists.
+ * @returns true if backup exists, false otherwise
+ */
+export const hasBackup = (): boolean => {
+  const storage = getStorage()
+  if (storage) {
+    return storage.getItem(BACKUP_STORAGE_KEY) !== null
+  }
+  return false
 }
 
 export { createId }
