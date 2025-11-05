@@ -31,6 +31,25 @@ const getInitialsBgColor = (gender: 'Herre' | 'Dame' | null | undefined) => {
   return 'bg-[hsl(var(--surface-2))]' // neutral gray for no gender
 }
 
+const getCategoryBadge = (category: 'Single' | 'Double' | 'Begge' | null | undefined) => {
+  if (!category) return null
+  const labels: Record<'Single' | 'Double' | 'Begge', string> = {
+    Single: 'S',
+    Double: 'D',
+    Begge: 'B'
+  }
+  const colors: Record<'Single' | 'Double' | 'Begge', string> = {
+    Single: 'bg-[hsl(205_70%_85%)] text-[hsl(205_70%_25%)]',
+    Double: 'bg-[hsl(280_60%_85%)] text-[hsl(280_60%_25%)]',
+    Begge: 'bg-[hsl(160_50%_85%)] text-[hsl(160_50%_25%)]'
+  }
+  return (
+    <span className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold w-5 h-5 ${colors[category]}`} title={category}>
+      {labels[category]}
+    </span>
+  )
+}
+
 const CheckInPage = () => {
   const [players, setPlayers] = useState<Player[]>([])
   const [checkedIn, setCheckedIn] = useState<CheckedInPlayer[]>([])
@@ -91,6 +110,12 @@ const CheckInPage = () => {
   }, [session?.id, loadCheckIns])
 
   const checkedInIds = useMemo(() => new Set(checkedIn.map((player) => player.id)), [checkedIn])
+
+  const genderBreakdown = useMemo(() => {
+    const male = checkedIn.filter((player) => player.gender === 'Herre').length
+    const female = checkedIn.filter((player) => player.gender === 'Dame').length
+    return { male, female }
+  }, [checkedIn])
 
   const filteredPlayers = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -186,6 +211,14 @@ const CheckInPage = () => {
         <p className="mt-1 text-[hsl(var(--muted))]">
           Aktiv træning: {new Date(session.date).toLocaleDateString('da-DK')}
         </p>
+        {checkedIn.length > 0 && (
+          <div className="mt-2">
+            <p className="text-sm text-[hsl(var(--muted))]">Tjekket ind: {checkedIn.length}</p>
+            <p className="text-xs text-[hsl(var(--muted))]">
+              Herrer: {genderBreakdown.male} • Damer: {genderBreakdown.female}
+            </p>
+          </div>
+        )}
         {error && <span className="mt-2 inline-block text-sm text-[hsl(var(--destructive))]">{error}</span>}
       </header>
 
@@ -230,7 +263,7 @@ const CheckInPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col space-y-3">
+        <div className="flex flex-col space-y-2">
           {filteredPlayers.length === 0 ? (
             <EmptyState
               icon={<UsersRound />}
@@ -259,34 +292,36 @@ const CheckInPage = () => {
                     }
                   }}
                   className={clsx(
-                    'border-hair flex min-h-[72px] items-center justify-between gap-4 rounded-xl px-4 py-4',
+                    'border-hair flex min-h-[56px] items-center justify-between gap-3 rounded-lg px-3 py-2.5',
                     'transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
                     !isChecked && 'card-glass-active cursor-pointer hover:shadow-sm hover:ring-[hsl(var(--accent)/.15)]',
                     isChecked && 'bg-[hsl(206_88%_92%)] ring-1 ring-[hsl(206_88%_85%)]',
-                    isJustCheckedIn && 'bg-[hsl(206_88%_75%)] ring-2 ring-[hsl(206_88%_60%)] scale-[1.03] shadow-lg'
+                    isJustCheckedIn && 'bg-[hsl(206_88%_75%)] ring-2 ring-[hsl(206_88%_60%)] scale-[1.02] shadow-lg'
                   )}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className={clsx(
-                      'flex h-12 w-12 items-center justify-center rounded-full text-lg font-semibold text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)]',
+                      'flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)] flex-shrink-0',
                       getInitialsBgColor(player.gender)
                     )}>
                       {initials}
                     </div>
-                    <div>
-                      <p className="text-base font-semibold text-[hsl(var(--foreground))]">{player.name}</p>
-                      <p className="text-sm text-[hsl(var(--muted))]">
-                        {player.alias ?? 'Ingen kaldenavn'} · Niveau {player.level ?? '–'}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">
+                        {player.name}
+                        {player.alias && (
+                          <span className="text-xs font-normal text-[hsl(var(--muted))]"> ({player.alias})</span>
+                        )}
                         {isOneRoundOnly && (
-                          <span className="ml-2 text-xs text-[hsl(var(--muted))]">• Kun 1 runde</span>
+                          <span className="ml-1.5 text-[10px] text-[hsl(var(--muted))]">• Kun 1 runde</span>
                         )}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {!isChecked && (
                       <label 
-                        className="flex items-center gap-2 cursor-pointer"
+                        className="flex items-center gap-1.5 cursor-pointer"
                         onClick={(e) => e.stopPropagation()} // Prevent row click from triggering
                       >
                         <input
@@ -301,12 +336,12 @@ const CheckInPage = () => {
                             }
                             setOneRoundOnlyPlayers(newSet)
                           }}
-                          className="w-4 h-4 rounded ring-1 ring-[hsl(var(--line)/.12)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none cursor-pointer"
+                          className="w-3.5 h-3.5 rounded ring-1 ring-[hsl(var(--line)/.12)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none cursor-pointer"
                         />
-                        <span className="text-xs text-[hsl(var(--muted))]">Kun 1 runde</span>
+                        <span className="text-[10px] text-[hsl(var(--muted))] whitespace-nowrap">Kun 1 runde</span>
                       </label>
                     )}
-                    {isChecked && <Badge variant="success">Tjekket ind</Badge>}
+                    {isChecked && <Badge variant="success" className="text-[10px] px-2 py-0.5">Tjekket ind</Badge>}
                     <Button
                       variant={isChecked ? 'secondary' : 'primary'}
                       size="sm"
@@ -322,7 +357,7 @@ const CheckInPage = () => {
                           setOneRoundOnlyPlayers(newSet)
                         }
                       }}
-                      className={clsx(!isChecked && 'ring-2 ring-[hsl(var(--accent)/.2)]')}
+                      className={clsx(!isChecked && 'ring-2 ring-[hsl(var(--accent)/.2)]', 'text-xs px-3 py-1.5')}
                     >
                       {isChecked ? 'Check ud' : 'Check ind'}
                     </Button>
@@ -333,6 +368,64 @@ const CheckInPage = () => {
           )}
         </div>
       </PageCard>
+
+      {/* Checked-in players section */}
+      {checkedIn.length > 0 && (
+        <PageCard className="space-y-2">
+          <header className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Tjekket ind</h3>
+            <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-xs font-medium">
+              {checkedIn.length}
+            </span>
+          </header>
+          <div className="flex flex-col space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
+            {checkedIn.map((player) => {
+              const initials = getInitials(player.name)
+              const isOneRoundOnly = player.maxRounds === 1
+              return (
+                <div
+                  key={player.id}
+                  className="flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm transition-all ring-1 ring-[hsl(var(--line)/.12)] bg-[hsl(206_88%_92%)]"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className={clsx(
+                      'flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)] flex-shrink-0',
+                      getInitialsBgColor(player.gender)
+                    )}>
+                      {initials}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">
+                        {player.name}
+                        {player.alias && (
+                          <span className="text-[10px] font-normal text-[hsl(var(--muted))]"> ({player.alias})</span>
+                        )}
+                        {isOneRoundOnly && (
+                          <span className="ml-1.5 text-[10px] text-[hsl(var(--muted))]">• Kun 1 runde</span>
+                        )}
+                      </p>
+                      <div className="flex items-center gap-1.5">
+                        {getCategoryBadge(player.primaryCategory)}
+                        <p className="text-[10px] text-[hsl(var(--muted))] truncate">
+                          Niveau {player.level ?? '–'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleCheckOut(player)}
+                    className="text-xs px-3 py-1.5 flex-shrink-0"
+                  >
+                    Check ud
+                  </Button>
+                </div>
+              )
+            })}
+          </div>
+        </PageCard>
+      )}
     </section>
   )
 }
