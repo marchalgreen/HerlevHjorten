@@ -694,7 +694,7 @@ const movePlayer = async (payload: MatchMovePayload, round?: number): Promise<vo
       playerId: z.string().min(1),
       toCourtIdx: z.number().int().min(1).max(8).optional(),
       toSlot: z.number().int().min(0).max(3).optional(),
-      round: z.number().int().min(1).max(3).optional(),
+      round: z.number().int().min(1).max(4).optional(),
       swapWithPlayerId: z.string().optional()
     })
     .superRefine((value, ctx) => {
