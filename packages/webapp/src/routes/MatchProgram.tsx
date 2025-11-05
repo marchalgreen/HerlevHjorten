@@ -594,6 +594,17 @@ const MatchProgramPage = () => {
             event.dataTransfer.setData('application/x-source-court-idx', String(court.courtIdx))
             event.dataTransfer.setData('application/x-source-slot', String(slotIndex))
             event.dataTransfer.effectAllowed = 'move'
+            // Create a clone of the element for drag preview to prevent layout shift
+            const dragElement = event.currentTarget.cloneNode(true) as HTMLElement
+            dragElement.style.position = 'absolute'
+            dragElement.style.top = '-1000px'
+            dragElement.style.width = `${event.currentTarget.offsetWidth}px`
+            dragElement.style.opacity = '0.8'
+            document.body.appendChild(dragElement)
+            const rect = event.currentTarget.getBoundingClientRect()
+            event.dataTransfer.setDragImage(dragElement, event.clientX - rect.left, event.clientY - rect.top)
+            // Clean up after a short delay
+            setTimeout(() => document.body.removeChild(dragElement), 0)
           }
         }}
         className={`flex min-h-[52px] items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
@@ -820,6 +831,17 @@ const MatchProgramPage = () => {
                 onDragStart={(event) => {
                   event.dataTransfer.setData('application/x-player-id', player.id)
                   event.dataTransfer.effectAllowed = 'move'
+                  // Create a clone of the element for drag preview to prevent layout shift
+                  const dragElement = event.currentTarget.cloneNode(true) as HTMLElement
+                  dragElement.style.position = 'absolute'
+                  dragElement.style.top = '-1000px'
+                  dragElement.style.width = `${event.currentTarget.offsetWidth}px`
+                  dragElement.style.opacity = '0.8'
+                  document.body.appendChild(dragElement)
+                  const rect = event.currentTarget.getBoundingClientRect()
+                  event.dataTransfer.setDragImage(dragElement, event.clientX - rect.left, event.clientY - rect.top)
+                  // Clean up after a short delay
+                  setTimeout(() => document.body.removeChild(dragElement), 0)
                 }}
               >
                 <div className="min-w-0 flex-1">
@@ -869,11 +891,15 @@ const MatchProgramPage = () => {
                         <div
                           key={player.id}
                           className={`flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor(player.gender)}`}
-                          draggable
-                          onDragStart={(event) => {
-                            event.dataTransfer.setData('application/x-player-id', player.id)
-                            event.dataTransfer.effectAllowed = 'move'
-                          }}
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData('application/x-player-id', player.id)
+                          event.dataTransfer.effectAllowed = 'move'
+                          // Prevent layout shift by using a transparent drag image
+                          const img = new Image()
+                          img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs='
+                          event.dataTransfer.setDragImage(img, 0, 0)
+                        }}
                         >
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
@@ -928,6 +954,7 @@ const MatchProgramPage = () => {
           {matches.map((court) => (
             <PageCard
               key={court.courtIdx}
+              hover={false}
               className={`space-y-2 hover:shadow-md p-4 transition-all duration-200 relative ${
                 courtsWithDuplicatesSet.has(court.courtIdx)
                   ? 'ring-2 ring-[hsl(var(--destructive)/.45)] border border-[hsl(var(--destructive)/.3)] bg-[hsl(var(--destructive)/.03)]'
