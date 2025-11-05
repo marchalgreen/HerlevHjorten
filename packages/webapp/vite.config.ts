@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 
 export default defineConfig({
   root: resolve(__dirname, '.'),
+  base: process.env.NODE_ENV === 'production' ? '/HerlevHjorten/' : '/',
   plugins: [react()],
   build: {
     outDir: 'dist',
