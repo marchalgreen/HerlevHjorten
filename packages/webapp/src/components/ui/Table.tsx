@@ -189,25 +189,37 @@ type TableSearchProps = {
  * TableSearch component — search input with clear button.
  * @remarks Accessible search input with aria-label and clear button.
  */
-export const TableSearch = ({ value, onChange, placeholder }: TableSearchProps) => (
-  <label className="relative inline-flex w-full max-w-sm items-center">
-    <Search className="pointer-events-none absolute left-3 h-4 w-4 text-[hsl(var(--muted))]" aria-hidden />
-    <input
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      placeholder={placeholder}
-      className="w-full rounded-full bg-[hsl(var(--surface))] px-9 py-2 text-sm ring-[hsl(var(--line)/.14)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none"
-      type="search"
-    />
-    {value && (
-      <button
-        type="button"
-        onClick={() => onChange('')}
-        className="absolute right-3 text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]"
-        aria-label="Ryd søgning"
-      >
-        ×
-      </button>
-    )}
-  </label>
-)
+export const TableSearch = ({ value, onChange, placeholder }: TableSearchProps) => {
+  const handleClear = () => {
+    onChange('')
+  }
+
+  return (
+    <label className="relative inline-flex w-full max-w-sm items-center">
+      <Search className="pointer-events-none absolute left-3 h-4 w-4 text-[hsl(var(--muted))]" aria-hidden />
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onInput={(event) => {
+          // Handle native search input clear button
+          if ((event.target as HTMLInputElement).value === '') {
+            onChange('')
+          }
+        }}
+        placeholder={placeholder}
+        className="w-full rounded-full bg-[hsl(var(--surface))] px-9 py-2 text-sm ring-[hsl(var(--line)/.14)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none"
+        type="search"
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={handleClear}
+          className="absolute right-3 text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]"
+          aria-label="Ryd søgning"
+        >
+          ×
+        </button>
+      )}
+    </label>
+  )
+}

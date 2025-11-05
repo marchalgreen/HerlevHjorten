@@ -220,4 +220,34 @@
       transition: none;
     }
   }
+
+  /* Thin, aesthetic scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--line) / 0.3) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--line) / 0.3);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--line) / 0.5);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+      transition: none;
+    }
+  }
 }

@@ -887,7 +887,7 @@ const MatchProgramPage = () => {
               {bench.length}
             </span>
           </header>
-          <div className="flex flex-col space-y-2 max-h-[calc(100vh-380px)] overflow-y-auto pr-1">
+          <div className="flex flex-col space-y-2 max-h-[calc(100vh-380px)] overflow-y-auto pr-0.5 scrollbar-thin">
             {bench.length === 0 && (
               <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-4 text-center text-xs text-[hsl(var(--muted))] border-hair">
                 Træk spillere her for at aktivere dem

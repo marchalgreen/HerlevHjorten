@@ -67,11 +67,21 @@ const PlayersPage = () => {
     }
   }, [search, showInactive])
 
-  // WHY: Reload players when showInactive filter changes; search is debounced via loadPlayers
+  // WHY: Reload players when showInactive filter changes
   useEffect(() => {
     void loadPlayers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showInactive])
+
+  // WHY: Reload players when search changes (debounced to avoid excessive API calls)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      void loadPlayers()
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timeoutId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   // WHY: Create backup on mount if one doesn't exist to preserve current state
   useEffect(() => {
