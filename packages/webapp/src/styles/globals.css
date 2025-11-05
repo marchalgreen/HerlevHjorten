@@ -30,15 +30,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        height: 44px;                 /* slightly larger for top nav */
-        width: 180px;
-        flex: 0 0 180px;
-        margin-right: 12px;
-        padding: 0 20px;
-        border-radius: 10px;
+        gap: 8px;
+        height: 40px;
+        width: 160px;
+        flex: 0 0 160px;
+        padding: 0 16px;
+        border-radius: 8px;
         font-weight: 600;
-        font-size: 15px;
+        font-size: 14px;
         color: hsl(var(--muted));
         background: transparent;
         box-sizing: border-box;
@@ -48,10 +47,6 @@
           color 200ms cubic-bezier(.2,.8,.2,1),
           box-shadow 200ms cubic-bezier(.2,.8,.2,1);
         text-decoration: none;
-      }
-      
-      .nav-item:last-child {
-        margin-right: 0;
       }
 
       /* Inactive hover: gentle surface lift, never white text */

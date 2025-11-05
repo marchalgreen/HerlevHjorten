@@ -15,18 +15,33 @@ const navItems = [
 const Header = () => {
   const location = useLocation()
   return (
-    <header className="flex items-center ring-1 ring-[hsl(var(--line)/.12)] bg-[hsl(var(--surface)/.7)] px-6 py-4 backdrop-blur shadow-[inset_0_-1px_0_hsl(var(--line)/.08)]">
-      <div className="flex items-center gap-3 flex-shrink-0 w-[200px]">
-        <img src="/logo.jpeg" alt="Herlev/Hjorten" className="h-11 w-11 rounded-full ring-1 ring-[hsl(var(--line)/.2)] object-cover" />
-        <p className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] whitespace-nowrap">Herlev/Hjorten</p>
+    <header className="relative flex items-center ring-1 ring-[hsl(var(--line)/.12)] bg-[hsl(var(--surface)/.7)] px-6 py-4 backdrop-blur shadow-[inset_0_-1px_0_hsl(var(--line)/.08)]">
+      {/* Left section: Logo and text */}
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <img 
+          src="/logo.jpeg" 
+          alt="Herlev/Hjorten" 
+          className="h-12 w-12 rounded-full ring-1 ring-[hsl(var(--line)/.2)] object-cover flex-shrink-0" 
+        />
+        <p className="text-lg font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] whitespace-nowrap">
+          HERLEV/HJORTEN
+        </p>
       </div>
-      <nav aria-label="Primær navigation" className="flex-1 flex items-center justify-center gap-3">
+
+      {/* Center section: Navigation - absolutely positioned and centered */}
+      <nav 
+        aria-label="Primær navigation" 
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
+        style={{ width: '496px' }}
+      >
         <SidebarItem to="/check-in" icon={<Search />} label="Check ind" />
         <SidebarItem to="/coach" icon={<Grid2x2 />} label="Kampprogram" />
         <SidebarItem to="/players" icon={<UsersRound />} label="Spillere" />
       </nav>
-      <div className="flex-shrink-0 w-[200px]" aria-hidden="true">
-        {/* Spacer to balance the left side */}
+
+      {/* Right section: Spacer for balance */}
+      <div className="flex-shrink-0" style={{ width: '200px' }} aria-hidden="true">
+        {/* Empty spacer */}
       </div>
     </header>
   )

@@ -73,6 +73,18 @@ const CheckInPage = () => {
     }
   }, [])
 
+  const handleStartTraining = useCallback(async () => {
+    try {
+      setError(null)
+      const active = await api.session.startOrGetActive()
+      setSession(active)
+      // loadCheckIns will be called automatically by useEffect when session changes
+      notify({ variant: 'success', title: 'Træning startet' })
+    } catch (err: any) {
+      setError(err.message ?? 'Kunne ikke starte træning')
+    }
+  }, [notify])
+
   const loadPlayers = useCallback(async () => {
     try {
       const result = await api.players.list({ active: true })
@@ -246,19 +258,51 @@ const CheckInPage = () => {
 
   if (!session) {
     return (
-      <section className="mx-auto flex h-full max-w-4xl items-center justify-center p-6">
-        <PageCard className="w-full max-w-xl text-center">
-        <EmptyState
-          icon={<UsersRound />}
-          title="Ingen aktiv træning"
-          helper="Start en træning i Kampprogrammet for at tjekke spillere ind."
-          action={
-            <Button variant="primary" onClick={refreshSession}>
-              Opdater
-            </Button>
-          }
-        />
-        </PageCard>
+      <section className="flex h-full items-center justify-center p-6">
+        <div className="w-full max-w-2xl">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[hsl(var(--surface)/.95)] via-[hsl(var(--surface)/.98)] to-[hsl(var(--surface-glass)/.85)] p-12 shadow-[0_8px_32px_hsl(var(--primary)/.08)] ring-1 ring-[hsl(var(--line)/.12)] backdrop-blur-sm">
+            {/* Decorative background elements */}
+            <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[hsl(var(--primary)/.06)] blur-3xl" />
+            <div className="absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-[hsl(var(--accent)/.06)] blur-3xl" />
+            
+            <div className="relative z-10 flex flex-col items-center gap-6 text-center">
+              {/* Icon */}
+              <div className="relative">
+                <div className="absolute inset-0 rounded-full bg-[hsl(var(--primary)/.12)] blur-xl" />
+                <div className="relative rounded-full bg-gradient-to-br from-[hsl(var(--primary)/.15)] to-[hsl(var(--accent)/.15)] p-6 ring-2 ring-[hsl(var(--primary)/.2)]">
+                  <UsersRound className="h-12 w-12 text-[hsl(var(--primary))]" />
+                </div>
+              </div>
+
+              {/* Title and description */}
+              <div className="space-y-3">
+                <h1 className="text-3xl font-bold text-[hsl(var(--foreground))] tracking-tight">
+                  Velkommen til træningssessionen
+                </h1>
+                <p className="mx-auto max-w-md text-base leading-relaxed text-[hsl(var(--muted))]">
+                  Start en ny træning for at begynde at tjekke spillere ind og arrangere kampe. 
+                  Når træningen er startet, kan du se alle tilmeldte spillere og oprette kampprogrammer.
+                </p>
+              </div>
+
+              {/* CTA Button */}
+              <div className="pt-2">
+                <Button
+                  variant="primary"
+                  onClick={handleStartTraining}
+                  className="min-w-[200px] h-14 px-8 text-lg font-semibold shadow-[0_4px_16px_hsl(var(--primary)/.25)] hover:shadow-[0_6px_24px_hsl(var(--primary)/.35)] transition-all duration-300"
+                >
+                  Start træning
+                </Button>
+              </div>
+
+              {/* Error message */}
+              {error && (
+                <p className="mt-2 text-sm text-[hsl(var(--destructive))]">{error}</p>
+              )}
+            </div>
+          </div>
+        </div>
       </section>
     )
   }
