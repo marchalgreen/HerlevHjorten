@@ -459,31 +459,31 @@ const getPlayerStatistics = async (
  */
 const generateDummyHistoricalData = async (): Promise<void> => {
   const state = getStateCopy()
-  
-  // Don't generate if dummy data already exists
-  if (state.statistics && state.statistics.length > 0) {
-    throw new Error('Historiske data findes allerede. Slet eksisterende data først.')
-  }
 
   const players = state.players.filter((p) => p.active)
   if (players.length < 8) {
     throw new Error('Mindst 8 aktive spillere kræves for at generere dummy data')
   }
 
+  // Clear existing statistics before generating new data
+  updateState((state: DatabaseState) => {
+    state.statistics = []
+  })
+
   const courts = state.courts
   const now = new Date()
 
-  // Generate sessions for the past 2.5 seasons (about 20 months)
-  // Start from 20 months ago
+  // Generate sessions for the past 3 seasons (about 36 months)
+  // Start from 36 months ago
   const sessions: Array<{ date: string; season: string }> = []
-  const monthsToGenerate = 20
+  const monthsToGenerate = 36
 
   for (let i = monthsToGenerate; i >= 0; i--) {
     const sessionDate = new Date(now)
     sessionDate.setMonth(sessionDate.getMonth() - i)
     
-    // Generate 2-4 sessions per month (randomly distributed)
-    const sessionsThisMonth = Math.floor(Math.random() * 3) + 2 // 2-4 sessions
+    // Generate 8 sessions per month
+    const sessionsThisMonth = 8
     
     for (let j = 0; j < sessionsThisMonth; j++) {
       const dayOfMonth = Math.floor(Math.random() * 28) + 1 // 1-28 to avoid month boundary issues
@@ -544,72 +544,108 @@ const generateDummyHistoricalData = async (): Promise<void> => {
         })
       })
 
-      // Create matches (2-6 courts typically)
-      const courtCount = Math.min(
-        Math.floor(Math.random() * 5) + 2,
-        courts.length,
-        Math.floor(checkedInPlayers.length / 4)
-      )
-      const usedCourts = courts.slice(0, courtCount)
-      const matches: Match[] = []
-      const matchPlayers: MatchPlayer[] = []
-      const assignedPlayers = new Set<string>()
+      // Generate 2 rounds on average (1-3 rounds per session)
+      const roundsPerSession = Math.floor(Math.random() * 3) + 1 // 1-3 rounds, average ~2
+      const allMatches: Match[] = []
+      const allMatchPlayers: MatchPlayer[] = []
+      
+      // Track how many matches each player has been assigned to (for 1.7 ratio)
+      const playerMatchCount = new Map<string, number>()
+      checkedInPlayers.forEach((p) => playerMatchCount.set(p.id, 0))
+      
+      // Target: ~1.7 matches per check-in on average
+      const targetMatchesPerPlayer = 1.7
 
-      usedCourts.forEach((court, courtIndex) => {
-        const matchId = createId()
-        const matchStart = new Date(sessionDate)
-        matchStart.setMinutes(matchStart.getMinutes() + courtIndex * 5) // Stagger start times
+      for (let roundNum = 1; roundNum <= roundsPerSession; roundNum++) {
+        // Create matches (5-7 courts on average per round)
+        const courtCount = Math.min(
+          Math.floor(Math.random() * 3) + 5, // 5-7 courts
+          courts.length,
+          Math.floor(checkedInPlayers.length / 4)
+        )
+        const usedCourts = courts.slice(0, courtCount)
+        const matches: Match[] = []
+        const matchPlayers: MatchPlayer[] = []
         
-        matches.push({
-          id: matchId,
-          sessionId,
-          courtId: court.id,
-          startedAt: matchStart.toISOString(),
-          endedAt: new Date(matchStart.getTime() + 45 * 60000).toISOString(), // 45 minutes later
-          round: 1 // All dummy data is round 1 for simplicity
-        })
+        // For each round, shuffle players to ensure fair distribution
+        const shuffledPlayers = [...checkedInPlayers].sort(() => Math.random() - 0.5)
 
-        // Get available players for this court
-        const availablePlayers = checkedInPlayers.filter((p) => !assignedPlayers.has(p.id))
-        if (availablePlayers.length < 2) return
-
-        // Randomly decide match type: 1v1 or 2v2
-        const isDoubles = availablePlayers.length >= 4 && Math.random() > 0.3 // 70% chance of doubles if enough players
-        
-        if (isDoubles && availablePlayers.length >= 4) {
-          // 2v2 match
-          const selectedPlayers = availablePlayers.slice(0, 4)
-          selectedPlayers.forEach((player) => assignedPlayers.add(player.id))
+        usedCourts.forEach((court, courtIndex) => {
+          const matchId = createId()
+          const matchStart = new Date(sessionDate)
+          // Stagger start times: round 1 starts at session time, round 2 starts 45 min later, etc.
+          matchStart.setMinutes(matchStart.getMinutes() + (roundNum - 1) * 45 + courtIndex * 5)
           
-          // Assign slots 0, 1, 2, 3
-          selectedPlayers.forEach((player, index) => {
+          matches.push({
+            id: matchId,
+            sessionId,
+            courtId: court.id,
+            startedAt: matchStart.toISOString(),
+            endedAt: new Date(matchStart.getTime() + 45 * 60000).toISOString(), // 45 minutes later
+            round: roundNum
+          })
+
+          // Get available players for this court, prioritizing players with fewer matches
+          const availablePlayers = shuffledPlayers
+            .filter((p) => {
+              const currentCount = playerMatchCount.get(p.id) ?? 0
+              // Prioritize players who haven't reached target yet
+              return currentCount < Math.ceil(targetMatchesPerPlayer)
+            })
+            .sort((a, b) => {
+              const countA = playerMatchCount.get(a.id) ?? 0
+              const countB = playerMatchCount.get(b.id) ?? 0
+              return countA - countB // Players with fewer matches first
+            })
+          
+          // If no players available with priority, use all shuffled players
+          const playersToUse = availablePlayers.length >= 2 ? availablePlayers : shuffledPlayers
+
+          if (playersToUse.length < 2) return
+
+          // Randomly decide match type: 1v1 or 2v2
+          const isDoubles = playersToUse.length >= 4 && Math.random() > 0.3 // 70% chance of doubles if enough players
+          
+          if (isDoubles && playersToUse.length >= 4) {
+            // 2v2 match
+            const selectedPlayers = playersToUse.slice(0, 4)
+            
+            // Assign slots 0, 1, 2, 3
+            selectedPlayers.forEach((player, index) => {
+              playerMatchCount.set(player.id, (playerMatchCount.get(player.id) ?? 0) + 1)
+              matchPlayers.push({
+                id: createId(),
+                matchId,
+                playerId: player.id,
+                slot: index
+              })
+            })
+          } else {
+            // 1v1 match
+            const selectedPlayers = playersToUse.slice(0, 2)
+            
+            // Assign slots 1 and 2
+            selectedPlayers.forEach((player) => {
+              playerMatchCount.set(player.id, (playerMatchCount.get(player.id) ?? 0) + 1)
+            })
             matchPlayers.push({
               id: createId(),
               matchId,
-              playerId: player.id,
-              slot: index
+              playerId: selectedPlayers[0].id,
+              slot: 1
             })
-          })
-        } else {
-          // 1v1 match
-          const selectedPlayers = availablePlayers.slice(0, 2)
-          selectedPlayers.forEach((player) => assignedPlayers.add(player.id))
-          
-          // Assign slots 1 and 2
-          matchPlayers.push({
-            id: createId(),
-            matchId,
-            playerId: selectedPlayers[0].id,
-            slot: 1
-          })
-          matchPlayers.push({
-            id: createId(),
-            matchId,
-            playerId: selectedPlayers[1].id,
-            slot: 2
-          })
-        }
-      })
+            matchPlayers.push({
+              id: createId(),
+              matchId,
+              playerId: selectedPlayers[1].id,
+              slot: 2
+            })
+          }
+        })
+
+        allMatches.push(...matches)
+        allMatchPlayers.push(...matchPlayers)
+      }
 
       // Create snapshot
       const snapshot: StatisticsSnapshot = {
@@ -617,8 +653,8 @@ const generateDummyHistoricalData = async (): Promise<void> => {
         sessionId,
         sessionDate: sessionInfo.date,
         season: sessionInfo.season,
-        matches: matches.map((m) => ({ ...m })),
-        matchPlayers: matchPlayers.map((mp) => ({ ...mp })),
+        matches: allMatches.map((m) => ({ ...m })),
+        matchPlayers: allMatchPlayers.map((mp) => ({ ...mp })),
         checkIns: checkIns.map((c) => ({ ...c })),
         createdAt: new Date().toISOString()
       }

@@ -142,17 +142,15 @@ const StatisticsPage = () => {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">Statistik</h1>
-        {!hasHistoricalData && (
-          <button
-            type="button"
-            onClick={handleGenerateDummyData}
-            disabled={isGeneratingDummyData}
-            className="px-4 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/.9)] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <BarChart3 className="w-4 h-4" />
-            {isGeneratingDummyData ? 'Genererer...' : 'Demo: Input historiske dummy data'}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleGenerateDummyData}
+          disabled={isGeneratingDummyData}
+          className="px-4 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/.9)] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          <BarChart3 className="w-4 h-4" />
+          {isGeneratingDummyData ? 'Genererer...' : 'Demo: Input historiske dummy data'}
+        </button>
       </div>
 
       {/* Player Selector */}
@@ -202,7 +200,7 @@ const StatisticsPage = () => {
               <div className="flex flex-col gap-3">
                 <TableSearch
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(value) => setSearch(value)}
                   placeholder="Søg efter spiller..."
                 />
                 <div className="max-h-[200px] overflow-y-auto border border-[hsl(var(--line)/.12)] rounded-lg">
@@ -242,7 +240,7 @@ const StatisticsPage = () => {
               </label>
               <TableSearch
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(value) => setSearch(value)}
                 placeholder="Søg efter spiller..."
               />
             </div>
@@ -293,7 +291,7 @@ const StatisticsPage = () => {
                 </span>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-sm text-[hsl(var(--muted))]">Foretrukket kategori</span>
+                <span className="text-sm text-[hsl(var(--muted))]">Mest spillede kategori</span>
                 <span className="text-lg font-semibold text-[hsl(var(--foreground))]">
                   {statistics.preferredCategory ?? 'Ingen'}
                 </span>
@@ -308,7 +306,7 @@ const StatisticsPage = () => {
                   {Object.entries(statistics.checkInsBySeason)
                     .sort(([a], [b]) => b.localeCompare(a))
                     .map(([season, count]) => (
-                      <div key={season} className="flex items-center justify-between">
+                      <div key={season} className="flex items-center gap-3">
                         <span className="text-sm text-[hsl(var(--muted))]">Sæson {season}</span>
                         <span className="text-sm font-semibold text-[hsl(var(--foreground))]">{count}</span>
                       </div>
@@ -318,71 +316,74 @@ const StatisticsPage = () => {
             )}
           </PageCard>
 
-          {/* Top Partners Section */}
-          <PageCard>
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-[hsl(var(--primary))]" />
-              <h2 className="text-xl font-semibold text-[hsl(var(--foreground))]">Top 5 Partnere</h2>
-            </div>
-            {statistics.partners.length === 0 ? (
-              <p className="text-sm text-[hsl(var(--muted))]">Ingen partnerdata tilgængelig</p>
-            ) : (
-              <div className="space-y-3">
-                {statistics.partners.map((partner, index) => (
-                  <div
-                    key={partner.playerId}
-                    className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-2))]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(var(--primary)/.1)] text-[hsl(var(--primary))] font-bold text-sm">
-                        {index + 1}
-                      </div>
-                      <span className="font-medium text-[hsl(var(--foreground))]">{partner.names}</span>
-                    </div>
-                    <Badge variant="default" className="text-xs">
-                      {partner.count} {partner.count === 1 ? 'gang' : 'gange'}
-                    </Badge>
-                  </div>
-                ))}
+          {/* Top Partners and Opponents Section - Side by Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Top Partners Section */}
+            <PageCard>
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="w-5 h-5 text-[hsl(var(--primary))]" />
+                <h2 className="text-xl font-semibold text-[hsl(var(--foreground))]">Top 5 makkere</h2>
               </div>
-            )}
-          </PageCard>
+              {statistics.partners.length === 0 ? (
+                <p className="text-sm text-[hsl(var(--muted))]">Ingen partnerdata tilgængelig</p>
+              ) : (
+                <div className="space-y-3">
+                  {statistics.partners.map((partner, index) => (
+                    <div
+                      key={partner.playerId}
+                      className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-2))]"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(var(--primary)/.1)] text-[hsl(var(--primary))] font-bold text-sm">
+                          {index + 1}
+                        </div>
+                        <span className="font-medium text-[hsl(var(--foreground))]">{partner.names}</span>
+                      </div>
+                      <Badge variant="default" className="text-xs">
+                        {partner.count} {partner.count === 1 ? 'gang' : 'gange'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </PageCard>
 
-          {/* Top Opponents Section */}
-          <PageCard>
-            <div className="flex items-center gap-2 mb-4">
-              <Target className="w-5 h-5 text-[hsl(var(--primary))]" />
-              <h2 className="text-xl font-semibold text-[hsl(var(--foreground))]">Top 5 Modstandere</h2>
-            </div>
-            {statistics.opponents.length === 0 ? (
-              <p className="text-sm text-[hsl(var(--muted))]">Ingen modstanderdata tilgængelig</p>
-            ) : (
-              <div className="space-y-3">
-                {statistics.opponents.map((opponent, index) => (
-                  <div
-                    key={opponent.playerId}
-                    className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-2))]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(var(--destructive)/.1)] text-[hsl(var(--destructive))] font-bold text-sm">
-                        {index + 1}
-                      </div>
-                      <span className="font-medium text-[hsl(var(--foreground))]">{opponent.names}</span>
-                    </div>
-                    <Badge variant="destructive" className="text-xs">
-                      {opponent.count} {opponent.count === 1 ? 'gang' : 'gange'}
-                    </Badge>
-                  </div>
-                ))}
+            {/* Top Opponents Section */}
+            <PageCard>
+              <div className="flex items-center gap-2 mb-4">
+                <Target className="w-5 h-5 text-[hsl(var(--primary))]" />
+                <h2 className="text-xl font-semibold text-[hsl(var(--foreground))]">Top 5 modstandere</h2>
               </div>
-            )}
-          </PageCard>
+              {statistics.opponents.length === 0 ? (
+                <p className="text-sm text-[hsl(var(--muted))]">Ingen modstanderdata tilgængelig</p>
+              ) : (
+                <div className="space-y-3">
+                  {statistics.opponents.map((opponent, index) => (
+                    <div
+                      key={opponent.playerId}
+                      className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-2))]"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(var(--destructive)/.1)] text-[hsl(var(--destructive))] font-bold text-sm">
+                          {index + 1}
+                        </div>
+                        <span className="font-medium text-[hsl(var(--foreground))]">{opponent.names}</span>
+                      </div>
+                      <Badge variant="danger" className="text-xs">
+                        {opponent.count} {opponent.count === 1 ? 'gang' : 'gange'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </PageCard>
+          </div>
 
           {/* Additional Metrics Section */}
           <PageCard>
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="w-5 h-5 text-[hsl(var(--primary))]" />
-              <h2 className="text-xl font-semibold text-[hsl(var(--foreground))]">Yderligere Statistik</h2>
+              <h2 className="text-xl font-semibold text-[hsl(var(--foreground))]">Yderligere statistik</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {statistics.mostPlayedCourt !== null && (
