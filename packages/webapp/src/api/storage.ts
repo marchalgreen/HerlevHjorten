@@ -167,8 +167,10 @@ const migrateHistoricalStatistics = (state: DatabaseState): void => {
 
   for (const session of endedSessions) {
     const sessionDate = new Date(session.date)
+    const month = sessionDate.getMonth() + 1 // 1-12
     const year = sessionDate.getFullYear()
-    const season = year.toString()
+    // Seasons run from August to July
+    const season = month >= 8 ? `${year}-${year + 1}` : `${year - 1}-${year}`
 
     const sessionMatches = state.matches.filter((m) => m.sessionId === session.id)
     const sessionMatchPlayers = state.matchPlayers.filter((mp) =>
@@ -209,17 +211,22 @@ export const loadState = (): DatabaseState => {
           parsed.statistics = []
         }
         // Migrate players that might be missing gender/primaryCategory
+        // NOTE: Only restore from seed if field is explicitly null/undefined (preserves user-set values)
         if (parsed.players && Array.isArray(parsed.players)) {
           const seedMap = new Map(playerSeeds.map((seed) => [seed.name, seed]))
           parsed.players = parsed.players.map((player) => {
-            // If player is missing gender or primaryCategory, try to restore from seed data
-            if (!player.gender || !player.primaryCategory) {
+            // Only restore if field is explicitly null/undefined (not if user has set it)
+            const needsGender = player.gender === null || player.gender === undefined
+            const needsCategory = player.primaryCategory === null || player.primaryCategory === undefined
+            
+            if (needsGender || needsCategory) {
               const seedData = seedMap.get(player.name)
               if (seedData) {
                 return {
                   ...player,
-                  gender: player.gender ?? seedData.gender ?? null,
-                  primaryCategory: player.primaryCategory ?? seedData.primaryCategory ?? null
+                  // Only set if currently null/undefined (preserves user-set values)
+                  gender: player.gender !== null && player.gender !== undefined ? player.gender : (seedData.gender ?? null),
+                  primaryCategory: player.primaryCategory !== null && player.primaryCategory !== undefined ? player.primaryCategory : (seedData.primaryCategory ?? null)
                 }
               }
             }
@@ -244,12 +251,25 @@ export const loadState = (): DatabaseState => {
 /**
  * Persists current database state to localStorage.
  * @remarks No-op if localStorage unavailable or state is null.
+ * Call this to explicitly ensure the current state is saved.
  */
 export const persistState = () => {
   const storage = getStorage()
   if (storage && cachedState) {
     storage.setItem(STORAGE_KEY, JSON.stringify(cachedState))
   }
+}
+
+/**
+ * Forces a save of the current database state.
+ * @remarks Ensures the current in-memory state is persisted to localStorage.
+ * Useful to explicitly save user changes.
+ */
+export const forceSave = () => {
+  // Load current state to ensure it's in memory
+  loadState()
+  // Persist it
+  persistState()
 }
 
 /**

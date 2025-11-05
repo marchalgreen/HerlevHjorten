@@ -5,19 +5,33 @@ import type {
   Player,
   Match,
   MatchPlayer,
-  Court
+  Court,
+  TrainingSession,
+  CheckIn
 } from '@herlev-hjorten/common'
 import { createId, getStateCopy, loadState, updateState } from './storage'
 import type { DatabaseState } from './storage'
 
 /**
- * Determines season from a date string (calendar year).
+ * Determines season from a date string (August to July).
  * @param dateStr - ISO date string
- * @returns Season string (e.g., "2024")
+ * @returns Season string (e.g., "2023-2024")
+ * @remarks Seasons run from August 1st to July 31st.
+ * Dates in August-December use current year as start.
+ * Dates in January-July use previous year as start.
  */
 const getSeasonFromDate = (dateStr: string): string => {
   const date = new Date(dateStr)
-  return date.getFullYear().toString()
+  const month = date.getMonth() + 1 // 1-12 (Jan=1, Dec=12)
+  const year = date.getFullYear()
+  
+  // If month is August (8) or later, season is YEAR-YEAR+1
+  // If month is January-July (1-7), season is YEAR-1-YEAR
+  if (month >= 8) {
+    return `${year}-${year + 1}`
+  } else {
+    return `${year - 1}-${year}`
+  }
 }
 
 /**
@@ -67,9 +81,7 @@ const snapshotSession = async (sessionId: string): Promise<StatisticsSnapshot> =
     return existingSnapshot
   }
 
-  const sessionDate = new Date(session.date)
-  const year = sessionDate.getFullYear()
-  const season = year.toString()
+  const season = getSeasonFromDate(session.date)
 
   const sessionMatches = state.matches.filter((m) => m.sessionId === sessionId)
   const sessionMatchPlayers = state.matchPlayers.filter((mp) =>
@@ -440,6 +452,182 @@ const getPlayerStatistics = async (
   }
 }
 
+/**
+ * Generates dummy historical data for demo purposes.
+ * @remarks Creates realistic historical sessions, matches, and check-ins spanning multiple seasons.
+ * This function is for demo/testing purposes only.
+ */
+const generateDummyHistoricalData = async (): Promise<void> => {
+  const state = getStateCopy()
+  
+  // Don't generate if dummy data already exists
+  if (state.statistics && state.statistics.length > 0) {
+    throw new Error('Historiske data findes allerede. Slet eksisterende data først.')
+  }
+
+  const players = state.players.filter((p) => p.active)
+  if (players.length < 8) {
+    throw new Error('Mindst 8 aktive spillere kræves for at generere dummy data')
+  }
+
+  const courts = state.courts
+  const now = new Date()
+
+  // Generate sessions for the past 2.5 seasons (about 20 months)
+  // Start from 20 months ago
+  const sessions: Array<{ date: string; season: string }> = []
+  const monthsToGenerate = 20
+
+  for (let i = monthsToGenerate; i >= 0; i--) {
+    const sessionDate = new Date(now)
+    sessionDate.setMonth(sessionDate.getMonth() - i)
+    
+    // Generate 2-4 sessions per month (randomly distributed)
+    const sessionsThisMonth = Math.floor(Math.random() * 3) + 2 // 2-4 sessions
+    
+    for (let j = 0; j < sessionsThisMonth; j++) {
+      const dayOfMonth = Math.floor(Math.random() * 28) + 1 // 1-28 to avoid month boundary issues
+      const sessionDay = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), dayOfMonth)
+      const hour = 18 + Math.floor(Math.random() * 3) // 18-20 (6-8 PM)
+      const minute = Math.floor(Math.random() * 4) * 15 // 0, 15, 30, 45
+      sessionDay.setHours(hour, minute, 0, 0)
+      
+      const season = getSeasonFromDate(sessionDay.toISOString())
+      sessions.push({
+        date: sessionDay.toISOString(),
+        season
+      })
+    }
+  }
+
+  // Sort sessions by date
+  sessions.sort((a, b) => a.date.localeCompare(b.date))
+
+  updateState((state: DatabaseState) => {
+    if (!state.statistics) {
+      state.statistics = []
+    }
+
+    sessions.forEach((sessionInfo) => {
+      const sessionId = createId()
+      const sessionDate = new Date(sessionInfo.date)
+      
+      // Create ended session
+      const session: TrainingSession = {
+        id: sessionId,
+        date: sessionInfo.date,
+        status: 'ended',
+        createdAt: sessionInfo.date
+      }
+      state.sessions.push(session)
+
+      // Randomly select 12-24 players to check in (60-100% of players)
+      const checkInCount = Math.min(
+        Math.floor(Math.random() * (players.length * 0.4)) + Math.floor(players.length * 0.6),
+        players.length
+      )
+      const shuffledPlayers = [...players].sort(() => Math.random() - 0.5)
+      const checkedInPlayers = shuffledPlayers.slice(0, checkInCount)
+
+      // Create check-ins
+      const checkIns: CheckIn[] = []
+      checkedInPlayers.forEach((player) => {
+        const checkInTime = new Date(sessionDate)
+        checkInTime.setMinutes(checkInTime.getMinutes() - Math.floor(Math.random() * 60)) // Random time before session
+        
+        checkIns.push({
+          id: createId(),
+          sessionId,
+          playerId: player.id,
+          createdAt: checkInTime.toISOString(),
+          maxRounds: null
+        })
+      })
+
+      // Create matches (2-6 courts typically)
+      const courtCount = Math.min(
+        Math.floor(Math.random() * 5) + 2,
+        courts.length,
+        Math.floor(checkedInPlayers.length / 4)
+      )
+      const usedCourts = courts.slice(0, courtCount)
+      const matches: Match[] = []
+      const matchPlayers: MatchPlayer[] = []
+      const assignedPlayers = new Set<string>()
+
+      usedCourts.forEach((court, courtIndex) => {
+        const matchId = createId()
+        const matchStart = new Date(sessionDate)
+        matchStart.setMinutes(matchStart.getMinutes() + courtIndex * 5) // Stagger start times
+        
+        matches.push({
+          id: matchId,
+          sessionId,
+          courtId: court.id,
+          startedAt: matchStart.toISOString(),
+          endedAt: new Date(matchStart.getTime() + 45 * 60000).toISOString(), // 45 minutes later
+          round: 1 // All dummy data is round 1 for simplicity
+        })
+
+        // Get available players for this court
+        const availablePlayers = checkedInPlayers.filter((p) => !assignedPlayers.has(p.id))
+        if (availablePlayers.length < 2) return
+
+        // Randomly decide match type: 1v1 or 2v2
+        const isDoubles = availablePlayers.length >= 4 && Math.random() > 0.3 // 70% chance of doubles if enough players
+        
+        if (isDoubles && availablePlayers.length >= 4) {
+          // 2v2 match
+          const selectedPlayers = availablePlayers.slice(0, 4)
+          selectedPlayers.forEach((player) => assignedPlayers.add(player.id))
+          
+          // Assign slots 0, 1, 2, 3
+          selectedPlayers.forEach((player, index) => {
+            matchPlayers.push({
+              id: createId(),
+              matchId,
+              playerId: player.id,
+              slot: index
+            })
+          })
+        } else {
+          // 1v1 match
+          const selectedPlayers = availablePlayers.slice(0, 2)
+          selectedPlayers.forEach((player) => assignedPlayers.add(player.id))
+          
+          // Assign slots 1 and 2
+          matchPlayers.push({
+            id: createId(),
+            matchId,
+            playerId: selectedPlayers[0].id,
+            slot: 1
+          })
+          matchPlayers.push({
+            id: createId(),
+            matchId,
+            playerId: selectedPlayers[1].id,
+            slot: 2
+          })
+        }
+      })
+
+      // Create snapshot
+      const snapshot: StatisticsSnapshot = {
+        id: createId(),
+        sessionId,
+        sessionDate: sessionInfo.date,
+        season: sessionInfo.season,
+        matches: matches.map((m) => ({ ...m })),
+        matchPlayers: matchPlayers.map((mp) => ({ ...mp })),
+        checkIns: checkIns.map((c) => ({ ...c })),
+        createdAt: new Date().toISOString()
+      }
+
+      state.statistics.push(snapshot)
+    })
+  })
+}
+
 /** Statistics API — manages historical statistics and player analytics. */
 const statsApi = {
   snapshotSession,
@@ -448,7 +636,8 @@ const statsApi = {
   getTopOpponents,
   getCheckInsBySeason,
   getAllSeasons,
-  getSessionHistory
+  getSessionHistory,
+  generateDummyHistoricalData
 }
 
 export default statsApi

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Player, PlayerStatistics } from '@herlev-hjorten/common'
-import { BarChart3, TrendingUp, Users, Target } from 'lucide-react'
+import { BarChart3, TrendingUp, Users, Target, X, Search } from 'lucide-react'
 import api from '../api'
 import statsApi from '../api/stats'
 import { Badge, PageCard } from '../components/ui'
@@ -31,7 +31,10 @@ const StatisticsPage = () => {
   const [loading, setLoading] = useState(true)
   const [loadingStats, setLoadingStats] = useState(false)
   const [search, setSearch] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isGeneratingDummyData, setIsGeneratingDummyData] = useState(false)
+  const [hasHistoricalData, setHasHistoricalData] = useState(false)
   const { notify } = useToast()
 
   /** Loads all players from API. */
@@ -66,10 +69,41 @@ const StatisticsPage = () => {
     [notify]
   )
 
+  /** Checks if historical data exists. */
+  const checkHistoricalData = useCallback(async () => {
+    try {
+      const seasons = await statsApi.getAllSeasons()
+      setHasHistoricalData(seasons.length > 0)
+    } catch {
+      setHasHistoricalData(false)
+    }
+  }, [])
+
+  /** Generates dummy historical data for demo purposes. */
+  const handleGenerateDummyData = useCallback(async () => {
+    setIsGeneratingDummyData(true)
+    setError(null)
+    try {
+      await statsApi.generateDummyHistoricalData()
+      await checkHistoricalData()
+      notify('Historiske dummy data er blevet genereret', 'success')
+      // Reload statistics if a player is selected
+      if (selectedPlayerId) {
+        await loadStatistics(selectedPlayerId)
+      }
+    } catch (err: any) {
+      setError(err.message ?? 'Kunne ikke generere dummy data')
+      notify(err.message ?? 'Kunne ikke generere dummy data', 'error')
+    } finally {
+      setIsGeneratingDummyData(false)
+    }
+  }, [selectedPlayerId, loadStatistics, checkHistoricalData, notify])
+
   // WHY: Load players on mount
   useEffect(() => {
     void loadPlayers()
-  }, [loadPlayers])
+    void checkHistoricalData()
+  }, [loadPlayers, checkHistoricalData])
 
   // WHY: Load statistics when player is selected
   useEffect(() => {
@@ -108,51 +142,131 @@ const StatisticsPage = () => {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">Statistik</h1>
+        {!hasHistoricalData && (
+          <button
+            type="button"
+            onClick={handleGenerateDummyData}
+            disabled={isGeneratingDummyData}
+            className="px-4 py-2 text-sm font-medium text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/.9)] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <BarChart3 className="w-4 h-4" />
+            {isGeneratingDummyData ? 'Genererer...' : 'Demo: Input historiske dummy data'}
+          </button>
+        )}
       </div>
 
       {/* Player Selector */}
-      <PageCard>
-        <div className="flex flex-col gap-4">
-          <div>
-            <label htmlFor="player-search" className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
-              Vælg spiller
-            </label>
-            <TableSearch
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Søg efter spiller..."
-              id="player-search"
-            />
-          </div>
-          <div className="max-h-[300px] overflow-y-auto border border-[hsl(var(--line)/.12)] rounded-lg">
-            {filteredPlayers.length === 0 ? (
-              <div className="p-4 text-center text-sm text-[hsl(var(--muted))]">Ingen spillere fundet</div>
-            ) : (
-              <div className="divide-y divide-[hsl(var(--line)/.12)]">
-                {filteredPlayers.map((player) => (
-                  <button
-                    key={player.id}
-                    type="button"
-                    onClick={() => setSelectedPlayerId(player.id)}
-                    className={`w-full px-4 py-3 text-left hover:bg-[hsl(var(--surface-2))] transition-colors ${
-                      selectedPlayerId === player.id ? 'bg-[hsl(var(--primary)/.1)]' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-[hsl(var(--foreground))]">{player.name}</span>
-                      {selectedPlayerId === player.id && (
-                        <Badge variant="default" className="text-xs">
-                          Valgt
-                        </Badge>
-                      )}
-                    </div>
-                  </button>
-                ))}
+      {selectedPlayer ? (
+        <PageCard className="p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[hsl(var(--primary)/.1)] text-[hsl(var(--primary))] font-semibold text-sm flex-shrink-0">
+                {selectedPlayer.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2)}
               </div>
-            )}
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-sm text-[hsl(var(--muted))]">Valgt spiller</span>
+                <span className="font-semibold text-[hsl(var(--foreground))] truncate">{selectedPlayer.name}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowSearch(!showSearch)}
+                className="px-3 py-2 text-sm font-medium text-[hsl(var(--foreground))] bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-glass)/.85)] rounded-lg transition-colors flex items-center gap-2"
+                title="Skift spiller"
+              >
+                <Search className="w-4 h-4" />
+                Skift
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPlayerId(null)
+                  setShowSearch(false)
+                  setSearch('')
+                }}
+                className="px-3 py-2 text-sm font-medium text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors flex items-center gap-2"
+                title="Fjern valg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
-      </PageCard>
+          {showSearch && (
+            <div className="mt-4 pt-4 border-t border-[hsl(var(--line)/.12)]">
+              <div className="flex flex-col gap-3">
+                <TableSearch
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Søg efter spiller..."
+                />
+                <div className="max-h-[200px] overflow-y-auto border border-[hsl(var(--line)/.12)] rounded-lg">
+                  {filteredPlayers.length === 0 ? (
+                    <div className="p-3 text-center text-sm text-[hsl(var(--muted))]">Ingen spillere fundet</div>
+                  ) : (
+                    <div className="divide-y divide-[hsl(var(--line)/.12)]">
+                      {filteredPlayers.map((player) => (
+                        <button
+                          key={player.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPlayerId(player.id)
+                            setShowSearch(false)
+                            setSearch('')
+                          }}
+                          className={`w-full px-3 py-2 text-left hover:bg-[hsl(var(--surface-2))] transition-colors ${
+                            selectedPlayerId === player.id ? 'bg-[hsl(var(--primary)/.1)]' : ''
+                          }`}
+                        >
+                          <span className="text-sm font-medium text-[hsl(var(--foreground))]">{player.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </PageCard>
+      ) : (
+        <PageCard>
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
+                Vælg spiller
+              </label>
+              <TableSearch
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Søg efter spiller..."
+              />
+            </div>
+            <div className="max-h-[300px] overflow-y-auto border border-[hsl(var(--line)/.12)] rounded-lg">
+              {filteredPlayers.length === 0 ? (
+                <div className="p-4 text-center text-sm text-[hsl(var(--muted))]">Ingen spillere fundet</div>
+              ) : (
+                <div className="divide-y divide-[hsl(var(--line)/.12)]">
+                  {filteredPlayers.map((player) => (
+                    <button
+                      key={player.id}
+                      type="button"
+                      onClick={() => setSelectedPlayerId(player.id)}
+                      className="w-full px-4 py-3 text-left hover:bg-[hsl(var(--surface-2))] transition-colors"
+                    >
+                      <span className="font-medium text-[hsl(var(--foreground))]">{player.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </PageCard>
+      )}
 
       {/* Statistics Display */}
       {selectedPlayer && statistics && (
