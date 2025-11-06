@@ -35,7 +35,6 @@ const PlayersPage = () => {
   const [sort, setSort] = useState<{ columnId: string; direction: 'asc' | 'desc' } | undefined>({ columnId: 'name', direction: 'asc' })
   const scrollPositionRef = useRef<number>(0)
   const shouldRestoreScrollRef = useRef(false)
-  const [hasBackup, setHasBackup] = useState(false)
   const { notify } = useToast()
 
   /** Loads players from API with optional filters. */
@@ -83,16 +82,6 @@ const PlayersPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
 
-  // WHY: Create backup on mount if one doesn't exist to preserve current state
-  useEffect(() => {
-    const backupExists = api.database.hasBackup()
-    setHasBackup(backupExists)
-    if (!backupExists) {
-      api.database.createBackup()
-      setHasBackup(true)
-      console.log('Backup created automatically on first load')
-    }
-  }, [])
 
   /** Memoized filtered players list — applies search term to name/alias. */
   const filteredPlayers = useMemo(() => {
@@ -328,38 +317,6 @@ const PlayersPage = () => {
             />
             Vis inaktive
           </label>
-          <button
-            type="button"
-            onClick={() => {
-              api.database.createBackup()
-              setHasBackup(true)
-              notify({ variant: 'success', title: 'Backup oprettet', description: 'Nuværende database er gemt som backup' })
-            }}
-            className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg text-sm font-medium whitespace-nowrap bg-[hsl(var(--surface-glass)/.85)] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.95)] ring-1 ring-[hsl(var(--line)/.12)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-            title="Gem nuværende database som backup"
-          >
-            <span>Gem backup</span>
-          </button>
-          {hasBackup && (
-            <button
-              type="button"
-              onClick={async () => {
-                if (confirm('Er du sikker på at du vil gendanne fra backup? Dette vil overskrive alle nuværende ændringer.')) {
-                  const restored = await api.database.restoreFromBackup()
-                  if (restored) {
-                    notify({ variant: 'success', title: 'Backup gendannet', description: 'Database er gendannet fra backup' })
-                    loadPlayers()
-                  } else {
-                    notify({ variant: 'danger', title: 'Kunne ikke gendanne backup' })
-                  }
-                }
-              }}
-              className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg text-sm font-medium whitespace-nowrap bg-[hsl(var(--surface-glass)/.85)] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.95)] ring-1 ring-[hsl(var(--line)/.12)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-              title="Gendan database fra backup"
-            >
-              <span>Gendan fra backup</span>
-            </button>
-          )}
           <button
             type="button"
             onClick={openCreate}
