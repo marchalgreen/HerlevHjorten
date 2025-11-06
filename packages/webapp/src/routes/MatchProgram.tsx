@@ -59,8 +59,8 @@ const MatchProgramPage = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   // WHY: Track extended capacity per court (4, 5, 6, 7, or 8 slots)
   const [extendedCapacityCourts, setExtendedCapacityCourts] = useState<Map<number, number>>(new Map())
-  // WHY: Track locked courts that should not be changed by auto-match/re-shuffle
-  const [lockedCourts, setLockedCourts] = useState<Set<number>>(new Set())
+  // WHY: Track locked courts per round that should not be changed by auto-match/re-shuffle
+  const [lockedCourts, setLockedCourts] = useState<Record<number, Set<number>>>({})
   // WHY: Track if auto-match has been run for the current round (to show "Omfordel" button)
   const [hasRunAutoMatch, setHasRunAutoMatch] = useState<Set<number>>(new Set())
   
@@ -563,14 +563,19 @@ const MatchProgramPage = () => {
     })
     return occupied
   }, [matches])
-
+  
+  /** Gets locked courts for the current round. */
+  const currentRoundLockedCourts = useMemo(() => {
+    return lockedCourts[selectedRound] || new Set<number>()
+  }, [selectedRound, lockedCourts])
+  
   /** Gets all courts that should be excluded from auto-match: manually locked + occupied */
   const excludedCourts = useMemo(() => {
-    const excluded = new Set(lockedCourts)
+    const excluded = new Set(currentRoundLockedCourts)
     // Also exclude occupied courts (courts with players)
     occupiedCourts.forEach((courtIdx) => excluded.add(courtIdx))
     return excluded
-  }, [lockedCourts, occupiedCourts])
+  }, [currentRoundLockedCourts, occupiedCourts])
 
   /** Triggers auto-matching algorithm for selected round. */
   const handleAutoMatch = async () => {
@@ -584,7 +589,7 @@ const MatchProgramPage = () => {
       
       // For initial auto-match: only fill empty courts (excludes occupied courts)
       // For re-shuffle: reshuffle all players among non-locked courts (don't clear first)
-      const courtsToExclude = isReshuffle ? lockedCourts : excludedCourts
+      const courtsToExclude = isReshuffle ? currentRoundLockedCourts : excludedCourts
       
       // Call auto-arrange - it now returns matches in memory (no DB writes)
       const { matches: newMatches, result } = await api.matches.autoArrange(selectedRound, unavailablePlayers, activatedOneRoundPlayers, courtsToExclude, isReshuffle)
@@ -593,9 +598,9 @@ const MatchProgramPage = () => {
       let finalMatches = newMatches
       if (isReshuffle) {
         const currentMatches = inMemoryMatches[selectedRound] || []
-        const lockedCourtsMatches = currentMatches.filter((court) => lockedCourts.has(court.courtIdx))
+        const lockedCourtsMatches = currentMatches.filter((court) => currentRoundLockedCourts.has(court.courtIdx))
         // Merge: keep locked courts, add new matches (excluding locked court indices)
-        const newMatchesWithoutLocked = newMatches.filter((court) => !lockedCourts.has(court.courtIdx))
+        const newMatchesWithoutLocked = newMatches.filter((court) => !currentRoundLockedCourts.has(court.courtIdx))
         finalMatches = [...lockedCourtsMatches, ...newMatchesWithoutLocked]
       }
       
@@ -614,16 +619,17 @@ const MatchProgramPage = () => {
     }
   }
 
-  /** Toggles lock state for a court. */
+  /** Toggles lock state for a court in the current round. */
   const handleToggleCourtLock = (courtIdx: number) => {
     setLockedCourts((prev) => {
-      const newSet = new Set(prev)
+      const roundLocks = prev[selectedRound] || new Set<number>()
+      const newSet = new Set(roundLocks)
       if (newSet.has(courtIdx)) {
         newSet.delete(courtIdx)
       } else {
         newSet.add(courtIdx)
       }
-      return newSet
+      return { ...prev, [selectedRound]: newSet }
     })
   }
 
@@ -639,8 +645,8 @@ const MatchProgramPage = () => {
       
       const updatedMatches: CourtWithPlayers[] = allCourts.map((courtIdx) => {
         const existing = matchesByCourt.get(courtIdx)
-        // If court is locked, keep it as is
-        if (lockedCourts.has(courtIdx) && existing) {
+        // If court is locked in current round, keep it as is
+        if (currentRoundLockedCourts.has(courtIdx) && existing) {
           return existing
         }
         // Otherwise, clear all slots (or create empty court)
@@ -1397,17 +1403,17 @@ const MatchProgramPage = () => {
                           handleToggleCourtLock(court.courtIdx)
                         }}
                         className={`relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 items-center justify-start ${
-                          lockedCourts.has(court.courtIdx)
+                          currentRoundLockedCourts.has(court.courtIdx)
                             ? 'bg-[hsl(var(--primary))]'
                             : 'bg-[hsl(var(--surface-2))]'
                         }`}
                         role="switch"
-                        aria-checked={lockedCourts.has(court.courtIdx)}
-                        title={lockedCourts.has(court.courtIdx) ? 'Lås op' : 'Lås bane'}
+                        aria-checked={currentRoundLockedCourts.has(court.courtIdx)}
+                        title={currentRoundLockedCourts.has(court.courtIdx) ? 'Lås op' : 'Lås bane'}
                       >
                         <span
                           className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            lockedCourts.has(court.courtIdx)
+                            currentRoundLockedCourts.has(court.courtIdx)
                               ? 'translate-x-3'
                               : 'translate-x-0.5'
                           }`}
@@ -1420,7 +1426,7 @@ const MatchProgramPage = () => {
                       {/* Lock Icon */}
                       <svg
                         className={`h-3.5 w-3.5 transition-colors duration-200 ml-1.5 ${
-                          lockedCourts.has(court.courtIdx)
+                          currentRoundLockedCourts.has(court.courtIdx)
                             ? 'text-[hsl(var(--primary))]'
                             : 'text-[hsl(var(--muted))]'
                         }`}
@@ -1428,9 +1434,9 @@ const MatchProgramPage = () => {
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth={2}
-                        title={lockedCourts.has(court.courtIdx) ? 'Bane er låst - vil ikke blive ændret ved auto-match/omfordel' : 'Bane er ikke låst'}
+                        title={currentRoundLockedCourts.has(court.courtIdx) ? 'Bane er låst - vil ikke blive ændret ved auto-match/omfordel' : 'Bane er ikke låst'}
                       >
-                        {lockedCourts.has(court.courtIdx) ? (
+                        {currentRoundLockedCourts.has(court.courtIdx) ? (
                           // Closed lock (locked state)
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         ) : (
