@@ -382,12 +382,15 @@ const resetMatches = async (): Promise<void> => {
 /**
  * Auto-arranges players into balanced matches using smart algorithm.
  * @param round - Optional round number (1-4) for duplicate detection
+ * @param unavailablePlayerIds - Optional set of player IDs to exclude from auto-matching (inactive players)
+ * @param activatedOneRoundPlayers - Optional set of player IDs who have maxRounds === 1 but are manually activated
  * @returns Result with filled courts count and benched players count
  * @remarks For rounds 2+, avoids repeating previous matchups (3+ same players).
  * Prioritizes Double players in 2v2 matches, balances levels, and avoids
- * duplicate partners/opponents from earlier rounds.
+ * duplicate partners/opponents from earlier rounds. Excludes inactive/unavailable players
+ * and players with maxRounds === 1 (unless manually activated).
  */
-const autoArrangeMatches = async (round?: number): Promise<AutoArrangeResult> => {
+const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>): Promise<AutoArrangeResult> => {
   const session = await ensureActiveSession()
   const state = await getStateCopy()
   const checkIns = state.checkIns
@@ -411,12 +414,22 @@ const autoArrangeMatches = async (round?: number): Promise<AutoArrangeResult> =>
   )
 
   // Get bench players with their full data
+  // Exclude players already assigned to courts, inactive/unavailable players, and "Kun 1 runde" players (rounds 2+)
   const benchPlayers = checkIns
     .map((checkIn: CheckIn) => {
       const player = state.players.find((p: Player) => p.id === checkIn.playerId)
-      return player ? { ...player, checkInId: checkIn.id } : null
+      return player ? { ...player, checkInId: checkIn.id, maxRounds: checkIn.maxRounds } : null
     })
-    .filter((p): p is Player & { checkInId: string } => p !== null && !assignedPlayers.has(p.id))
+    .filter((p): p is Player & { checkInId: string; maxRounds?: number | null } => {
+      if (p === null) return false
+      // Exclude players already assigned to courts
+      if (assignedPlayers.has(p.id)) return false
+      // Exclude inactive/unavailable players
+      if (unavailablePlayerIds?.has(p.id)) return false
+      // Exclude players who only want to play 1 round if we're in rounds 2+, UNLESS they've been manually activated
+      if ((round ?? 1) > 1 && p.maxRounds === 1 && !activatedOneRoundPlayers?.has(p.id)) return false
+      return true
+    })
 
   if (!benchPlayers.length) {
     return { filledCourts: 0, benched: 0 }
@@ -998,7 +1011,7 @@ const movePlayer = async (payload: MatchMovePayload, round?: number): Promise<vo
 
 /** Matches API — manages court assignments and player matching. */
 const matchesApi = {
-  autoArrange: (round?: number) => autoArrangeMatches(round),
+  autoArrange: (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>) => autoArrangeMatches(round, unavailablePlayerIds, activatedOneRoundPlayers),
   list: (round?: number) => listMatches(round),
   reset: resetMatches,
   move: movePlayer

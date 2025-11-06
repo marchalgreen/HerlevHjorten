@@ -467,7 +467,7 @@ const MatchProgramPage = () => {
   const handleAutoMatch = async () => {
     if (!session) return
     try {
-      const result: AutoArrangeResult = await api.matches.autoArrange(selectedRound)
+      const result: AutoArrangeResult = await api.matches.autoArrange(selectedRound, unavailablePlayers, activatedOneRoundPlayers)
       await loadMatches()
       await loadCheckIns()
       notify({ 
