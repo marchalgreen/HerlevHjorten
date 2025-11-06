@@ -497,22 +497,10 @@ const MatchProgramPage = () => {
       // Mark that auto-match has been run for this round
       setHasRunAutoMatch((prev) => new Set(prev).add(selectedRound))
       
-      if (isReshuffle) {
-        // For re-shuffle, first clear existing matches in this round (except locked courts)
-        const matchesToReset = matches.filter((court) => !lockedCourts.has(court.courtIdx))
-        for (const court of matchesToReset) {
-          for (const slot of court.slots) {
-            if (slot.player) {
-              await handleMove(slot.player.id)
-            }
-          }
-        }
-        await loadMatches()
-      }
-      
-      // Auto-match only fills empty courts - it doesn't clear existing matches
-      // Excludes manually locked courts and occupied courts (courts with players)
-      const result: AutoArrangeResult = await api.matches.autoArrange(selectedRound, unavailablePlayers, activatedOneRoundPlayers, excludedCourts)
+      // For initial auto-match: only fill empty courts (excludes occupied courts)
+      // For re-shuffle: reshuffle all players among non-locked courts (don't clear first)
+      const courtsToExclude = isReshuffle ? lockedCourts : excludedCourts
+      const result: AutoArrangeResult = await api.matches.autoArrange(selectedRound, unavailablePlayers, activatedOneRoundPlayers, courtsToExclude, isReshuffle)
       await loadMatches()
       await loadCheckIns()
       notify({ 
@@ -543,16 +531,10 @@ const MatchProgramPage = () => {
   const handleResetMatches = async () => {
     if (!session) return
     try {
-      // Only clear matches from courts that are not manually locked
-      const matchesToReset = matches.filter((court) => !lockedCourts.has(court.courtIdx))
-      for (const court of matchesToReset) {
-        for (const slot of court.slots) {
-          if (slot.player) {
-            await handleMove(slot.player.id)
-          }
-        }
-      }
+      // Use bulk reset API for instant UX - no animations
+      await api.matches.resetForRound(selectedRound, lockedCourts)
       await loadMatches()
+      await loadCheckIns()
       notify({ 
         variant: 'success', 
         title: 'Kampe nulstillet (låste baner bevares)' 

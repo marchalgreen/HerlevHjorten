@@ -380,11 +380,55 @@ const resetMatches = async (): Promise<void> => {
 }
 
 /**
+ * Resets court assignments for a specific round, respecting locked courts.
+ * Performs bulk deletion for instant UX.
+ * @param round - Round number to reset (defaults to 1)
+ * @param lockedCourtIdxs - Set of court indices that should be preserved
+ * @throws Error if no active session
+ */
+const resetMatchesForRound = async (round?: number, lockedCourtIdxs?: Set<number>): Promise<void> => {
+  const session = await ensureActiveSession()
+  const state = await getStateCopy()
+  const stateCourts = [...state.courts].sort((a, b) => a.idx - b.idx)
+  
+  // Get matches for this round
+  const roundMatches = state.matches.filter(
+    (match: Match) => match.sessionId === session.id && (match.round ?? 1) === (round ?? 1)
+  )
+  
+  // Filter out matches from locked courts
+  const matchesToReset = roundMatches.filter((match: Match) => {
+    const court = stateCourts.find((c) => c.id === match.courtId)
+    return court && !lockedCourtIdxs?.has(court.idx)
+  })
+  
+  const matchIdsToReset = matchesToReset.map((m: Match) => m.id)
+  
+  if (matchIdsToReset.length === 0) {
+    return // Nothing to reset
+  }
+  
+  // Get all match players for these matches
+  const matchPlayersToDelete = state.matchPlayers.filter((mp) => 
+    matchIdsToReset.includes(mp.matchId)
+  )
+  
+  // Bulk delete all match players at once
+  const deletePlayerPromises = matchPlayersToDelete.map((mp) => deleteMatchPlayerInDb(mp.id))
+  await Promise.all(deletePlayerPromises)
+  
+  // Bulk delete all matches at once
+  const deleteMatchPromises = matchIdsToReset.map((matchId) => deleteMatchInDb(matchId))
+  await Promise.all(deleteMatchPromises)
+}
+
+/**
  * Auto-arranges players into balanced matches using smart algorithm.
  * @param round - Optional round number (1-4) for duplicate detection
  * @param unavailablePlayerIds - Optional set of player IDs to exclude from auto-matching (inactive players)
  * @param activatedOneRoundPlayers - Optional set of player IDs who have maxRounds === 1 but are manually activated
  * @param lockedCourtIdxs - Optional set of court indices that should be excluded from auto-matching
+ * @param isReshuffle - If true, includes players from non-locked courts in the reshuffle pool
  * @returns Result with filled courts count and benched players count
  * @remarks For rounds 2+, avoids repeating previous matchups (3+ same players).
  * Prioritizes Double players in 2v2 matches, balances levels, and avoids
@@ -392,7 +436,7 @@ const resetMatches = async (): Promise<void> => {
  * and players with maxRounds === 1 (unless manually activated). Includes randomization
  * to allow different outcomes on re-shuffle.
  */
-const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>, lockedCourtIdxs?: Set<number>): Promise<AutoArrangeResult> => {
+const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>, lockedCourtIdxs?: Set<number>, isReshuffle?: boolean): Promise<AutoArrangeResult> => {
   const session = await ensureActiveSession()
   const state = await getStateCopy()
   const checkIns = state.checkIns
@@ -412,6 +456,7 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   
   // Only exclude players who are already assigned in THIS round
   // BUT: exclude players on locked courts from being reassigned (they should stay on locked courts)
+  // For reshuffle: include players from non-locked courts in the pool to be reshuffled
   const assignedPlayers = new Set(
     state.matchPlayers
       .filter((mp) => {
@@ -422,7 +467,10 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
         if (court && lockedCourtIdxs?.has(court.idx)) {
           return true // Exclude players on locked courts from being reassigned
         }
-        // For re-shuffle: exclude all players already assigned in this round (they'll be cleared first)
+        // For reshuffle: include players from non-locked courts in the reshuffle pool
+        if (isReshuffle) {
+          return false // Don't exclude - they'll be reshuffled
+        }
         // For initial match: exclude all players already assigned in this round
         return true
       })
@@ -452,6 +500,7 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   }
   
   // Only exclude courts that are occupied in THIS round
+  // For reshuffle: include occupied non-locked courts (they'll be cleared and reused)
   const occupied = new Set(
     existingMatchesInRound
       .map((match) => stateCourts.find((court) => court.id === match.courtId)?.idx)
@@ -460,7 +509,54 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
 
   const availableCourtIdxs = stateCourts
     .map((court) => court.idx)
-    .filter((idx) => !occupied.has(idx) && !lockedCourtIdxs?.has(idx))
+    .filter((idx) => {
+      // Always exclude locked courts
+      if (lockedCourtIdxs?.has(idx)) return false
+      // For reshuffle: include occupied courts (they'll be cleared and reused)
+      if (isReshuffle) return true
+      // For initial match: exclude occupied courts
+      return !occupied.has(idx)
+    })
+
+  // For reshuffle: clear existing matches from non-locked courts BEFORE creating assignments
+  if (isReshuffle && existingMatchesInRound.length > 0) {
+    const matchesToClear = existingMatchesInRound.filter((match: Match) => {
+      const court = stateCourts.find((c) => c.id === match.courtId)
+      return court && !lockedCourtIdxs?.has(court.idx)
+    })
+    
+    const matchIdsToClear = matchesToClear.map((m: Match) => m.id)
+    const matchPlayersToDelete = state.matchPlayers.filter((mp) => 
+      matchIdsToClear.includes(mp.matchId)
+    )
+    
+    // Bulk delete match players and matches
+    const deletePlayerPromises = matchPlayersToDelete.map((mp) => deleteMatchPlayerInDb(mp.id))
+    const deleteMatchPromises = matchIdsToClear.map((matchId) => deleteMatchInDb(matchId))
+    await Promise.all([...deletePlayerPromises, ...deleteMatchPromises])
+    
+    // Refresh state after clearing
+    const updatedState = await getStateCopy()
+    // Update benchPlayers to include players that were just cleared
+    const clearedPlayerIds = new Set(matchPlayersToDelete.map((mp) => mp.playerId))
+    const clearedPlayers = checkIns
+      .map((checkIn: CheckIn) => {
+        const player = updatedState.players.find((p: Player) => p.id === checkIn.playerId)
+        if (!player || !clearedPlayerIds.has(player.id)) return null
+        return { ...player, checkInId: checkIn.id, maxRounds: checkIn.maxRounds }
+      })
+      .filter((p): p is Player & { checkInId: string; maxRounds?: number | null } => {
+        if (p === null) return false
+        // Exclude inactive/unavailable players
+        if (unavailablePlayerIds?.has(p.id)) return false
+        // Exclude players who only want to play 1 round if we're in rounds 2+, UNLESS they've been manually activated
+        if ((round ?? 1) > 1 && p.maxRounds === 1 && !activatedOneRoundPlayers?.has(p.id)) return false
+        return true
+      })
+    
+    // Add cleared players to benchPlayers
+    benchPlayers.push(...clearedPlayers)
+  }
 
   if (!availableCourtIdxs.length) {
     return { filledCourts: 0, benched: benchPlayers.length }
@@ -1082,9 +1178,10 @@ const movePlayer = async (payload: MatchMovePayload, round?: number): Promise<vo
 
 /** Matches API — manages court assignments and player matching. */
 const matchesApi = {
-  autoArrange: (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>, lockedCourtIdxs?: Set<number>) => autoArrangeMatches(round, unavailablePlayerIds, activatedOneRoundPlayers, lockedCourtIdxs),
+  autoArrange: (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>, lockedCourtIdxs?: Set<number>, isReshuffle?: boolean) => autoArrangeMatches(round, unavailablePlayerIds, activatedOneRoundPlayers, lockedCourtIdxs, isReshuffle),
   list: (round?: number) => listMatches(round),
   reset: resetMatches,
+  resetForRound: resetMatchesForRound,
   move: movePlayer
 }
 
