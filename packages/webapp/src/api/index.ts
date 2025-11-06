@@ -489,6 +489,7 @@ const resetMatchesForRound = async (round?: number, lockedCourtIdxs?: Set<number
  * @param activatedOneRoundPlayers - Optional set of player IDs who have maxRounds === 1 but are manually activated
  * @param lockedCourtIdxs - Optional set of court indices that should be excluded from auto-matching
  * @param isReshuffle - If true, includes players from non-locked courts in the reshuffle pool
+ * @param currentMatches - Optional current in-memory matches for this round (used to identify players on locked courts)
  * @returns Result with filled courts count and benched players count
  * @remarks For rounds 2+, avoids repeating previous matchups (3+ same players).
  * Prioritizes Double players in 2v2 matches, balances levels, and avoids
@@ -496,7 +497,7 @@ const resetMatchesForRound = async (round?: number, lockedCourtIdxs?: Set<number
  * and players with maxRounds === 1 (unless manually activated). Includes randomization
  * to allow different outcomes on re-shuffle.
  */
-const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>, lockedCourtIdxs?: Set<number>, isReshuffle?: boolean): Promise<{ matches: CourtWithPlayers[]; result: AutoArrangeResult }> => {
+const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>, lockedCourtIdxs?: Set<number>, isReshuffle?: boolean, currentMatches?: CourtWithPlayers[]): Promise<{ matches: CourtWithPlayers[]; result: AutoArrangeResult }> => {
   const session = await ensureActiveSession()
   const state = await getStateCopy()
   const checkIns = state.checkIns
@@ -517,6 +518,20 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   // Only exclude players who are already assigned in THIS round
   // BUT: exclude players on locked courts from being reassigned (they should stay on locked courts)
   // For reshuffle: include players from non-locked courts in the pool to be reshuffled
+  // First, get players from locked courts from current in-memory matches (if provided)
+  const playersOnLockedCourts = new Set<string>()
+  if (currentMatches && lockedCourtIdxs) {
+    for (const court of currentMatches) {
+      if (lockedCourtIdxs.has(court.courtIdx)) {
+        for (const slot of court.slots) {
+          if (slot.player?.id) {
+            playersOnLockedCourts.add(slot.player.id)
+          }
+        }
+      }
+    }
+  }
+  
   const assignedPlayers = new Set(
     state.matchPlayers
       .filter((mp) => {
@@ -536,6 +551,9 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
       })
       .map((mp) => mp.playerId)
   )
+  
+  // Also add players from locked courts from in-memory matches (if provided)
+  playersOnLockedCourts.forEach((playerId) => assignedPlayers.add(playerId))
 
   // Get bench players with their full data
   // Exclude players already assigned to courts, inactive/unavailable players, and "Kun 1 runde" players (rounds 2+)
@@ -1100,7 +1118,7 @@ const movePlayer = async (payload: MatchMovePayload, round?: number): Promise<vo
 
 /** Matches API — manages court assignments and player matching. */
 const matchesApi = {
-  autoArrange: (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>, lockedCourtIdxs?: Set<number>, isReshuffle?: boolean) => autoArrangeMatches(round, unavailablePlayerIds, activatedOneRoundPlayers, lockedCourtIdxs, isReshuffle),
+  autoArrange: (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>, lockedCourtIdxs?: Set<number>, isReshuffle?: boolean, currentMatches?: CourtWithPlayers[]) => autoArrangeMatches(round, unavailablePlayerIds, activatedOneRoundPlayers, lockedCourtIdxs, isReshuffle, currentMatches),
   list: (round?: number) => listMatches(round),
   reset: resetMatches,
   resetForRound: resetMatchesForRound,
