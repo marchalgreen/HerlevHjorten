@@ -118,7 +118,8 @@ async function migrateData() {
       idx: c.idx
     }))
 
-    const { error: courtsError } = await supabase.from('courts').upsert(courtsToInsert, { onConflict: 'id' })
+    // Use insert with ignoreDuplicates to handle existing courts
+    const { error: courtsError } = await supabase.from('courts').upsert(courtsToInsert, { onConflict: 'idx', ignoreDuplicates: true })
     if (courtsError) {
       console.error('Error migrating courts:', courtsError)
     } else {
@@ -166,40 +167,64 @@ async function migrateData() {
   // Migrate matches
   if (exportData.matches && exportData.matches.length > 0) {
     console.log('Migrating matches...')
-    const matchesToInsert = exportData.matches.map((m) => ({
-      id: m.id,
-      session_id: m.sessionId,
-      court_id: m.courtId,
-      started_at: m.startedAt,
-      ended_at: m.endedAt || null,
-      round: m.round || null,
-      created_at: m.createdAt || m.startedAt
-    }))
+    
+    // Get valid court and session IDs from the database
+    const { data: validCourts } = await supabase.from('courts').select('id')
+    const { data: validSessions } = await supabase.from('training_sessions').select('id')
+    const validCourtIds = new Set(validCourts?.map(c => c.id) || [])
+    const validSessionIds = new Set(validSessions?.map(s => s.id) || [])
+    
+    const matchesToInsert = exportData.matches
+      .filter((m) => validCourtIds.has(m.courtId) && validSessionIds.has(m.sessionId))
+      .map((m) => ({
+        id: m.id,
+        session_id: m.sessionId,
+        court_id: m.courtId,
+        started_at: m.startedAt,
+        ended_at: m.endedAt || null,
+        round: m.round || null
+      }))
 
-    const { error: matchesError } = await supabase.from('matches').upsert(matchesToInsert, { onConflict: 'id' })
-    if (matchesError) {
-      console.error('Error migrating matches:', matchesError)
+    if (matchesToInsert.length > 0) {
+      const { error: matchesError } = await supabase.from('matches').upsert(matchesToInsert, { onConflict: 'id' })
+      if (matchesError) {
+        console.error('Error migrating matches:', matchesError)
+      } else {
+        console.log(`✓ Migrated ${matchesToInsert.length} matches (skipped ${exportData.matches.length - matchesToInsert.length} with invalid foreign keys)`)
+      }
     } else {
-      console.log(`✓ Migrated ${matchesToInsert.length} matches`)
+      console.log(`⚠ Skipped ${exportData.matches.length} matches (no valid foreign keys)`)
     }
   }
 
   // Migrate match players
   if (exportData.matchPlayers && exportData.matchPlayers.length > 0) {
     console.log('Migrating match players...')
-    const matchPlayersToInsert = exportData.matchPlayers.map((mp) => ({
-      id: mp.id,
-      match_id: mp.matchId,
-      player_id: mp.playerId,
-      slot: mp.slot,
-      created_at: mp.createdAt || new Date().toISOString()
-    }))
+    
+    // Get valid match and player IDs from the database
+    const { data: validMatches } = await supabase.from('matches').select('id')
+    const { data: validPlayers } = await supabase.from('players').select('id')
+    const validMatchIds = new Set(validMatches?.map(m => m.id) || [])
+    const validPlayerIds = new Set(validPlayers?.map(p => p.id) || [])
+    
+    const matchPlayersToInsert = exportData.matchPlayers
+      .filter((mp) => validMatchIds.has(mp.matchId) && validPlayerIds.has(mp.playerId))
+      .map((mp) => ({
+        id: mp.id,
+        match_id: mp.matchId,
+        player_id: mp.playerId,
+        slot: mp.slot
+      }))
 
-    const { error: matchPlayersError } = await supabase.from('match_players').upsert(matchPlayersToInsert, { onConflict: 'id' })
-    if (matchPlayersError) {
-      console.error('Error migrating match players:', matchPlayersError)
+    if (matchPlayersToInsert.length > 0) {
+      const { error: matchPlayersError } = await supabase.from('match_players').upsert(matchPlayersToInsert, { onConflict: 'id' })
+      if (matchPlayersError) {
+        console.error('Error migrating match players:', matchPlayersError)
+      } else {
+        console.log(`✓ Migrated ${matchPlayersToInsert.length} match players (skipped ${exportData.matchPlayers.length - matchPlayersToInsert.length} with invalid foreign keys)`)
+      }
     } else {
-      console.log(`✓ Migrated ${matchPlayersToInsert.length} match players`)
+      console.log(`⚠ Skipped ${exportData.matchPlayers.length} match players (no valid foreign keys)`)
     }
   }
 

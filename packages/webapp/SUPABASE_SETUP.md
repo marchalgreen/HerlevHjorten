@@ -27,12 +27,67 @@ This guide will help you set up Supabase for the Herlev Hjorten webapp.
 
 ## Step 3: Run Database Migration
 
+### Option A: Using Supabase SQL Editor (Recommended)
+
 1. In your Supabase project dashboard, go to **SQL Editor**
 2. Click "New query"
 3. Open the file `supabase/migrations/001_initial_schema.sql` from this repository
 4. Copy and paste the entire SQL content into the SQL Editor
 5. Click "Run" (or press Cmd/Ctrl + Enter)
 6. Verify the migration succeeded (you should see "Success. No rows returned")
+
+**If you get "Failed to fetch" error:**
+- Try refreshing the page
+- Check your internet connection
+- Disable browser extensions (ad blockers, privacy tools)
+- Try a different browser or incognito mode
+- Check if Supabase is experiencing outages: [status.supabase.com](https://status.supabase.com)
+- Clear browser cache and cookies for supabase.com
+- Try using the Supabase CLI (see Option B below)
+
+### Option B: Using Supabase CLI (Alternative)
+
+If the SQL Editor doesn't work, you can use the Supabase CLI:
+
+1. **Install Supabase CLI** (if not already installed):
+   ```bash
+   # macOS
+   brew install supabase/tap/supabase
+   
+   # Or using npm
+   npm install -g supabase
+   ```
+
+2. **Login to Supabase**:
+   ```bash
+   supabase login
+   ```
+
+3. **Link your project**:
+   ```bash
+   cd packages/webapp
+   supabase link --project-ref your-project-ref
+   ```
+   (Find your project ref in Supabase dashboard → Settings → General → Reference ID)
+
+4. **Run the migration**:
+   ```bash
+   supabase db push
+   ```
+   Or manually:
+   ```bash
+   supabase db execute --file ../../supabase/migrations/001_initial_schema.sql
+   ```
+
+### Option C: Using psql (Direct Database Connection)
+
+If you have PostgreSQL client installed:
+
+1. Get your database connection string from Supabase dashboard → Settings → Database → Connection string → URI
+2. Run:
+   ```bash
+   psql "your-connection-string" -f supabase/migrations/001_initial_schema.sql
+   ```
 
 ## Step 4: Configure Environment Variables
 
@@ -61,29 +116,34 @@ If you have existing data in localStorage that you want to migrate:
 1. **Export from localStorage**:
    - Open your app in the browser
    - Open the browser console (F12)
-   - Run:
-     ```javascript
-     const data = localStorage.getItem('herlev-hjorten-db')
-     console.log(data)
-     ```
-   - Copy the output
-   - Save it to `packages/webapp/localStorage-export.json`
+   - **Option A - Use the helper script** (recommended):
+     - Open the file `packages/webapp/scripts/export-localStorage.js`
+     - Copy the entire contents
+     - Paste it into the browser console and press Enter
+     - Copy the JSON output that appears
+   - **Option B - Manual export**:
+     - In the console, run:
+       ```javascript
+       localStorage.getItem('herlev-hjorten-db')
+       ```
+     - Copy the output (it should be a JSON string)
+   - Save the copied output to `packages/webapp/localStorage-export.json`
+   - **Important**: Make sure the file contains valid JSON (it should start with `{` and end with `}`)
 
-2. **Run the migration script**:
+2. **Run the migration script** (IMPORTANT: Run this in a terminal, NOT in the browser console):
+   
+   **First, install tsx if needed:**
    ```bash
    cd packages/webapp
-   pnpm tsx scripts/migrate-to-supabase.ts
-   ```
-
-   Note: You may need to install `tsx` first:
-   ```bash
    pnpm add -D tsx
    ```
    
-   Or use Node.js directly (if you have a TypeScript runner configured):
+   **Then run the migration:**
    ```bash
-   node --loader tsx scripts/migrate-to-supabase.ts
+   pnpm tsx scripts/migrate-to-supabase.ts
    ```
+   
+   **Note**: Make sure you're running this in a terminal/command prompt (Terminal on Mac, Command Prompt or PowerShell on Windows), NOT in the browser console. The browser console is only for exporting data from localStorage.
 
 ## Step 6: Test the Setup
 
