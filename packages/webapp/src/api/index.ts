@@ -479,7 +479,7 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
 
   // Get bench players with their full data
   // Exclude players already assigned to courts, inactive/unavailable players, and "Kun 1 runde" players (rounds 2+)
-  const benchPlayers = checkIns
+  const benchPlayersRaw = checkIns
     .map((checkIn: CheckIn) => {
       const player = state.players.find((p: Player) => p.id === checkIn.playerId)
       return player ? { ...player, checkInId: checkIn.id, maxRounds: checkIn.maxRounds } : null
@@ -494,6 +494,16 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
       if ((round ?? 1) > 1 && p.maxRounds === 1 && !activatedOneRoundPlayers?.has(p.id)) return false
       return true
     })
+
+  // Deduplicate benchPlayers by player ID (in case of duplicates)
+  const seenPlayerIds = new Set<string>()
+  const benchPlayers = benchPlayersRaw.filter((p) => {
+    if (seenPlayerIds.has(p.id)) {
+      return false // Skip duplicate
+    }
+    seenPlayerIds.add(p.id)
+    return true
+  })
 
   if (!benchPlayers.length) {
     return { filledCourts: 0, benched: 0 }
@@ -535,27 +545,10 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
     const deleteMatchPromises = matchIdsToClear.map((matchId) => deleteMatchInDb(matchId))
     await Promise.all([...deletePlayerPromises, ...deleteMatchPromises])
     
-    // Refresh state after clearing
-    const updatedState = await getStateCopy()
-    // Update benchPlayers to include players that were just cleared
-    const clearedPlayerIds = new Set(matchPlayersToDelete.map((mp) => mp.playerId))
-    const clearedPlayers = checkIns
-      .map((checkIn: CheckIn) => {
-        const player = updatedState.players.find((p: Player) => p.id === checkIn.playerId)
-        if (!player || !clearedPlayerIds.has(player.id)) return null
-        return { ...player, checkInId: checkIn.id, maxRounds: checkIn.maxRounds }
-      })
-      .filter((p): p is Player & { checkInId: string; maxRounds?: number | null } => {
-        if (p === null) return false
-        // Exclude inactive/unavailable players
-        if (unavailablePlayerIds?.has(p.id)) return false
-        // Exclude players who only want to play 1 round if we're in rounds 2+, UNLESS they've been manually activated
-        if ((round ?? 1) > 1 && p.maxRounds === 1 && !activatedOneRoundPlayers?.has(p.id)) return false
-        return true
-      })
-    
-    // Add cleared players to benchPlayers
-    benchPlayers.push(...clearedPlayers)
+    // Note: We don't need to add cleared players to benchPlayers because:
+    // - For reshuffle, assignedPlayers excludes players from non-locked courts
+    // - So benchPlayers already includes those players
+    // - Adding them again would create duplicates
   }
 
   if (!availableCourtIdxs.length) {
@@ -570,15 +563,17 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
     return randomSeed / 233280
   }
 
-  // Sort players by level with some randomization to allow variation
-  // Still prioritize by level, but add small random factor to allow different ordering
+  // Sort players with minimal level influence - randomization dominates
+  // Rangliste (level) is almost irrelevant - just a tiny preference
   benchPlayers.sort((a, b) => {
     const levelA = a.level ?? 0
     const levelB = b.level ?? 0
     const levelDiff = levelA - levelB
-    // Add small random factor (±0.5) to allow variation while maintaining level-based sorting
-    const randomFactor = (random() - 0.5) * 0.3
-    return levelDiff + randomFactor
+    // Rangliste has minimal influence (0.1x) - randomization dominates (10x)
+    // This makes level almost irrelevant, allowing much more variation
+    const levelInfluence = levelDiff * 0.1 // Very small influence
+    const randomFactor = (random() - 0.5) * 10.0 // Large random variation
+    return levelInfluence + randomFactor
   })
 
   // For rounds 2+, track previous matchups to avoid repeating partners/opponents
@@ -612,19 +607,21 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   }
 
   // Helper function to score a match combination (lower is better)
-  // Prefers new matchups over repeat matchups, and balanced levels
-  // Made less absolute to allow variation - repeat matchups are discouraged but not forbidden
+  // Rangliste (level) is almost irrelevant - randomization dominates completely
   const scoreMatchup = (player1: Player, player2: Player, isTeam: boolean): number => {
     const levelDiff = Math.abs((player1.level ?? 0) - (player2.level ?? 0))
     const isRepeat = havePlayedTogether(player1.id, player2.id)
-    // Reduced penalty to allow some variation - repeat matchups are discouraged but not forbidden
-    // Add random factor to allow different outcomes
-    const randomFactor = random() * 20 // Add 0-20 random variation
-    const repeatPenalty = isRepeat ? (isTeam ? 200 : 100) : 0 // Reduced from 1000/500
-    return levelDiff + repeatPenalty + randomFactor
+    // Rangliste has minimal influence (0.05x) - almost doesn't count
+    const levelInfluence = levelDiff * 0.05 // Very tiny influence
+    // Very small penalty - repeat matchups are slightly discouraged but easily overridden
+    const repeatPenalty = isRepeat ? (isTeam ? 20 : 10) : 0 // Very small penalty
+    // Large random factor completely dominates the scoring
+    const randomFactor = random() * 200 // Add 0-200 random variation (completely dominates)
+    return levelInfluence + repeatPenalty + randomFactor
   }
 
   // Helper function to score a team split for 2v2
+  // Rangliste (level) is almost irrelevant - randomization completely dominates
   const scoreTeamSplit = (players: Player[], team1: [number, number], team2: [number, number]): number => {
     const [i, j] = team1
     const [k, l] = team2
@@ -640,14 +637,19 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
       scoreMatchup(players[j], players[k], false) +
       scoreMatchup(players[j], players[l], false)
     
-    // Calculate level balance
+    // Calculate level balance - but make it almost irrelevant
     const levels = players.map((p) => p.level ?? 0)
     const team1Total = levels[i] + levels[j]
     const team2Total = levels[k] + levels[l]
-    const levelBalance = Math.abs(team1Total - team2Total)
+    const levelBalance = Math.abs(team1Total - team2Total) * 0.05 // Very tiny influence
+    
+    // Add huge random factor to allow maximum variation
+    // Randomization completely dominates, making strategies almost irrelevant
+    const randomFactor = random() * 300 // Very large random variation
     
     // Combine all factors (lower is better)
-    return team1Score + team2Score + crossTeamScore / 4 + levelBalance
+    // Random factor completely dominates, making other factors almost irrelevant
+    return team1Score + team2Score + crossTeamScore / 4 + levelBalance + randomFactor
   }
 
   // Smart matching algorithm - PRIORITY: Get ALL players assigned to a court
@@ -656,7 +658,14 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   const assignments: Array<{ courtIdx: number; playerIds: string[] }> = []
   const usedPlayerIds = new Set<string>()
   let courtIdxIndex = 0
-  const remainingPlayers = [...benchPlayers]
+  // Deduplicate remainingPlayers to prevent duplicate assignments
+  const remainingPlayersMap = new Map<string, Player & { checkInId: string; maxRounds?: number | null }>()
+  benchPlayers.forEach((p) => {
+    if (!remainingPlayersMap.has(p.id)) {
+      remainingPlayersMap.set(p.id, p)
+    }
+  })
+  const remainingPlayers = Array.from(remainingPlayersMap.values())
 
   // Helper function to create balanced 2v2 match with variety preference
   // Made less absolute - considers top N splits instead of just the best one
@@ -674,12 +683,18 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
       }
     }
     
-    // Sort by score and pick from top 3 (or all if less than 3) to allow variation
+    // Sort by score but randomization dominates, so scores are almost irrelevant
     splits.sort((a, b) => a.score - b.score)
-    const topSplits = splits.slice(0, Math.min(3, splits.length))
+    // Consider most splits (80%+) since randomization makes scores almost irrelevant
+    const topCount = Math.min(splits.length, Math.max(3, Math.floor(splits.length * 0.8)))
+    const topSplits = splits.slice(0, topCount)
     
-    // Randomly select from top splits (weighted towards better scores)
-    const selectedSplit = topSplits[Math.floor(random() * topSplits.length)]
+    // Randomly select from top splits - randomization dominates
+    // 70% chance to pick completely randomly from all top splits
+    // 30% chance to slightly prefer top 2
+    const selectedSplit = random() > 0.7
+      ? topSplits[Math.floor(random() * Math.min(2, topSplits.length))]
+      : topSplits[Math.floor(random() * topSplits.length)]
     
     const [i, j] = selectedSplit.team1
     const team1 = [players[i].id, players[j].id]
@@ -704,12 +719,18 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
       opponents.push({ index: i, score })
     }
     
-    // Sort by score and pick from top 3 (or all if less than 3) to allow variation
+    // Sort by score but randomization dominates, so scores are almost irrelevant
     opponents.sort((a, b) => a.score - b.score)
-    const topOpponents = opponents.slice(0, Math.min(3, opponents.length))
+    // Consider most opponents (80%+) since randomization makes scores almost irrelevant
+    const topCount = Math.min(opponents.length, Math.max(3, Math.floor(opponents.length * 0.8)))
+    const topOpponents = opponents.slice(0, topCount)
     
-    // Randomly select from top opponents (weighted towards better scores)
-    const selectedOpponent = topOpponents[Math.floor(random() * topOpponents.length)]
+    // Randomly select from top opponents - randomization dominates
+    // 70% chance to pick completely randomly from all top opponents
+    // 30% chance to slightly prefer top 2
+    const selectedOpponent = random() > 0.7
+      ? topOpponents[Math.floor(random() * Math.min(2, topOpponents.length))]
+      : topOpponents[Math.floor(random() * topOpponents.length)]
     
     return {
       courtIdx: availableCourtIdxs[courtIdxIndex++],
@@ -720,13 +741,15 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   // Main strategy: Assign ALL players to courts, prioritizing balanced matches
   // Made less absolute - add randomization to player selection order
   while (remainingPlayers.length > 0 && courtIdxIndex < availableCourtIdxs.length) {
-    // Re-sort with randomization to allow different outcomes
+    // Re-sort with minimal level influence - randomization completely dominates
     remainingPlayers.sort((a, b) => {
       const levelA = a.level ?? 0
       const levelB = b.level ?? 0
       const levelDiff = levelA - levelB
-      const randomFactor = (random() - 0.5) * 0.3
-      return levelDiff + randomFactor
+      // Rangliste has minimal influence (0.1x) - randomization dominates (10x)
+      const levelInfluence = levelDiff * 0.1 // Very small influence
+      const randomFactor = (random() - 0.5) * 10.0 // Large random variation
+      return levelInfluence + randomFactor
     })
     
     // Separate players by category
@@ -740,18 +763,21 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
       // Take 4 players (prioritize Double players, fill with Singles if needed)
       const players: Player[] = []
       
-      // Shuffle doubles players to allow variation
+      // Shuffle doubles players with significant randomization for more variation
       const shuffledDoubles = [...doublesOnly].sort(() => random() - 0.5)
       
-      // Add Double players first (with some randomization)
-      for (const p of shuffledDoubles) {
+      // Add Double players first (with significant randomization)
+      // Sometimes take all doubles, sometimes mix early
+      const doublesToTake = random() > 0.3 ? shuffledDoubles.length : Math.min(2, shuffledDoubles.length)
+      for (let i = 0; i < doublesToTake; i++) {
+        const p = shuffledDoubles[i]
         if (players.length < 4 && !usedPlayerIds.has(p.id)) {
           players.push(p)
           usedPlayerIds.add(p.id)
         }
       }
       
-      // Shuffle singles-eligible players to allow variation
+      // Shuffle singles-eligible players with significant randomization for more variation
       const shuffledSingles = [...singlesEligible].sort(() => random() - 0.5)
       
       // Fill remaining slots with Singles-eligible players
@@ -777,13 +803,12 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
     }
     
     // PRIORITY 2: Create 2v2 matches if we have 4+ players
-    // Made less absolute - allow variation in which players are selected
+    // Made much less strict - allow significant variation in which players are selected
     if (remainingPlayers.length >= 4) {
-      // Instead of always taking first 4, sometimes take a random sample to allow variation
-      // But still prefer balanced selection
+      // Much more randomization - prefer variety over predictability
       let players: Player[]
-      if (random() > 0.7) {
-        // 30% chance: take a slightly randomized selection
+      if (random() > 0.4) {
+        // 60% chance: take a randomized selection for more variety
         const shuffled = [...remainingPlayers].sort(() => random() - 0.5)
         players = shuffled.slice(0, 4)
         // Remove selected players from remaining
@@ -792,7 +817,7 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
           if (idx >= 0) remainingPlayers.splice(idx, 1)
         })
       } else {
-        // 70% chance: take first 4 (more predictable)
+        // 40% chance: take first 4 (still some predictability)
         players = remainingPlayers.splice(0, 4)
       }
       
@@ -915,9 +940,27 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   const courtsByIdx = new Map(courts.map((court) => [court.idx, court]))
   
   // Create matches and match players in Supabase
+  // Track assigned player IDs to prevent duplicates
+  const assignedInThisRound = new Set<string>()
   for (const { courtIdx, playerIds } of assignments) {
     const court = courtsByIdx.get(courtIdx)
     if (!court) continue
+    
+    // Validate: ensure no duplicate players in this assignment
+    const uniquePlayerIds = Array.from(new Set(playerIds))
+    if (uniquePlayerIds.length !== playerIds.length) {
+      console.warn(`Duplicate players detected in assignment for court ${courtIdx}, removing duplicates`)
+    }
+    
+    // Validate: ensure no player is assigned to multiple courts
+    const duplicatePlayers = uniquePlayerIds.filter((id) => assignedInThisRound.has(id))
+    if (duplicatePlayers.length > 0) {
+      console.warn(`Players ${duplicatePlayers.join(', ')} already assigned to another court, skipping this assignment`)
+      continue
+    }
+    
+    // Mark players as assigned
+    uniquePlayerIds.forEach((id) => assignedInThisRound.add(id))
     
     const match = await createMatchInDb({
       sessionId: session.id,
@@ -929,24 +972,24 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
     
     // For 1v1 matches (2 players), place them in slots 1 and 2 (opposite sides of net)
     // For 2v2 matches (4 players), use slots 0, 1, 2, 3 (normal order)
-    if (playerIds.length === 2) {
+    if (uniquePlayerIds.length === 2) {
       // 1v1 match: place players in slots 1 and 2
       await createMatchPlayerInDb({
         matchId: match.id,
-        playerId: playerIds[0],
+        playerId: uniquePlayerIds[0],
         slot: 1
       })
       await createMatchPlayerInDb({
         matchId: match.id,
-        playerId: playerIds[1],
+        playerId: uniquePlayerIds[1],
         slot: 2
       })
     } else {
       // 2v2 match: use slots 0, 1, 2, 3
-      for (let slot = 0; slot < playerIds.length; slot++) {
+      for (let slot = 0; slot < uniquePlayerIds.length; slot++) {
         await createMatchPlayerInDb({
           matchId: match.id,
-          playerId: playerIds[slot],
+          playerId: uniquePlayerIds[slot],
           slot
         })
       }
