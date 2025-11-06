@@ -219,16 +219,16 @@ const MatchProgramPage = () => {
         return true
       })
       .sort((a, b) => {
-        // Primary sort: Gender (Herre, Dame, then null/undefined)
-        const genderOrder: Record<string, number> = { Herre: 1, Dame: 2 }
+        // Primary sort: Gender (Dame first, Herre second, then null/undefined)
+        const genderOrder: Record<string, number> = { Dame: 1, Herre: 2 }
         const genderA = genderOrder[a.gender ?? ''] ?? 3
         const genderB = genderOrder[b.gender ?? ''] ?? 3
         if (genderA !== genderB) {
           return genderA - genderB
         }
         
-        // Secondary sort: PlayingCategory (Begge, Double, Single, then null/undefined)
-        const categoryOrder: Record<string, number> = { Begge: 1, Double: 2, Single: 3 }
+        // Secondary sort: PlayingCategory (Double first, Begge second, Single last, then null/undefined)
+        const categoryOrder: Record<string, number> = { Double: 1, Begge: 2, Single: 3 }
         const categoryA = categoryOrder[a.primaryCategory ?? ''] ?? 4
         const categoryB = categoryOrder[b.primaryCategory ?? ''] ?? 4
         return categoryA - categoryB
@@ -250,16 +250,16 @@ const MatchProgramPage = () => {
         return isOneRoundOnly || isUnavailable
       })
       .sort((a, b) => {
-        // Primary sort: Gender (Herre, Dame, then null/undefined)
-        const genderOrder: Record<string, number> = { Herre: 1, Dame: 2 }
+        // Primary sort: Gender (Dame first, Herre second, then null/undefined)
+        const genderOrder: Record<string, number> = { Dame: 1, Herre: 2 }
         const genderA = genderOrder[a.gender ?? ''] ?? 3
         const genderB = genderOrder[b.gender ?? ''] ?? 3
         if (genderA !== genderB) {
           return genderA - genderB
         }
         
-        // Secondary sort: PlayingCategory (Begge, Double, Single, then null/undefined)
-        const categoryOrder: Record<string, number> = { Begge: 1, Double: 2, Single: 3 }
+        // Secondary sort: PlayingCategory (Double first, Begge second, Single last, then null/undefined)
+        const categoryOrder: Record<string, number> = { Double: 1, Begge: 2, Single: 3 }
         const categoryA = categoryOrder[a.primaryCategory ?? ''] ?? 4
         const categoryB = categoryOrder[b.primaryCategory ?? ''] ?? 4
         return categoryA - categoryB
