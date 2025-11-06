@@ -28,8 +28,10 @@ const MatchProgramPage = () => {
   const { notify } = useToast()
   const [selectedRound, setSelectedRound] = useState<number>(1)
   const [unavailablePlayers, setUnavailablePlayers] = useState<Set<string>>(new Set())
+  const [activatedOneRoundPlayers, setActivatedOneRoundPlayers] = useState<Set<string>>(new Set())
   const [dragOverInactive, setDragOverInactive] = useState(false)
   const [dragOverBench, setDragOverBench] = useState(false)
+  const [dragSource, setDragSource] = useState<'bench' | 'inactive' | 'court' | null>(null)
   const [dragOverCourt, setDragOverCourt] = useState<number | null>(null)
   const [dragOverSlot, setDragOverSlot] = useState<{ courtIdx: number; slot: number } | null>(null)
   const [recentlySwappedPlayers, setRecentlySwappedPlayers] = useState<Set<string>>(new Set())
@@ -139,7 +141,8 @@ const MatchProgramPage = () => {
         // Exclude players already assigned to a court
         if (assignedIds.has(player.id)) return false
         // Exclude players who only want to play 1 round if we're viewing rounds 2 or 3
-        if (selectedRound > 1 && player.maxRounds === 1) return false
+        // UNLESS they've been manually activated
+        if (selectedRound > 1 && player.maxRounds === 1 && !activatedOneRoundPlayers.has(player.id)) return false
         // Exclude players marked as unavailable/injured
         if (unavailablePlayers.has(player.id)) return false
         return true
@@ -159,7 +162,7 @@ const MatchProgramPage = () => {
         const categoryB = categoryOrder[b.primaryCategory ?? ''] ?? 4
         return categoryA - categoryB
       }),
-    [checkedIn, assignedIds, selectedRound, unavailablePlayers]
+    [checkedIn, assignedIds, selectedRound, unavailablePlayers, activatedOneRoundPlayers]
   )
 
   /** Memoized inactive players — includes one-round-only (rounds 2+) and unavailable players. */
@@ -169,7 +172,8 @@ const MatchProgramPage = () => {
         // Exclude players already assigned to a court
         if (assignedIds.has(player.id)) return false
         // Include players who only want to play 1 round if we're viewing rounds 2 or 3
-        const isOneRoundOnly = selectedRound > 1 && player.maxRounds === 1
+        // UNLESS they've been manually activated
+        const isOneRoundOnly = selectedRound > 1 && player.maxRounds === 1 && !activatedOneRoundPlayers.has(player.id)
         // Include players marked as unavailable/injured
         const isUnavailable = unavailablePlayers.has(player.id)
         return isOneRoundOnly || isUnavailable
@@ -189,7 +193,7 @@ const MatchProgramPage = () => {
         const categoryB = categoryOrder[b.primaryCategory ?? ''] ?? 4
         return categoryA - categoryB
       }),
-    [checkedIn, assignedIds, selectedRound, unavailablePlayers]
+    [checkedIn, assignedIds, selectedRound, unavailablePlayers, activatedOneRoundPlayers]
   )
 
   /** Marks player as unavailable/inactive. */
@@ -204,6 +208,23 @@ const MatchProgramPage = () => {
       newSet.delete(playerId)
       return newSet
     })
+  }
+
+  /** Activates a "Kun 1 runde" player by moving them to bench. */
+  const handleActivateOneRoundPlayer = async (playerId: string) => {
+    if (!session) return
+    try {
+      // Ensure player is not on a court
+      await handleMove(playerId)
+      // Also ensure they're not marked as unavailable
+      if (unavailablePlayers.has(playerId)) {
+        handleMarkAvailable(playerId)
+      }
+      // Add to activated one-round players set so they appear in bench
+      setActivatedOneRoundPlayers((prev) => new Set(prev).add(playerId))
+    } catch (err: any) {
+      setError(err.message ?? 'Kunne ikke aktivere spiller')
+    }
   }
 
   const genderBreakdown = useMemo(() => {
@@ -660,6 +681,7 @@ const MatchProgramPage = () => {
         draggable={!!player}
         onDragStart={(event: React.DragEvent<HTMLDivElement>) => {
           if (player) {
+            setDragSource('court')
             event.dataTransfer.setData('application/x-player-id', player.id)
             // Store source location for swapping
             event.dataTransfer.setData('application/x-source-court-idx', String(court.courtIdx))
@@ -677,6 +699,9 @@ const MatchProgramPage = () => {
             // Clean up after a short delay
             setTimeout(() => document.body.removeChild(dragElement), 0)
           }
+        }}
+        onDragEnd={() => {
+          setDragSource(null)
         }}
         className={`flex items-center gap-2 rounded-md px-2 py-2 h-[56px] w-full transition-all motion-reduce:transition-none ${
           isRecentlySwapped
@@ -870,12 +895,16 @@ const MatchProgramPage = () => {
               : ''
           }`}
           onDragOver={(e) => {
+            // Always allow drag over, even from inactive section (treat all inactive players the same)
             e.preventDefault()
             setDragOverBench(true)
           }}
-          onDragLeave={() => setDragOverBench(false)}
+          onDragLeave={() => {
+            setDragOverBench(false)
+          }}
           onDrop={(e) => {
             setDragOverBench(false)
+            setDragSource(null)
             onDropToBench(e)
           }}
         >
@@ -900,6 +929,7 @@ const MatchProgramPage = () => {
                 data-cat={catLetter || undefined}
                 draggable
                 onDragStart={(event) => {
+                  setDragSource('bench')
                   event.dataTransfer.setData('application/x-player-id', player.id)
                   event.dataTransfer.effectAllowed = 'move'
                   // Create a clone of the element for drag preview to prevent layout shift
@@ -913,6 +943,9 @@ const MatchProgramPage = () => {
                   event.dataTransfer.setDragImage(dragElement, event.clientX - rect.left, event.clientY - rect.top)
                   // Clean up after a short delay
                   setTimeout(() => document.body.removeChild(dragElement), 0)
+                }}
+                onDragEnd={() => {
+                  setDragSource(null)
                 }}
               >
                 <div className="min-w-0 flex-1">
@@ -931,17 +964,34 @@ const MatchProgramPage = () => {
             {/* Inactive Players Section */}
             <div 
               className={`mt-4 pt-4 border-t transition-all duration-200 min-w-0 ${
-                dragOverInactive 
+                dragOverInactive && dragSource !== 'inactive'
                   ? 'border-[hsl(var(--destructive)/.4)] bg-[hsl(var(--destructive)/.05)]' 
                   : 'border-[hsl(var(--line)/.12)]'
               }`}
               onDragOver={(e) => {
+                // If dragging from within inactive section, don't handle at all - let it bubble to parent (BÆNK)
+                if (dragSource === 'inactive') {
+                  return // Don't call preventDefault() or stopPropagation() - let event bubble naturally
+                }
+                
                 e.preventDefault()
                 setDragOverInactive(true)
               }}
-              onDragLeave={() => setDragOverInactive(false)}
-              onDrop={(e) => {
+              onDragLeave={(e) => {
+                // If dragging from within inactive section, don't handle - let it bubble
+                if (dragSource === 'inactive') {
+                  return
+                }
                 setDragOverInactive(false)
+              }}
+              onDrop={(e) => {
+                // If dropping from within inactive section, don't handle at all - let it bubble to parent (BÆNK)
+                if (dragSource === 'inactive') {
+                  return // Don't call preventDefault() or stopPropagation() - let event bubble naturally
+                }
+                
+                setDragOverInactive(false)
+                e.preventDefault()
                 onDropToInactive(e)
               }}
             >
@@ -967,6 +1017,7 @@ const MatchProgramPage = () => {
                           data-cat={catLetter || undefined}
                         draggable
                         onDragStart={(event) => {
+                          setDragSource('inactive')
                           event.dataTransfer.setData('application/x-player-id', player.id)
                           event.dataTransfer.effectAllowed = 'move'
                           // Create a clone of the element for drag preview to prevent layout shift
@@ -981,6 +1032,9 @@ const MatchProgramPage = () => {
                           // Clean up after a short delay
                           setTimeout(() => document.body.removeChild(dragElement), 0)
                         }}
+                        onDragEnd={() => {
+                          setDragSource(null)
+                        }}
                         >
                           <div className="min-w-0 flex-1 overflow-hidden">
                             <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate w-full">{player.alias ?? player.name}</p>
@@ -994,13 +1048,19 @@ const MatchProgramPage = () => {
                               )}
                             </div>
                           </div>
-                          {isUnavailable && (
+                          {(isUnavailable || (isOneRoundOnly && !isUnavailable)) && (
                             <div className="flex-shrink-0 flex items-center justify-end ml-1">
                               <button
                                 type="button"
-                                onClick={() => handleMarkAvailable(player.id)}
+                                onClick={() => {
+                                  if (isUnavailable) {
+                                    handleMarkAvailable(player.id)
+                                  } else if (isOneRoundOnly) {
+                                    handleActivateOneRoundPlayer(player.id)
+                                  }
+                                }}
                                 className="rounded px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/.1)] ring-1 ring-[hsl(var(--success)/.2)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm whitespace-nowrap"
-                                title="Gendan til bænk"
+                                title={isUnavailable ? "Gendan til bænk" : "Aktiver spiller"}
                               >
                                 Aktiver
                               </button>
