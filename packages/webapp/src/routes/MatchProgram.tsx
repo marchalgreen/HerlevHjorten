@@ -42,6 +42,10 @@ const MatchProgramPage = () => {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   // WHY: Track extended capacity per court (4, 5, 6, 7, or 8 slots)
   const [extendedCapacityCourts, setExtendedCapacityCourts] = useState<Map<number, number>>(new Map())
+  // WHY: Track locked courts that should not be changed by auto-match/re-shuffle
+  const [lockedCourts, setLockedCourts] = useState<Set<number>>(new Set())
+  // WHY: Track if auto-match has been run for the current round (to show "Omfordel" button)
+  const [hasRunAutoMatch, setHasRunAutoMatch] = useState<Set<number>>(new Set())
 
   /** Loads active training session from API. */
   const loadSession = useCallback(async () => {
@@ -103,6 +107,15 @@ const MatchProgramPage = () => {
     void loadMatches()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.id, selectedRound])
+
+  // WHY: Check if round has matches when matches load - if so, consider auto-match as run
+  useEffect(() => {
+    // If switching to a round with matches, consider auto-match as run
+    if (matches.length > 0 && !hasRunAutoMatch.has(selectedRound)) {
+      setHasRunAutoMatch((prev) => new Set(prev).add(selectedRound))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matches, selectedRound])
 
   // WHY: Close dropdown when round changes to avoid stale state
   useEffect(() => {
@@ -467,16 +480,49 @@ const MatchProgramPage = () => {
   const handleAutoMatch = async () => {
     if (!session) return
     try {
-      const result: AutoArrangeResult = await api.matches.autoArrange(selectedRound, unavailablePlayers, activatedOneRoundPlayers)
+      // Mark that auto-match has been run for this round
+      setHasRunAutoMatch((prev) => new Set(prev).add(selectedRound))
+      
+      // Check if we should reset existing matches first (for re-shuffle)
+      const hasExistingMatches = matches.length > 0
+      if (hasExistingMatches) {
+        // For re-shuffle, first clear existing matches in this round (except locked courts)
+        const matchesToReset = matches.filter((court) => !lockedCourts.has(court.courtIdx))
+        for (const court of matchesToReset) {
+          for (const slot of court.slots) {
+            if (slot.player) {
+              await handleMove(slot.player.id)
+            }
+          }
+        }
+        await loadMatches()
+      }
+      
+      const result: AutoArrangeResult = await api.matches.autoArrange(selectedRound, unavailablePlayers, activatedOneRoundPlayers, lockedCourts)
       await loadMatches()
       await loadCheckIns()
       notify({ 
         variant: 'success', 
-        title: `Fordelte spillere på ${result.filledCourts} baner (Runde ${selectedRound})` 
+        title: hasExistingMatches 
+          ? `Omfordelt spillere på ${result.filledCourts} baner (Runde ${selectedRound})`
+          : `Fordelte spillere på ${result.filledCourts} baner (Runde ${selectedRound})` 
       })
     } catch (err: any) {
       setError(err.message ?? 'Kunne ikke matche spillere')
     }
+  }
+
+  /** Toggles lock state for a court. */
+  const handleToggleCourtLock = (courtIdx: number) => {
+    setLockedCourts((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(courtIdx)) {
+        newSet.delete(courtIdx)
+      } else {
+        newSet.add(courtIdx)
+      }
+      return newSet
+    })
   }
 
   /** Resets all court assignments for current session. */
@@ -846,10 +892,10 @@ const MatchProgramPage = () => {
             <button
               type="button"
               onClick={handleAutoMatch}
-              disabled={!session || bench.length === 0}
+              disabled={!session || (bench.length === 0 && !hasRunAutoMatch.has(selectedRound))}
               className="rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none bg-[hsl(var(--surface-glass)/.85)] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.95)] ring-1 ring-[hsl(var(--line)/.12)] disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-sm"
             >
-              Auto-match
+              {hasRunAutoMatch.has(selectedRound) ? 'Omfordel' : 'Auto-match'}
             </button>
             <button
               type="button"
@@ -1129,8 +1175,62 @@ const MatchProgramPage = () => {
                       </span>
                     </span>
                   )}
+                  {/* Lock Toggle and Icon - always show when court has players */}
+                  {court.slots.some((slot) => slot.player) && (
+                    <>
+                      {/* Lock Toggle Switch */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleCourtLock(court.courtIdx)
+                        }}
+                        className={`relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] focus:ring-offset-2 items-center justify-start ${
+                          lockedCourts.has(court.courtIdx)
+                            ? 'bg-[hsl(var(--primary))]'
+                            : 'bg-[hsl(var(--surface-2))]'
+                        }`}
+                        role="switch"
+                        aria-checked={lockedCourts.has(court.courtIdx)}
+                        title={lockedCourts.has(court.courtIdx) ? 'Lås op' : 'Lås bane'}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            lockedCourts.has(court.courtIdx)
+                              ? 'translate-x-3'
+                              : 'translate-x-0.5'
+                          }`}
+                          style={{
+                            marginTop: '0',
+                            marginBottom: '0'
+                          }}
+                        />
+                      </button>
+                      {/* Lock Icon */}
+                      <svg
+                        className={`h-3.5 w-3.5 transition-colors duration-200 ml-1.5 ${
+                          lockedCourts.has(court.courtIdx)
+                            ? 'text-[hsl(var(--primary))]'
+                            : 'text-[hsl(var(--muted))]'
+                        }`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        title={lockedCourts.has(court.courtIdx) ? 'Bane er låst - vil ikke blive ændret ved auto-match/omfordel' : 'Bane er ikke låst'}
+                      >
+                        {lockedCourts.has(court.courtIdx) ? (
+                          // Closed lock (locked state)
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        ) : (
+                          // Open lock (unlocked state)
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                        )}
+                      </svg>
+                    </>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <div className="relative flex items-center gap-2">
                     {/* Capacity Selector - shown when extended capacity is enabled */}
                     {extendedCapacityCourts.get(court.courtIdx) && extendedCapacityCourts.get(court.courtIdx)! > 4 && (
