@@ -548,15 +548,21 @@ const MatchProgramPage = () => {
       // For re-shuffle: reshuffle all players among non-locked courts (don't clear first)
       const courtsToExclude = isReshuffle ? lockedCourts : excludedCourts
       
-      // Call auto-arrange but don't write to DB - it will return the matches structure
-      // We need to modify autoArrange to return matches instead of writing to DB
-      // For now, call it and then load from DB, but we should refactor autoArrange
-      const result: AutoArrangeResult = await api.matches.autoArrange(selectedRound, unavailablePlayers, activatedOneRoundPlayers, courtsToExclude, isReshuffle)
+      // Call auto-arrange - it now returns matches in memory (no DB writes)
+      const { matches: newMatches, result } = await api.matches.autoArrange(selectedRound, unavailablePlayers, activatedOneRoundPlayers, courtsToExclude, isReshuffle)
       
-      // Load the newly created matches from DB (autoArrange still writes to DB for now)
-      // TODO: Refactor autoArrange to return matches structure instead of writing to DB
-      const newMatches = await api.matches.list(selectedRound)
-      updateInMemoryMatches(selectedRound, newMatches)
+      // For reshuffle: merge new matches with existing locked courts
+      let finalMatches = newMatches
+      if (isReshuffle) {
+        const currentMatches = inMemoryMatches[selectedRound] || []
+        const lockedCourtsMatches = currentMatches.filter((court) => lockedCourts.has(court.courtIdx))
+        // Merge: keep locked courts, add new matches (excluding locked court indices)
+        const newMatchesWithoutLocked = newMatches.filter((court) => !lockedCourts.has(court.courtIdx))
+        finalMatches = [...lockedCourtsMatches, ...newMatchesWithoutLocked]
+      }
+      
+      // Update in-memory state with the final matches
+      updateInMemoryMatches(selectedRound, finalMatches)
       await loadCheckIns()
       
       notify({ 

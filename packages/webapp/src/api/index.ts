@@ -496,7 +496,7 @@ const resetMatchesForRound = async (round?: number, lockedCourtIdxs?: Set<number
  * and players with maxRounds === 1 (unless manually activated). Includes randomization
  * to allow different outcomes on re-shuffle.
  */
-const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>, lockedCourtIdxs?: Set<number>, isReshuffle?: boolean): Promise<AutoArrangeResult> => {
+const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<string>, activatedOneRoundPlayers?: Set<string>, lockedCourtIdxs?: Set<number>, isReshuffle?: boolean): Promise<{ matches: CourtWithPlayers[]; result: AutoArrangeResult }> => {
   const session = await ensureActiveSession()
   const state = await getStateCopy()
   const checkIns = state.checkIns
@@ -566,7 +566,7 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   })
 
   if (!benchPlayers.length) {
-    return { filledCourts: 0, benched: 0 }
+    return { matches: [], result: { filledCourts: 0, benched: 0 } }
   }
   
   // Only exclude courts that are occupied in THIS round
@@ -588,31 +588,12 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
       return !occupied.has(idx)
     })
 
-  // For reshuffle: clear existing matches from non-locked courts BEFORE creating assignments
-  if (isReshuffle && existingMatchesInRound.length > 0) {
-    const matchesToClear = existingMatchesInRound.filter((match: Match) => {
-      const court = stateCourts.find((c) => c.id === match.courtId)
-      return court && !lockedCourtIdxs?.has(court.idx)
-    })
-    
-    const matchIdsToClear = matchesToClear.map((m: Match) => m.id)
-    const matchPlayersToDelete = state.matchPlayers.filter((mp) => 
-      matchIdsToClear.includes(mp.matchId)
-    )
-    
-    // Bulk delete match players and matches
-    const deletePlayerPromises = matchPlayersToDelete.map((mp) => deleteMatchPlayerInDb(mp.id))
-    const deleteMatchPromises = matchIdsToClear.map((matchId) => deleteMatchInDb(matchId))
-    await Promise.all([...deletePlayerPromises, ...deleteMatchPromises])
-    
-    // Note: We don't need to add cleared players to benchPlayers because:
-    // - For reshuffle, assignedPlayers excludes players from non-locked courts
-    // - So benchPlayers already includes those players
-    // - Adding them again would create duplicates
-  }
+  // For reshuffle: players from non-locked courts are already included in benchPlayers
+  // (because assignedPlayers excludes them when isReshuffle is true)
+  // No database clearing needed - we're working in memory only
 
   if (!availableCourtIdxs.length) {
-    return { filledCourts: 0, benched: benchPlayers.length }
+    return { matches: [], result: { filledCourts: 0, benched: benchPlayers.length } }
   }
 
   // Add randomization seed based on current time to allow different outcomes
@@ -832,20 +813,19 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   const leftoverPlayerIds = benchPlayers.filter((p) => !usedPlayerIds.has(p.id)).map((p) => p.id)
 
   if (!assignments.length) {
-    return { filledCourts: 0, benched: leftoverPlayerIds.length }
+    return { 
+      matches: [],
+      result: { filledCourts: 0, benched: leftoverPlayerIds.length }
+    }
   }
 
-  // Get courts to map idx to id
-  const courts = await getCourts()
-  const courtsByIdx = new Map(courts.map((court) => [court.idx, court]))
+  // Build matches structure in memory (no database writes)
+  const playersMap = new Map(state.players.map((player: Player) => [player.id, normalisePlayer(player)]))
+  const matchesByCourt = new Map<number, CourtWithPlayers['slots']>()
   
-  // Create matches and match players in Supabase
   // Track assigned player IDs to prevent duplicates
   const assignedInThisRound = new Set<string>()
   for (const { courtIdx, playerIds } of assignments) {
-    const court = courtsByIdx.get(courtIdx)
-    if (!court) continue
-    
     // Validate: ensure no duplicate players in this assignment
     const uniquePlayerIds = Array.from(new Set(playerIds))
     if (uniquePlayerIds.length !== playerIds.length) {
@@ -862,43 +842,44 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
     // Mark players as assigned
     uniquePlayerIds.forEach((id) => assignedInThisRound.add(id))
     
-    const match = await createMatchInDb({
-      sessionId: session.id,
-      courtId: court.id,
-      startedAt: new Date().toISOString(),
-      endedAt: null,
-      round: round ?? null
-    })
+    // Build slots for this court
+    const slots: CourtWithPlayers['slots'] = []
     
     // For 1v1 matches (2 players), place them in slots 1 and 2 (opposite sides of net)
     // For 2v2 matches (4 players), use slots 0, 1, 2, 3 (normal order)
     if (uniquePlayerIds.length === 2) {
       // 1v1 match: place players in slots 1 and 2
-      await createMatchPlayerInDb({
-        matchId: match.id,
-        playerId: uniquePlayerIds[0],
-        slot: 1
-      })
-      await createMatchPlayerInDb({
-        matchId: match.id,
-        playerId: uniquePlayerIds[1],
-        slot: 2
-      })
+      const player1 = playersMap.get(uniquePlayerIds[0])
+      const player2 = playersMap.get(uniquePlayerIds[1])
+      if (player1) slots.push({ slot: 1, player: player1 })
+      if (player2) slots.push({ slot: 2, player: player2 })
     } else {
       // 2v2 match: use slots 0, 1, 2, 3
       for (let slot = 0; slot < uniquePlayerIds.length; slot++) {
-        await createMatchPlayerInDb({
-          matchId: match.id,
-          playerId: uniquePlayerIds[slot],
-          slot
-        })
+        const player = playersMap.get(uniquePlayerIds[slot])
+        if (player) {
+          slots.push({ slot, player })
+        }
       }
     }
+    
+    matchesByCourt.set(courtIdx, slots)
   }
 
+  // Build final matches array
+  const matches: CourtWithPlayers[] = stateCourts
+    .filter((court) => matchesByCourt.has(court.idx))
+    .map((court) => ({
+      courtIdx: court.idx,
+      slots: (matchesByCourt.get(court.idx) ?? []).sort((a, b) => a.slot - b.slot)
+    }))
+
   return {
-    filledCourts: assignments.length,
-    benched: leftoverPlayerIds.length
+    matches,
+    result: {
+      filledCourts: assignments.length,
+      benched: leftoverPlayerIds.length
+    }
   }
 }
 
