@@ -200,15 +200,9 @@ export const TableSearch = ({ value, onChange, placeholder }: TableSearchProps) 
       <input
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        onInput={(event) => {
-          // Handle native search input clear button
-          if ((event.target as HTMLInputElement).value === '') {
-            onChange('')
-          }
-        }}
         placeholder={placeholder}
         className="w-full rounded-full bg-[hsl(var(--surface))] px-9 py-2 text-sm ring-[hsl(var(--line)/.14)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none"
-        type="search"
+        type="text"
       />
       {value && (
         <button

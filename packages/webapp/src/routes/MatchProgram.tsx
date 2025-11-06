@@ -678,18 +678,18 @@ const MatchProgramPage = () => {
             setTimeout(() => document.body.removeChild(dragElement), 0)
           }
         }}
-        className={`flex min-h-[52px] items-center justify-between rounded-md px-3 py-2 text-sm transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ${
+        className={`flex items-center gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] transition-all motion-reduce:transition-none ${
           isRecentlySwapped
-            ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} animate-swap-in ring-2 ring-[hsl(var(--primary)/.5)] shadow-lg border-2 border-transparent`
+            ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} animate-swap-in ring-2 ring-[hsl(var(--primary)/.5)] shadow-lg hover:shadow-sm cursor-grab active:cursor-grabbing ring-1 ring-[hsl(var(--line)/.12)]`
             : isDragOverOccupied && player
-            ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} ring-2 ring-[hsl(var(--primary)/.6)] shadow-lg border-2 border-[hsl(var(--primary)/.4)]`
+            ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} ring-2 ring-[hsl(var(--primary)/.6)] shadow-lg hover:shadow-sm cursor-grab active:cursor-grabbing ring-1 ring-[hsl(var(--line)/.12)]`
             : player
-            ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} hover:shadow-sm ring-1 ring-[hsl(var(--line)/.12)] cursor-grab active:cursor-grabbing border-2 border-transparent`
+            ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} hover:shadow-sm cursor-grab active:cursor-grabbing ring-1 ring-[hsl(var(--line)/.12)]`
             : isDragOver
-            ? 'bg-[hsl(var(--primary)/.15)] ring-2 ring-[hsl(var(--primary)/.5)] shadow-md border-2 border-transparent'
+            ? 'bg-[hsl(var(--primary)/.15)] ring-2 ring-[hsl(var(--primary)/.5)] shadow-md'
             : isCourtHovered
-            ? 'bg-[hsl(var(--primary)/.08)] ring-1 ring-[hsl(var(--primary)/.3)] border-2 border-transparent'
-            : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] ring-1 ring-[hsl(var(--line)/.12)] border-2 border-transparent'
+            ? 'bg-[hsl(var(--primary)/.08)] ring-1 ring-[hsl(var(--primary)/.3)]'
+            : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair'
         }`}
         data-cat={catLetter || undefined}
         onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
@@ -709,23 +709,21 @@ const MatchProgramPage = () => {
       >
         {player ? (
           <>
-            <div className="flex flex-col gap-1 min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">
-                {player.alias ?? player.name}
-              </span>
-              {isDuplicatePlayer && (
-                <span className="inline-flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[8px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
-                  !
-                </span>
-              )}
-            </div>
-              <div className="flex items-center gap-1.5">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
+              <div className="flex items-center gap-1.5 mt-1">
                 {getCategoryBadge(player.primaryCategory)}
-                <span className="text-xs text-[hsl(var(--muted))]">Rangliste: {player.level ?? '–'}</span>
+                <span className="text-[10px] text-[hsl(var(--muted))] whitespace-nowrap">
+                  Rangliste: {player.level ?? '–'}
+                </span>
+                {isDuplicatePlayer && (
+                  <span className="inline-flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[8px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
+                    !
+                  </span>
+                )}
               </div>
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0 ml-1">
+            <div className="flex items-center gap-1 flex-shrink-0">
               <button
                 type="button"
                 onClick={(e) => {
@@ -866,7 +864,7 @@ const MatchProgramPage = () => {
       <div className="grid gap-4 lg:grid-cols-[minmax(200px,240px)_1fr] lg:items-start">
         {/* Bench */}
         <PageCard 
-          className={`space-y-2 transition-all duration-200 !pr-1 ${
+          className={`space-y-2 transition-all duration-200 ${
             dragOverBench 
               ? 'ring-2 ring-[hsl(var(--primary)/.4)] bg-[hsl(var(--primary)/.05)]' 
               : ''
@@ -887,7 +885,7 @@ const MatchProgramPage = () => {
               {bench.length}
             </span>
           </header>
-          <div className="flex flex-col space-y-2 max-h-[calc(100vh-380px)] overflow-y-auto pr-0.5 scrollbar-thin">
+          <div className="flex flex-col space-y-2 max-h-[calc(100vh-380px)] overflow-y-auto scrollbar-thin">
             {bench.length === 0 && (
               <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-4 text-center text-xs text-[hsl(var(--muted))] border-hair">
                 Træk spillere her for at aktivere dem
@@ -989,7 +987,7 @@ const MatchProgramPage = () => {
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                               {getCategoryBadge(player.primaryCategory)}
                               {isOneRoundOnly && !isUnavailable && (
-                                <span className="text-[10px] font-normal text-[hsl(var(--muted))] whitespace-nowrap">Kun 1 runde</span>
+                                <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-2 py-1 text-xs whitespace-nowrap">Kun 1 runde</span>
                               )}
                               {isUnavailable && (
                                 <span className="text-[10px] font-normal text-[hsl(var(--destructive))] whitespace-nowrap">Inaktiv</span>

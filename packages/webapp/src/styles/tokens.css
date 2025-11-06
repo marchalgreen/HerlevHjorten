@@ -58,7 +58,7 @@
   /* Category colors */
   --cat-single: 258 65% 58%;      /* purple for Single */
   --cat-double: 195 70% 52%;      /* cyan for Double */
-  --cat-mixed: 28 80% 54%;        /* amber for Begge (Mixed) */
+  --cat-mixed: 27 70% 56%;        /* calmer amber for Begge (Mixed) */
 }
 
 @media (prefers-reduced-motion: reduce) {

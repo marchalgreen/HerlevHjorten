@@ -199,20 +199,20 @@
 
   /* Category ring — outline for avatar/badge circle */
   .cat-ring {
-    box-shadow: inset 0 0 0 1.5px hsl(var(--cat-single));
+    box-shadow: inset 0 0 0 2px hsl(var(--cat-single));
     transition: box-shadow 0.2s ease;
   }
 
   .cat-ring[data-cat='S'] {
-    box-shadow: inset 0 0 0 1.5px hsl(var(--cat-single));
+    box-shadow: inset 0 0 0 2px hsl(var(--cat-single));
   }
 
   .cat-ring[data-cat='D'] {
-    box-shadow: inset 0 0 0 1.5px hsl(var(--cat-double));
+    box-shadow: inset 0 0 0 2px hsl(var(--cat-double));
   }
 
   .cat-ring[data-cat='B'] {
-    box-shadow: inset 0 0 0 1.5px hsl(var(--cat-mixed));
+    box-shadow: inset 0 0 0 2px hsl(var(--cat-mixed));
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -228,7 +228,7 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-track {
@@ -237,7 +237,9 @@
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: hsl(var(--line) / 0.3);
-    border-radius: 3px;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
     transition: background 0.2s ease;
   }
 

@@ -439,7 +439,7 @@ const CheckInPage = () => {
                     key={player.id}
                     className={clsx(
                       'flex items-center justify-between gap-2 rounded-md border-hair px-2 py-2 min-h-[48px] hover:shadow-sm transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-1 ring-[hsl(var(--line)/.12)]',
-                      getPlayerBgColor(),
+                      'bg-[hsl(var(--success)/.06)]',
                       catLetter && 'cat-rail',
                       isAnimatingOut && 'opacity-0 scale-95 translate-x-4 pointer-events-none',
                       isAnimatingIn && 'opacity-0 scale-95 -translate-x-4'
@@ -460,7 +460,7 @@ const CheckInPage = () => {
                             )}
                           </p>
                           {isOneRoundOnly && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border border-[hsl(var(--line)/.2)] whitespace-nowrap">
+                            <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-2 py-1 text-xs whitespace-nowrap">
                               Kun 1 runde
                             </span>
                           )}
@@ -594,7 +594,7 @@ const CheckInPage = () => {
                           }}
                           className="w-4 h-4 rounded ring-1 ring-[hsl(var(--line)/.12)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none cursor-pointer flex-shrink-0"
                         />
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border border-[hsl(var(--line)/.2)] whitespace-nowrap">
+                        <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-2 py-1 text-xs whitespace-nowrap">
                           Kun 1 runde
                         </span>
                       </label>
