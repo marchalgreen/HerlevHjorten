@@ -32,8 +32,6 @@
         justify-content: center;
         gap: 8px;
         height: 40px;
-        width: 160px;
-        flex: 0 0 160px;
         padding: 0 16px;
         border-radius: 8px;
         font-weight: 600;
@@ -56,28 +54,39 @@
         box-shadow: inset 0 0 0 1px hsl(var(--line)/.10);
       }
 
-      /* Active state: subtle elevation + accent marker (no blue fill) */
+      /* Active state: transparent background + dark label + blue underline */
       .nav-item[data-active="true"] {
-        background: hsl(var(--surface));
+        background: transparent;
         color: hsl(var(--foreground));
-        box-shadow: inset 0 0 0 1px hsl(var(--line)/.16);
-        /* Dimensions remain identical to inactive state */
+        box-shadow: none; /* remove inset hairline for active */
       }
 
-      /* Active bottom indicator - positioned absolutely to not affect layout */
-      .nav-item[data-active="true"]::before {
+      /* Base underline (hidden) */
+      .nav-item::after {
         content: "";
         position: absolute;
-        bottom: 0;
         left: 50%;
-        width: 60%;
-        height: 3px;
-        transform: translateX(-50%);
+        bottom: 2px;
+        height: 2px;
+        width: calc(100% - 24px);        /* padding-aware width */
         border-radius: 9999px;
+        background: transparent;
+        transform: translateX(-50%) scaleX(0);
+        transform-origin: center;
+        transition: transform 160ms cubic-bezier(.2,.8,.2,1),
+                    background-color 160ms cubic-bezier(.2,.8,.2,1);
+      }
+
+      /* Hover preview for inactive items */
+      .nav-item:hover::after {
+        background: hsl(var(--line) / .6);
+        transform: translateX(-50%) scaleX(.5);
+      }
+
+      /* Active underline */
+      .nav-item[data-active="true"]::after {
         background: hsl(var(--primary));
-        box-shadow: 0 0 0 1px hsl(var(--primary)/.3);
-        /* Ensure it doesn't affect layout */
-        pointer-events: none;
+        transform: translateX(-50%) scaleX(1);
       }
 
   /* Icon should inherit the text color */
@@ -94,6 +103,10 @@
     box-shadow:
       inset 0 0 0 1px hsl(var(--line)/.16),
       0 0 0 2px hsl(var(--ring));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-item::after { transition: none; }
   }
 }
 
