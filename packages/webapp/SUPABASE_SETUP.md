@@ -158,6 +158,11 @@ If you have existing data in localStorage that you want to migrate:
 
 ## Troubleshooting
 
+### "Failed to fetch" or Content Security Policy (CSP) errors
+- **CSP violations**: If you see errors like "violates the following Content Security Policy directive: connect-src", make sure `index.html` includes `https://*.supabase.co` in the `connect-src` directive
+- The CSP should allow: `connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:* https://*.supabase.co`
+- After updating CSP, refresh the browser (hard refresh: Cmd+Shift+R / Ctrl+Shift+R)
+
 ### "Supabase URL and Anon Key must be provided"
 - Make sure `.env.local` exists in `packages/webapp/`
 - Make sure the environment variables are prefixed with `VITE_`
