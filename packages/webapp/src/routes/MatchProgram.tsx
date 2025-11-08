@@ -132,6 +132,7 @@ const MatchProgramPage = () => {
   
   // WHY: Track bench collapse state for maximizing court space
   const [benchCollapsed, setBenchCollapsed] = useState(false)
+  const [benchCollapsing, setBenchCollapsing] = useState(false)
   
   // WHY: Track full-screen view mode for optimal readability when players gather
   const [isFullScreen, setIsFullScreen] = useState(false)
@@ -1222,7 +1223,7 @@ const MatchProgramPage = () => {
     const catLetter = getCategoryLetter(category)
     return (
       <span 
-        className={`inline-flex items-center justify-center rounded-full text-xs font-bold w-6 h-6 bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair ${catLetter ? 'cat-ring' : ''}`}
+        className={`inline-flex items-center justify-center rounded-full text-xs font-bold w-6 h-6 flex-shrink-0 bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair ${catLetter ? 'cat-ring' : ''}`}
         data-cat={catLetter || undefined}
         title={category}
       >
@@ -1235,7 +1236,7 @@ const MatchProgramPage = () => {
    * Renders a player slot with drag-and-drop support and swap detection.
    * @param court - Court data
    * @param slotIndex - Slot index to render
-   * @param fullScreen - Whether in full-screen mode (hides "Rangliste" text)
+   * @param fullScreen - Whether in full-screen mode (uses larger font)
    * @returns Slot JSX
    */
   const renderPlayerSlot = (court: CourtWithPlayers, slotIndex: number, fullScreen: boolean = false) => {
@@ -1326,21 +1327,16 @@ const MatchProgramPage = () => {
                   )}
                 </div>
               ) : (
-                // Normal view: name on top, badge and level below
-                <>
+                // Normal view: icon and name on same row
+                <div className="flex items-center gap-2">
+                  {getCategoryBadge(player.primaryCategory)}
                   <p className="text-base font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    {getCategoryBadge(player.primaryCategory)}
-                    <span className="text-xs text-[hsl(var(--muted))] whitespace-nowrap">
-                      Rangliste: {player.level ?? '–'}
+                  {isDuplicatePlayer && (
+                    <span className="inline-flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[8px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
+                      !
                     </span>
-                    {isDuplicatePlayer && (
-                      <span className="inline-flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[8px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
-                        !
-                      </span>
-                    )}
-                  </div>
-                </>
+                  )}
+                </div>
               )}
             </div>
           </>
@@ -1612,18 +1608,18 @@ const MatchProgramPage = () => {
         </PageCard>
       )}
 
-      <div className={`grid gap-3 lg:items-start transition-all duration-200 ${
+      <div className={`grid gap-3 lg:items-start transition-all duration-300 ease-in-out ${
         benchCollapsed 
-          ? 'lg:grid-cols-[40px_1fr]' 
+          ? 'lg:grid-cols-[48px_1fr]' 
           : 'lg:grid-cols-[minmax(200px,240px)_1fr]'
       }`}>
         {/* Bench */}
         <PageCard 
-          className={`space-y-3 transition-all duration-200 p-4 ${
+          className={`space-y-3 transition-all duration-300 ease-in-out p-4 ${
             dragOverBench 
               ? 'ring-2 ring-[hsl(var(--primary)/.4)] bg-[hsl(var(--primary)/.05)]' 
               : ''
-          } ${benchCollapsed ? 'overflow-hidden' : ''}`}
+          } ${benchCollapsed ? 'overflow-visible' : ''}`}
           onDragOver={(e) => {
             // Always allow drag over, even from inactive section (treat all inactive players the same)
             e.preventDefault()
@@ -1642,20 +1638,33 @@ const MatchProgramPage = () => {
             onDropToBench(e)
           }}
         >
-          <header className="flex items-center justify-between">
-            {benchCollapsed ? (
+          {benchCollapsed ? (
+            <div className="flex flex-col items-center gap-2">
               <button
                 type="button"
                 onClick={() => setBenchCollapsed(false)}
-                className="flex items-center justify-center w-full h-8 rounded hover:bg-[hsl(var(--surface-2))] transition-colors"
+                className="flex items-center justify-center w-8 h-8 rounded hover:bg-[hsl(var(--surface-2))] transition-colors"
                 title="Udvid bænk"
               >
                 <svg className="w-5 h-5 text-[hsl(var(--muted))]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
-            ) : (
-              <>
+              {bench.length > 0 && (
+                <span className="rounded-full bg-[hsl(var(--primary)/.1)] text-[hsl(var(--primary))] px-2 py-1 text-xs font-semibold border border-[hsl(var(--primary)/.2)]">
+                  {bench.length}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div 
+              style={{
+                animation: benchCollapsing 
+                  ? 'slideOutToLeft 0.3s ease-in forwards'
+                  : 'slideInFromLeft 0.3s ease-out forwards'
+              }}
+            >
+              <header className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">BÆNK</h3>
                 <div className="flex items-center gap-2">
                   <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-xs font-medium">
@@ -1663,7 +1672,13 @@ const MatchProgramPage = () => {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setBenchCollapsed(true)}
+                    onClick={() => {
+                      setBenchCollapsing(true)
+                      setTimeout(() => {
+                        setBenchCollapsed(true)
+                        setBenchCollapsing(false)
+                      }, 300) // Match animation duration
+                    }}
                     className="flex items-center justify-center w-6 h-6 rounded hover:bg-[hsl(var(--surface-2))] transition-colors"
                     title="Skjul bænk"
                   >
@@ -1672,25 +1687,14 @@ const MatchProgramPage = () => {
                     </svg>
                   </button>
                 </div>
-              </>
-            )}
-          </header>
-          {benchCollapsed ? (
-            bench.length > 0 && (
-              <div className="flex items-center justify-center mt-2">
-                <span className="rounded-full bg-[hsl(var(--primary)/.1)] text-[hsl(var(--primary))] px-2 py-1 text-xs font-semibold border border-[hsl(var(--primary)/.2)]">
-                  {bench.length}
-                </span>
-              </div>
-            )
-          ) : (
-            <div className="flex flex-col space-y-3 max-h-[calc(100vh-380px)] overflow-y-auto scrollbar-thin min-w-0">
-            {bench.length === 0 && (
+              </header>
+              <div className="flex flex-col space-y-3 max-h-[calc(100vh-380px)] overflow-y-auto scrollbar-thin min-w-0">
+              {bench.length === 0 && (
               <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-4 text-center text-xs text-[hsl(var(--muted))] border-hair">
                 Træk spillere her for at aktivere dem
               </p>
             )}
-            {bench.map((player) => {
+              {bench.map((player) => {
               const catLetter = getCategoryLetter(player.primaryCategory)
               return (
               <div
@@ -1710,20 +1714,17 @@ const MatchProgramPage = () => {
                 }}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-base font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
-                  <div className="flex items-center gap-1.5 mt-1">
+                  <div className="flex items-center gap-2">
                     {getCategoryBadge(player.primaryCategory)}
-                    <span className="text-xs text-[hsl(var(--muted))] whitespace-nowrap">
-                      Rangliste: {player.level ?? '–'}
-                    </span>
+                    <p className="text-base font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
                   </div>
                 </div>
               </div>
               )
             })}
-            
-            {/* Inactive Players Section */}
-            <div 
+              
+              {/* Inactive Players Section */}
+              <div 
               className={`mt-4 pt-4 border-t transition-all duration-200 min-w-0 ${
                 dragOverInactive && dragSource !== 'inactive'
                   ? 'border-[hsl(var(--destructive)/.4)] bg-[hsl(var(--destructive)/.05)]' 
@@ -1847,8 +1848,9 @@ const MatchProgramPage = () => {
                   </p>
                 </div>
               )}
+              </div>
+              </div>
             </div>
-          </div>
           )}
         </PageCard>
 

@@ -177,6 +177,17 @@
     }
   }
 
+  @keyframes slideOutToLeft {
+    from {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(-20px) scale(0.95);
+    }
+  }
+
   @keyframes swapIn {
     0% {
       opacity: 0;
