@@ -1314,20 +1314,34 @@ const MatchProgramPage = () => {
         {player ? (
           <>
             <div className="min-w-0 flex-1">
-              <p className={`${fullScreen ? 'text-lg' : 'text-base'} font-semibold text-[hsl(var(--foreground))] truncate`}>{player.alias ?? player.name}</p>
-              <div className="flex items-center gap-1.5 mt-1">
-                {getCategoryBadge(player.primaryCategory)}
-                {!fullScreen && (
-                  <span className="text-xs text-[hsl(var(--muted))] whitespace-nowrap">
-                    Rangliste: {player.level ?? '–'}
-                  </span>
-                )}
-                {isDuplicatePlayer && (
-                  <span className="inline-flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[8px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
-                    !
-                  </span>
-                )}
-              </div>
+              {fullScreen ? (
+                // Full-screen: icon and name on same row, larger font
+                <div className="flex items-center gap-2">
+                  {getCategoryBadge(player.primaryCategory)}
+                  <p className="text-xl font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
+                  {isDuplicatePlayer && (
+                    <span className="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[10px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
+                      !
+                    </span>
+                  )}
+                </div>
+              ) : (
+                // Normal view: name on top, badge and level below
+                <>
+                  <p className="text-base font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    {getCategoryBadge(player.primaryCategory)}
+                    <span className="text-xs text-[hsl(var(--muted))] whitespace-nowrap">
+                      Rangliste: {player.level ?? '–'}
+                    </span>
+                    {isDuplicatePlayer && (
+                      <span className="inline-flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[8px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
+                        !
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </>
         ) : null}
