@@ -34,16 +34,40 @@ const loadPersistedState = (sessionId: string | null): Partial<PersistedMatchPro
   if (typeof window === 'undefined') return null
   try {
     const raw = localStorage.getItem(MATCH_PROGRAM_STORAGE_KEY)
-    if (!raw) return null
+    if (!raw) {
+      console.log('[MatchProgram] No persisted state found in localStorage')
+      return null
+    }
     const parsed = JSON.parse(raw) as PersistedMatchProgramState
+    
+    // If sessionId is null, don't clear - just return null (session might not be loaded yet)
+    if (sessionId === null) {
+      console.log('[MatchProgram] Session not loaded yet, keeping persisted state:', {
+        persistedSessionId: parsed.sessionId,
+        rounds: Object.keys(parsed.inMemoryMatches)
+      })
+      return null
+    }
+    
     // Only restore if it's for the same session
     if (parsed.sessionId === sessionId) {
+      console.log('[MatchProgram] Loaded persisted state:', {
+        sessionId: parsed.sessionId,
+        rounds: Object.keys(parsed.inMemoryMatches),
+        totalMatches: Object.values(parsed.inMemoryMatches).flat().length
+      })
       return parsed
     }
+    
     // Clear stale state from different session
+    console.log('[MatchProgram] Stale state found (different session), clearing:', {
+      persistedSessionId: parsed.sessionId,
+      currentSessionId: sessionId
+    })
     localStorage.removeItem(MATCH_PROGRAM_STORAGE_KEY)
     return null
-  } catch {
+  } catch (err) {
+    console.error('[MatchProgram] Failed to load persisted state:', err)
     return null
   }
 }
@@ -55,9 +79,16 @@ const loadPersistedState = (sessionId: string | null): Partial<PersistedMatchPro
 const savePersistedState = (state: PersistedMatchProgramState) => {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(MATCH_PROGRAM_STORAGE_KEY, JSON.stringify(state))
-  } catch {
-    // Ignore localStorage errors (quota exceeded, etc.)
+    const serialized = JSON.stringify(state)
+    localStorage.setItem(MATCH_PROGRAM_STORAGE_KEY, serialized)
+    // Debug: Log what we're saving
+    console.log('[MatchProgram] Saved state to localStorage:', {
+      sessionId: state.sessionId,
+      rounds: Object.keys(state.inMemoryMatches),
+      totalMatches: Object.values(state.inMemoryMatches).flat().length
+    })
+  } catch (err) {
+    console.error('[MatchProgram] Failed to save state:', err)
   }
 }
 
@@ -130,6 +161,34 @@ const MatchProgramPage = () => {
   // WHY: Track if we've restored persisted state to avoid overwriting it
   const hasRestoredStateRef = useRef(false)
   
+  // WHY: Refs to hold latest state values for event handlers (to avoid stale closures)
+  const inMemoryMatchesRef = useRef(inMemoryMatches)
+  const lockedCourtsRef = useRef(lockedCourts)
+  const hasRunAutoMatchRef = useRef(hasRunAutoMatch)
+  const extendedCapacityCourtsRef = useRef(extendedCapacityCourts)
+  const sessionRef = useRef(session)
+  
+  // WHY: Keep refs in sync with state
+  useEffect(() => {
+    inMemoryMatchesRef.current = inMemoryMatches
+  }, [inMemoryMatches])
+  
+  useEffect(() => {
+    lockedCourtsRef.current = lockedCourts
+  }, [lockedCourts])
+  
+  useEffect(() => {
+    hasRunAutoMatchRef.current = hasRunAutoMatch
+  }, [hasRunAutoMatch])
+  
+  useEffect(() => {
+    extendedCapacityCourtsRef.current = extendedCapacityCourts
+  }, [extendedCapacityCourts])
+  
+  useEffect(() => {
+    sessionRef.current = session
+  }, [session])
+  
   // WHY: Track bench collapse state for maximizing court space
   const [benchCollapsed, setBenchCollapsed] = useState(false)
   const [benchCollapsing, setBenchCollapsing] = useState(false)
@@ -200,8 +259,24 @@ const MatchProgramPage = () => {
       return
     }
     try {
-      // ALWAYS check persisted state first (before checking in-memory state)
-      // This ensures we get the latest state even if React hasn't updated yet
+      // Check in-memory state first (it should already be restored from persisted state)
+      // Use ref to get the latest value in case React state hasn't updated yet
+      const currentInMemoryMatches = inMemoryMatchesRef.current
+      if (currentInMemoryMatches[selectedRound]) {
+        // Use in-memory state - ensure all 8 courts are present
+        const currentMatches = currentInMemoryMatches[selectedRound]
+        const allCourts = Array.from({ length: 8 }, (_, i) => i + 1)
+        const matchesByCourt = new Map(currentMatches.map((court) => [court.courtIdx, court]))
+        const data = allCourts.map((courtIdx) => {
+          const existing = matchesByCourt.get(courtIdx)
+          return existing || { courtIdx, slots: [] }
+        })
+        setMatches(data)
+        return
+      }
+      
+      // If in-memory state doesn't have this round, check persisted state as fallback
+      // This can happen if restoration hasn't completed yet or if data was lost
       const persisted = loadPersistedState(session.id)
       if (persisted?.inMemoryMatches?.[selectedRound]) {
         // Use persisted state - ensure all 8 courts are present
@@ -212,39 +287,8 @@ const MatchProgramPage = () => {
           const existing = matchesByCourt.get(courtIdx)
           return existing || { courtIdx, slots: [] }
         })
-        // ALWAYS restore to in-memory state (persisted state is the source of truth)
-        // Check if persisted state has actual matches (non-empty courts)
-        const hasMatches = persistedMatches.some((court) => 
-          court.slots.length > 0 && court.slots.some((slot) => slot.player)
-        )
-        // If persisted state has matches, always use it (even if we have something in memory)
-        // If persisted state is empty but we have matches in memory, keep memory state
-        setInMemoryMatches((prev) => {
-          const currentRound = prev[selectedRound]
-          const currentHasMatches = currentRound?.some((court) =>
-            court.slots.length > 0 && court.slots.some((slot) => slot.player)
-          )
-          // Use persisted state if it has matches, or if current state is empty
-          if (hasMatches || !currentHasMatches) {
-            return { ...prev, [selectedRound]: data }
-          }
-          // Keep current state if it has matches and persisted doesn't
-          return prev
-        })
-        setMatches(data)
-        return
-      }
-      
-      // Check in-memory state second
-      if (inMemoryMatches[selectedRound]) {
-        // Use in-memory state - ensure all 8 courts are present
-        const currentMatches = inMemoryMatches[selectedRound]
-        const allCourts = Array.from({ length: 8 }, (_, i) => i + 1)
-        const matchesByCourt = new Map(currentMatches.map((court) => [court.courtIdx, court]))
-        const data = allCourts.map((courtIdx) => {
-          const existing = matchesByCourt.get(courtIdx)
-          return existing || { courtIdx, slots: [] }
-        })
+        // Restore to in-memory state
+        setInMemoryMatches((prev) => ({ ...prev, [selectedRound]: data }))
         setMatches(data)
         return
       }
@@ -265,6 +309,49 @@ const MatchProgramPage = () => {
     }
   }
   
+  // WHY: Helper function to save state to localStorage (accepts state values as parameters)
+  // Defined early so it can be used by updateInMemoryMatches
+  const saveCurrentState = useCallback((
+    matches: Record<number, CourtWithPlayers[]>,
+    locked: Record<number, Set<number>>,
+    autoMatch: Set<number>,
+    extended: Map<number, number>
+  ) => {
+    const currentSession = sessionRef.current
+    if (!currentSession) {
+      console.log('[MatchProgram] saveCurrentState: No session, skipping save')
+      return
+    }
+    if (!hasRestoredStateRef.current) {
+      console.log('[MatchProgram] saveCurrentState: Restoration not complete, skipping save')
+      return
+    }
+    
+    // Convert Sets and Maps to serializable formats
+    const lockedCourtsSerializable: Record<number, number[]> = {}
+    for (const [round, courtSet] of Object.entries(locked)) {
+      lockedCourtsSerializable[Number(round)] = Array.from(courtSet)
+    }
+    
+    const extendedCapacityCourtsSerializable: Array<[number, number]> = Array.from(extended.entries())
+    
+    const stateToPersist: PersistedMatchProgramState = {
+      inMemoryMatches: matches,
+      lockedCourts: lockedCourtsSerializable,
+      hasRunAutoMatch: Array.from(autoMatch),
+      extendedCapacityCourts: extendedCapacityCourtsSerializable,
+      sessionId: currentSession.id
+    }
+    
+    console.log('[MatchProgram] saveCurrentState called:', {
+      sessionId: currentSession.id,
+      rounds: Object.keys(matches),
+      hasMatches: Object.values(matches).some(round => round.some(court => court.slots.length > 0))
+    })
+    
+    savePersistedState(stateToPersist)
+  }, [])
+
   /** Updates in-memory matches for a specific round. Ensures all 8 courts are always present. */
   const updateInMemoryMatches = useCallback((round: number, newMatches: CourtWithPlayers[]) => {
     // Ensure all 8 courts are always present (1-8)
@@ -277,12 +364,27 @@ const MatchProgramPage = () => {
       return existing || { courtIdx, slots: [] }
     })
     
-    setInMemoryMatches((prev) => ({ ...prev, [round]: completeMatches }))
+    // Update state and immediately save to localStorage to prevent data loss
+    setInMemoryMatches((prev) => {
+      const updated = { ...prev, [round]: completeMatches }
+      // Immediately save using the updated state we're about to set
+      // This ensures data is saved even if component unmounts before useEffect runs
+      // Use refs for other state variables to ensure we get the latest values
+      if (session && hasRestoredStateRef.current) {
+        // Save synchronously with the updated state value and latest ref values
+        saveCurrentState(
+          updated,
+          lockedCourtsRef.current,
+          hasRunAutoMatchRef.current,
+          extendedCapacityCourtsRef.current
+        )
+      }
+      return updated
+    })
     if (round === selectedRound) {
       setMatches(completeMatches)
     }
-    // Note: State persistence happens automatically via useEffect
-  }, [selectedRound])
+  }, [selectedRound, session, saveCurrentState])
 
   /** Initializes page state — loads session and players. */
   const hydrate = useCallback(async () => {
@@ -298,8 +400,9 @@ const MatchProgramPage = () => {
   // WHY: Load persisted state when session is available, then load matches
   useEffect(() => {
     if (!session) {
-      // Clear persisted state if no session
-      clearPersistedState()
+      // Don't clear persisted state if session is null - it might just be loading
+      // Only clear if we're sure there's no active session (e.g., after ending training)
+      // For now, just reset local state but keep persisted state in localStorage
       setMatches([])
       setCheckedIn([])
       hasRestoredStateRef.current = false
@@ -311,9 +414,11 @@ const MatchProgramPage = () => {
       // Load persisted state for this session
       const persisted = loadPersistedState(session.id)
       if (persisted) {
-        // Restore inMemoryMatches
+        // Restore inMemoryMatches - restore ALL rounds, not just selectedRound
         if (persisted.inMemoryMatches && Object.keys(persisted.inMemoryMatches).length > 0) {
           setInMemoryMatches(persisted.inMemoryMatches)
+          // Update ref immediately so loadMatches can use it
+          inMemoryMatchesRef.current = persisted.inMemoryMatches
         }
         
         // Restore lockedCourts (convert arrays back to Sets)
@@ -323,36 +428,47 @@ const MatchProgramPage = () => {
             restored[Number(round)] = new Set(courtIndices)
           }
           setLockedCourts(restored)
+          // Update ref immediately
+          lockedCourtsRef.current = restored
         }
         
         // Restore hasRunAutoMatch (convert array back to Set)
         if (persisted.hasRunAutoMatch) {
-          setHasRunAutoMatch(new Set(persisted.hasRunAutoMatch))
+          const restored = new Set(persisted.hasRunAutoMatch)
+          setHasRunAutoMatch(restored)
+          // Update ref immediately
+          hasRunAutoMatchRef.current = restored
         }
         
         // Restore extendedCapacityCourts (convert array of tuples back to Map)
         if (persisted.extendedCapacityCourts) {
-          setExtendedCapacityCourts(new Map(persisted.extendedCapacityCourts))
+          const restored = new Map(persisted.extendedCapacityCourts)
+          setExtendedCapacityCourts(restored)
+          // Update ref immediately
+          extendedCapacityCourtsRef.current = restored
         }
         
-        // Mark restoration as complete AFTER setting all state
-        // Use setTimeout to ensure state updates are applied before we allow persistence
-        setTimeout(() => {
-          hasRestoredStateRef.current = true
-        }, 0)
+        // Mark restoration as complete AFTER setting all state and refs
+        hasRestoredStateRef.current = true
+        // Load matches immediately after restoration (refs are now synced)
+        void loadMatches()
       } else {
         // No persisted state, mark as restored immediately
         hasRestoredStateRef.current = true
+        // Load matches immediately if no persisted state
+        void loadMatches()
       }
+    } else {
+      // Restoration already complete, just load matches for the selected round
+      void loadMatches()
     }
     
-    // Load check-ins and matches after restoring persisted state
+    // Always load check-ins
     void loadCheckIns()
-    void loadMatches()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.id, selectedRound])
 
-  // WHY: Persist state to localStorage whenever it changes
+  // WHY: Persist state to localStorage whenever it changes (passes actual state values)
   useEffect(() => {
     if (!session) return
     
@@ -362,24 +478,64 @@ const MatchProgramPage = () => {
       return
     }
     
-    // Convert Sets and Maps to serializable formats
-    const lockedCourtsSerializable: Record<number, number[]> = {}
-    for (const [round, courtSet] of Object.entries(lockedCourts)) {
-      lockedCourtsSerializable[Number(round)] = Array.from(courtSet)
+    // Pass actual state values directly to avoid race conditions with refs
+    saveCurrentState(inMemoryMatches, lockedCourts, hasRunAutoMatch, extendedCapacityCourts)
+  }, [session, inMemoryMatches, lockedCourts, hasRunAutoMatch, extendedCapacityCourts, saveCurrentState])
+
+  // WHY: Save state when component unmounts or user navigates away (uses refs for event handlers)
+  useEffect(() => {
+    if (!session || !hasRestoredStateRef.current) return
+
+    // Save state when page is about to unload
+    const handleBeforeUnload = () => {
+      // Use refs for event handlers (they're always synced via separate useEffects)
+      saveCurrentState(
+        inMemoryMatchesRef.current,
+        lockedCourtsRef.current,
+        hasRunAutoMatchRef.current,
+        extendedCapacityCourtsRef.current
+      )
     }
-    
-    const extendedCapacityCourtsSerializable: Array<[number, number]> = Array.from(extendedCapacityCourts.entries())
-    
-    const stateToPersist: PersistedMatchProgramState = {
-      inMemoryMatches,
-      lockedCourts: lockedCourtsSerializable,
-      hasRunAutoMatch: Array.from(hasRunAutoMatch),
-      extendedCapacityCourts: extendedCapacityCourtsSerializable,
-      sessionId: session.id
+
+    // Save state when page becomes hidden (e.g., user switches tabs or navigates away)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        saveCurrentState(
+          inMemoryMatchesRef.current,
+          lockedCourtsRef.current,
+          hasRunAutoMatchRef.current,
+          extendedCapacityCourtsRef.current
+        )
+      }
     }
-    
-    savePersistedState(stateToPersist)
-  }, [session, inMemoryMatches, lockedCourts, hasRunAutoMatch, extendedCapacityCourts])
+
+    // Save state when page is being unloaded (for modern browsers)
+    const handlePageHide = () => {
+      saveCurrentState(
+        inMemoryMatchesRef.current,
+        lockedCourtsRef.current,
+        hasRunAutoMatchRef.current,
+        extendedCapacityCourtsRef.current
+      )
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('pagehide', handlePageHide)
+
+    // Cleanup: save state when component unmounts
+    return () => {
+      saveCurrentState(
+        inMemoryMatchesRef.current,
+        lockedCourtsRef.current,
+        hasRunAutoMatchRef.current,
+        extendedCapacityCourtsRef.current
+      )
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('pagehide', handlePageHide)
+    }
+  }, [session, saveCurrentState])
 
 
   // WHY: Close dropdown when round changes to avoid stale state
