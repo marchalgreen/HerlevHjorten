@@ -230,35 +230,29 @@ export const FullScreenMatchProgram: React.FC<FullScreenMatchProgramProps> = ({
   
   return (
     <div className="fixed inset-0 z-50 bg-[hsl(var(--bg-canvas))] flex flex-col">
-      <header className="flex items-center justify-between p-4 border-b border-[hsl(var(--line)/.12)]">
+      <header className="flex items-center justify-between p-3 sm:p-4 border-b border-[hsl(var(--line)/.12)]">
         <div className="flex items-center gap-4">
           <select
             value={selectedRound}
             onChange={(e) => onRoundChange(Number(e.target.value))}
-            className="relative rounded-lg px-5 py-3 pr-11 text-base font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-contrast))] shadow-[0_2px_8px_hsl(var(--primary)/.25)] hover:shadow-[0_4px_16px_hsl(var(--primary)/.35)] hover:bg-[hsl(var(--primary)/.95)] focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 focus:ring-offset-[hsl(var(--bg-canvas))] outline-none transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none cursor-pointer appearance-none min-w-[140px]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 12px center',
-              backgroundSize: '18px 18px'
-            }}
+            className="dropdown-chevron relative rounded-lg px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 pr-8 sm:pr-10 md:pr-11 text-xs sm:text-sm md:text-base font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-contrast))] shadow-[0_2px_8px_hsl(var(--primary)/.25)] hover:shadow-[0_4px_16px_hsl(var(--primary)/.35)] hover:bg-[hsl(var(--primary)/.95)] focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 focus:ring-offset-[hsl(var(--bg-canvas))] outline-none transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none cursor-pointer appearance-none min-w-[100px] sm:min-w-[120px] md:min-w-[140px]"
           >
             <option value={1}>Runde 1</option>
             <option value={2}>Runde 2</option>
             <option value={3}>Runde 3</option>
             <option value={4}>Runde 4</option>
           </select>
-          <h1 className="text-2xl font-semibold text-[hsl(var(--foreground))]">Kampprogram</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-[hsl(var(--foreground))]">Kampprogram</h1>
         </div>
         <button
           type="button"
           onClick={onExitFullScreen}
-          className="rounded-md bg-accent px-6 py-3 text-base font-semibold text-white hover:opacity-90 transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-focus hover:shadow-sm"
+          className="rounded-md bg-accent px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-semibold text-white hover:opacity-90 transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-focus hover:shadow-sm"
         >
           Luk (ESC)
         </button>
       </header>
-      <div className="flex-1 overflow-hidden p-6" style={{ height: 'calc(100vh - 80px)' }}>
+      <div className="flex-1 overflow-hidden p-4 sm:p-6" style={{ height: 'calc(100vh - 80px)' }}>
         <section 
           className="grid gap-4 h-full w-full"
           style={{
@@ -272,7 +266,7 @@ export const FullScreenMatchProgram: React.FC<FullScreenMatchProgramProps> = ({
             <PageCard
               key={court.courtIdx}
               hover={false}
-              className={`space-y-3 hover:shadow-md p-5 transition-all duration-200 relative h-full flex flex-col ${
+              className={`space-y-2 sm:space-y-3 hover:shadow-md p-3 sm:p-5 transition-all duration-200 relative h-full flex flex-col ${
                 courtsWithDuplicatesSet.has(court.courtIdx)
                   ? 'ring-2 ring-[hsl(var(--destructive)/.45)] border border-[hsl(var(--destructive)/.3)] bg-[hsl(var(--destructive)/.03)]'
                   : ''
@@ -280,10 +274,10 @@ export const FullScreenMatchProgram: React.FC<FullScreenMatchProgramProps> = ({
             >
               <header className="flex items-center justify-between mb-3 flex-shrink-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-semibold text-[hsl(var(--foreground))]">Bane {court.courtIdx}</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))]">Bane {court.courtIdx}</h3>
                   {courtsWithDuplicatesSet.has(court.courtIdx) && (
                     <span className="group relative">
-                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.2)] text-xs font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.3)]">
+                      <span className="inline-flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.2)] text-[10px] sm:text-xs font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.3)]">
                         !
                       </span>
                       <span className="absolute left-1/2 top-full z-10 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-[hsl(var(--surface-2))] px-2 py-1 text-xs text-[hsl(var(--foreground))] shadow-lg ring-1 ring-[hsl(var(--line)/.12)] group-hover:block">
@@ -292,7 +286,7 @@ export const FullScreenMatchProgram: React.FC<FullScreenMatchProgramProps> = ({
                     </span>
                   )}
                 </div>
-                <span className="text-sm text-[hsl(var(--muted))]">{court.slots.length}/{extendedCapacityCourts.get(court.courtIdx) || EMPTY_SLOTS}</span>
+                <span className="text-xs sm:text-sm text-[hsl(var(--muted))]">{court.slots.length}/{extendedCapacityCourts.get(court.courtIdx) || EMPTY_SLOTS}</span>
               </header>
               <div className="flex flex-col gap-2 flex-1 min-h-0">
                 {renderCourtSlots(court)}

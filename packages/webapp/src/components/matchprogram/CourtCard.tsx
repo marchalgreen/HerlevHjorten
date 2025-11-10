@@ -189,7 +189,7 @@ export const CourtCard: React.FC<CourtCardProps> = ({
     <PageCard
       key={court.courtIdx}
       hover={false}
-      className={`space-y-2 hover:shadow-md p-4 transition-all duration-200 relative ${
+      className={`space-y-2 hover:shadow-md p-3 sm:p-4 transition-all duration-200 relative ${
         hasDuplicates
           ? 'ring-2 ring-[hsl(var(--destructive)/.45)] border border-[hsl(var(--destructive)/.3)] bg-[hsl(var(--destructive)/.03)]'
           : dragOverCourt === court.courtIdx
@@ -202,13 +202,13 @@ export const CourtCard: React.FC<CourtCardProps> = ({
     >
       <header className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">Bane {court.courtIdx}</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-[hsl(var(--foreground))]">Bane {court.courtIdx}</h3>
           {hasDuplicates && (
             <span className="group relative">
-              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.2)] text-[10px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.3)]">
+              <span className="inline-flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.2)] text-[9px] sm:text-[10px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.3)]">
                 !
               </span>
-              <span className="absolute left-1/2 top-full z-10 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-[hsl(var(--surface-2))] px-2 py-1 text-xs text-[hsl(var(--foreground))] shadow-lg ring-1 ring-[hsl(var(--line)/.12)] group-hover:block">
+              <span className="absolute left-1/2 top-full z-10 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-[hsl(var(--surface-2))] px-2 py-1 text-xs sm:text-sm text-[hsl(var(--foreground))] shadow-lg ring-1 ring-[hsl(var(--line)/.12)] group-hover:block">
                 3+ spillere har allerede spillet sammen i en tidligere runde
               </span>
             </span>
@@ -329,7 +329,7 @@ export const CourtCard: React.FC<CourtCardProps> = ({
               />
             </button>
           </div>
-          <span className="text-xs text-[hsl(var(--muted))]">{court.slots.length}/{maxCapacity}</span>
+          <span className="text-[10px] sm:text-xs text-[hsl(var(--muted))]">{court.slots.length}/{maxCapacity}</span>
         </div>
       </header>
       

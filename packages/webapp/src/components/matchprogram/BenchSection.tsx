@@ -113,7 +113,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
 }) => {
   return (
     <PageCard 
-      className={`space-y-3 transition-all duration-300 ease-in-out p-4 ${
+      className={`space-y-3 transition-all duration-300 ease-in-out p-3 sm:p-4 ${
         dragOverBench 
           ? 'ring-2 ring-[hsl(var(--primary)/.4)] bg-[hsl(var(--primary)/.05)]' 
           : ''
@@ -135,7 +135,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
             </svg>
           </button>
           {bench.length > 0 && (
-            <span className="rounded-full bg-[hsl(var(--primary)/.1)] text-[hsl(var(--primary))] px-2 py-1 text-xs font-semibold border border-[hsl(var(--primary)/.2)]">
+            <span className="rounded-full bg-[hsl(var(--primary)/.1)] text-[hsl(var(--primary))] px-2 py-1 text-xs sm:text-sm font-semibold border border-[hsl(var(--primary)/.2)]">
               {bench.length}
             </span>
           )}
@@ -149,9 +149,9 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
           }}
         >
           <header className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">BÆNK</h3>
+            <h3 className="text-xs sm:text-sm font-semibold">BÆNK</h3>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-xs font-medium">
+              <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] sm:text-xs font-medium">
                 {bench.length}
               </span>
               <button
@@ -169,9 +169,9 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               </button>
             </div>
           </header>
-          <div className="flex flex-col space-y-3 max-h-[calc(100vh-380px)] overflow-y-auto scrollbar-thin min-w-0">
+          <div className="flex flex-col space-y-3 max-h-[calc(100vh-420px)] sm:max-h-[calc(100vh-380px)] overflow-y-auto scrollbar-thin min-w-0">
             {bench.length === 0 && (
-              <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-4 text-center text-xs text-[hsl(var(--muted))] border-hair">
+              <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-3 sm:py-4 text-center text-xs sm:text-sm text-[hsl(var(--muted))] border-hair">
                 Træk spillere her for at aktivere dem
               </p>
             )}
@@ -180,7 +180,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center gap-3 rounded-md px-3 py-3 h-[72px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                  className={`flex items-center gap-2 sm:gap-3 rounded-md px-2.5 py-2.5 sm:px-3 sm:py-3 h-[64px] sm:h-[72px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
                   data-cat={catLetter || undefined}
                   draggable
                   onDragStart={(event) => onBenchDragStart(event, player.id)}
@@ -189,7 +189,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       {getCategoryBadge(player.primaryCategory)}
-                      <p className="text-base font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
+                      <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
                     </div>
                   </div>
                 </div>
@@ -228,10 +228,10 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               {inactivePlayers.length > 0 ? (
                 <>
                   <header className="flex items-center justify-between mb-2">
-                    <h4 className="text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
+                    <h4 className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
                       Inaktive / Kun 1 runde
                     </h4>
-                    <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--muted))]">
+                    <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[9px] sm:text-[10px] font-medium text-[hsl(var(--muted))]">
                       {inactivePlayers.length}
                     </span>
                   </header>
@@ -243,21 +243,21 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                       return (
                         <div
                           key={player.id}
-                          className={`flex items-center gap-2 rounded-md px-3 py-3 h-[72px] w-full max-w-full box-border opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] overflow-hidden ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                          className={`flex items-center gap-2 rounded-md px-2.5 py-2.5 sm:px-3 sm:py-3 h-[64px] sm:h-[72px] w-full max-w-full box-border opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] overflow-hidden ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
                           data-cat={catLetter || undefined}
                           draggable
                           onDragStart={(event) => onInactiveDragStart(event, player.id)}
                           onDragEnd={onInactiveDragEnd}
                         >
                           <div className="min-w-0 flex-1 overflow-hidden">
-                            <p className="text-base font-semibold text-[hsl(var(--foreground))] truncate w-full">{player.alias ?? player.name}</p>
+                            <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate w-full">{player.alias ?? player.name}</p>
                             <div className="flex items-center gap-1.5 mt-1 min-w-0">
                               {getCategoryBadge(player.primaryCategory)}
                               {isOneRoundOnly && !isUnavailable && (
-                                <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-1.5 py-0.5 text-[10px] whitespace-nowrap flex-shrink-0">Kun 1 runde</span>
+                                <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-1.5 py-0.5 text-[9px] sm:text-[10px] whitespace-nowrap flex-shrink-0">Kun 1 runde</span>
                               )}
                               {isUnavailable && (
-                                <span className="text-[10px] font-normal text-[hsl(var(--destructive))] whitespace-nowrap flex-shrink-0">Inaktiv</span>
+                                <span className="text-[9px] sm:text-[10px] font-normal text-[hsl(var(--destructive))] whitespace-nowrap flex-shrink-0">Inaktiv</span>
                               )}
                             </div>
                           </div>
@@ -272,7 +272,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                                     onActivateOneRoundPlayer(player.id)
                                   }
                                 }}
-                                className="rounded px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/.1)] ring-1 ring-[hsl(var(--success)/.2)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm whitespace-nowrap"
+                                className="rounded px-2 py-0.5 text-[9px] sm:text-[10px] font-medium text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/.1)] ring-1 ring-[hsl(var(--success)/.2)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm whitespace-nowrap"
                                 title={isUnavailable ? "Gendan til bænk" : "Aktiver spiller"}
                               >
                                 Aktiver
@@ -287,14 +287,14 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               ) : (
                 <div className="py-4">
                   <header className="flex items-center justify-between mb-2">
-                    <h4 className="text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
+                    <h4 className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
                       Inaktive / Kun 1 runde
                     </h4>
-                    <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] font-medium text-[hsl(var(--muted))]">
+                    <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[9px] sm:text-[10px] font-medium text-[hsl(var(--muted))]">
                       0
                     </span>
                   </header>
-                  <p className="text-[10px] text-[hsl(var(--muted))] text-center py-2 rounded-md bg-[hsl(var(--surface-2))] border-hair">
+                  <p className="text-[9px] sm:text-[10px] text-[hsl(var(--muted))] text-center py-2 rounded-md bg-[hsl(var(--surface-2))] border-hair">
                     Træk spillere her for at markere dem som inaktive
                   </p>
                 </div>

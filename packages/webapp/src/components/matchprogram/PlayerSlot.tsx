@@ -88,7 +88,7 @@ export const PlayerSlot: React.FC<PlayerSlotProps> = ({
         }
       }}
       onDragEnd={onDragEnd}
-      className={`flex items-center gap-2 rounded-md px-3 py-3 h-[72px] w-full transition-all motion-reduce:transition-none ${
+      className={`flex items-center gap-2 rounded-md px-2.5 py-2.5 sm:px-3 sm:py-3 h-[64px] sm:h-[72px] w-full transition-all motion-reduce:transition-none ${
         isRecentlySwapped
           ? `${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''} animate-swap-in ring-2 ring-[hsl(var(--primary)/.5)] shadow-lg hover:shadow-sm cursor-grab active:cursor-grabbing ring-1 ring-[hsl(var(--line)/.12)]`
           : isDragOverOccupied && player
@@ -113,9 +113,9 @@ export const PlayerSlot: React.FC<PlayerSlotProps> = ({
               // Full-screen: icon and name on same row, larger font
               <div className="flex items-center gap-2">
                 {getCategoryBadge(player.primaryCategory)}
-                <p className="text-xl font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
+                <p className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
                 {isDuplicatePlayer && (
-                  <span className="inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[10px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
+                  <span className="inline-flex h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[9px] sm:text-[10px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
                     !
                   </span>
                 )}
@@ -124,9 +124,9 @@ export const PlayerSlot: React.FC<PlayerSlotProps> = ({
               // Normal view: icon and name on same row
               <div className="flex items-center gap-2">
                 {getCategoryBadge(player.primaryCategory)}
-                <p className="text-base font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
+                <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
                 {isDuplicatePlayer && (
-                  <span className="inline-flex h-3 w-3 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[8px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
+                  <span className="inline-flex h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[7px] sm:text-[8px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
                     !
                   </span>
                 )}

@@ -330,11 +330,11 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
   const handleSelectPlayer = useCallback(
     async (selectedId: string | null) => {
       try {
-        // If clearing, proceed directly
-        if (!selectedId) {
-          await performPartnerUpdate(null)
-          return
-        }
+      // If clearing, proceed directly
+      if (!selectedId) {
+        await performPartnerUpdate(null)
+        return
+      }
 
         // Step 1: Reload fresh data to ensure we have the latest state
         // Note: We fetch fresh data directly without calling onUpdate() first
@@ -366,11 +366,11 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
             setExistingPartnerName(existingPartner.name)
             setShowConfirmDialog(true)
             return
-          }
         }
+      }
 
-        // No existing partner or it's the current player, proceed directly
-        await performPartnerUpdate(selectedId)
+      // No existing partner or it's the current player, proceed directly
+      await performPartnerUpdate(selectedId)
       } catch (err: unknown) {
         const normalizedError = normalizeError(err)
         notify({
@@ -432,15 +432,15 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
     return (
       <>
         {dialogElement}
-        <div className="w-full max-w-[200px] mx-auto">
-          <button
-            type="button"
-            onClick={() => setIsEditing(true)}
-            className="w-full text-xs rounded bg-[hsl(var(--surface))] px-2 py-1 ring-1 ring-[hsl(var(--line)/.14)] hover:ring-2 hover:ring-[hsl(var(--ring))] transition-colors text-left"
-          >
-            {partner ? formatPlayerName(partner.name, partner.alias) : 'Ingen'}
-          </button>
-        </div>
+      <div className="w-full max-w-[200px] mx-auto">
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          className="w-full text-xs rounded bg-[hsl(var(--surface))] px-2 py-1 ring-1 ring-[hsl(var(--line)/.14)] hover:ring-2 hover:ring-[hsl(var(--ring))] transition-colors text-left"
+        >
+          {partner ? formatPlayerName(partner.name, partner.alias) : 'Ingen'}
+        </button>
+      </div>
       </>
     )
   }
@@ -469,17 +469,17 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
         <div className="absolute top-[28px] left-0 w-full min-w-[200px] bg-[hsl(var(--surface))] border border-[hsl(var(--line)/.14)] rounded shadow-lg max-h-[150px] overflow-y-auto z-[100]">
           <button
             type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  e.preventDefault()
+            onClick={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
                   void handleSelectPlayer(null)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    e.stopPropagation()
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.stopPropagation()
                     void handleSelectPlayer(null)
-                  } else if (e.key === 'ArrowDown') {
+              } else if (e.key === 'ArrowDown') {
                 e.preventDefault()
                 const next = e.currentTarget.nextElementSibling as HTMLButtonElement
                 next?.focus()

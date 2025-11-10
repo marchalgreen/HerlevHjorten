@@ -80,12 +80,15 @@ const MatchProgramPage = () => {
     setIsFullScreen,
     viewportSize,
     popupPosition,
+    popupSize,
     isDragging,
+    isResizing,
     inMemoryMatches,
     hasRunAutoMatch,
     handleStartTraining,
     handleEndTraining,
     handleMouseDown,
+    handleResizeStart,
     handleToggleBenchCollapse,
     handleExtendedCapacityChange,
     handleTogglePreviousRounds,
@@ -144,7 +147,7 @@ const MatchProgramPage = () => {
 
 
   return (
-    <section className="flex h-full flex-col gap-6 pt-4">
+    <section className="flex h-full flex-col gap-4 sm:gap-6 pt-2 sm:pt-4">
       <MatchProgramHeader
         session={session}
         checkedInCount={checkedIn.length}
@@ -170,10 +173,10 @@ const MatchProgramPage = () => {
         </PageCard>
       )}
 
-      <div className={`grid gap-3 lg:items-start transition-all duration-300 ease-in-out ${
+      <div className={`grid gap-3 md:grid-cols-[minmax(180px,220px)_1fr] lg:items-start transition-all duration-300 ease-in-out ${
         benchCollapsed 
-          ? 'lg:grid-cols-[48px_1fr]' 
-          : 'lg:grid-cols-[minmax(200px,240px)_1fr]'
+          ? 'md:grid-cols-[48px_1fr]' 
+          : ''
       }`}>
         {/* Bench */}
         <BenchSection
@@ -202,7 +205,7 @@ const MatchProgramPage = () => {
         />
 
         {/* Courts */}
-        <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {matches.map((court) => (
             <CourtCard
               key={court.courtIdx}
@@ -237,8 +240,11 @@ const MatchProgramPage = () => {
         inMemoryMatches={inMemoryMatches}
         previousRoundsMatches={previousRoundsMatches}
         popupPosition={popupPosition}
+        popupSize={popupSize}
         isDragging={isDragging}
+        isResizing={isResizing}
         onMouseDown={handleMouseDown}
+        onResizeStart={handleResizeStart}
       />
     </section>
   )

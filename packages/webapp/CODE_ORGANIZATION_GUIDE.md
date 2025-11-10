@@ -1,5 +1,7 @@
 # Code Organization & Best Practices Guide
 
+> **See also:** [Responsive Design Guide](./RESPONSIVE_DESIGN_GUIDE.md) for mobile-first UI patterns
+
 ## Core Principles
 
 ### 1. Architectural Thinking First

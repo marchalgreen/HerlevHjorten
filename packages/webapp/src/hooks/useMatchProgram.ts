@@ -109,10 +109,16 @@ interface UseMatchProgramReturn {
   viewportSize: { width: number; height: number }
   popupPosition: { x: number; y: number }
   setPopupPosition: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>
+  popupSize: { width: number; height: number }
+  setPopupSize: React.Dispatch<React.SetStateAction<{ width: number; height: number }>>
   isDragging: boolean
   setIsDragging: (dragging: boolean) => void
+  isResizing: boolean
+  setIsResizing: (resizing: boolean) => void
   dragOffset: { x: number; y: number }
   setDragOffset: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>
+  resizeOffset: { x: number; y: number }
+  setResizeOffset: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>
   
   // Internal refs (for drag handlers)
   dragOverSlotRef: React.MutableRefObject<{ courtIdx: number; slot: number } | null>
@@ -134,6 +140,7 @@ interface UseMatchProgramReturn {
   
   // UI handlers
   handleMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void
+  handleResizeStart: (e: React.MouseEvent<HTMLDivElement>) => void
   handleToggleBenchCollapse: () => void
   handleExtendedCapacityChange: (courtIdx: number, capacity: number | null) => void
   handleTogglePreviousRounds: () => Promise<void>
@@ -222,8 +229,11 @@ export const useMatchProgram = ({
     height: typeof window !== 'undefined' ? window.innerHeight : 1080 
   })
   const [popupPosition, setPopupPosition] = useState({ x: 16, y: 16 })
+  const [popupSize, setPopupSize] = useState({ width: 400, height: 600 })
   const [isDragging, setIsDragging] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [resizeOffset, setResizeOffset] = useState({ x: 0, y: 0 })
   
   // Court management
   const [extendedCapacityCourts, setExtendedCapacityCourts] = useState<Map<number, number>>(new Map())
@@ -671,7 +681,7 @@ export const useMatchProgram = ({
       const newX = e.clientX - dragOffset.x
       const newY = e.clientY - dragOffset.y
       
-      const maxX = window.innerWidth - 400
+      const maxX = window.innerWidth - popupSize.width
       const maxY = window.innerHeight - 100
       
       setPopupPosition({
@@ -692,7 +702,40 @@ export const useMatchProgram = ({
         document.removeEventListener('mouseup', handleMouseUp)
       }
     }
-  }, [isDragging, dragOffset])
+  }, [isDragging, dragOffset, popupSize.width])
+  
+  // Handle popup resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return
+      
+      const newWidth = e.clientX - popupPosition.x - resizeOffset.x
+      const newHeight = e.clientY - popupPosition.y - resizeOffset.y
+      
+      const minWidth = 300
+      const minHeight = 200
+      const maxWidth = window.innerWidth - popupPosition.x
+      const maxHeight = window.innerHeight - popupPosition.y
+      
+      setPopupSize({
+        width: Math.max(minWidth, Math.min(newWidth, maxWidth)),
+        height: Math.max(minHeight, Math.min(newHeight, maxHeight))
+      })
+    }
+    
+    const handleMouseUp = () => {
+      setIsResizing(false)
+    }
+    
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [isResizing, popupPosition, resizeOffset])
   
   // Match operations (to be continued in next part due to size)
   const handleMove = useCallback(async (playerId: string, courtIdx?: number, slot?: number) => {
@@ -1008,6 +1051,17 @@ export const useMatchProgram = ({
     })
   }, [])
   
+  const handleResizeStart = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsResizing(true)
+    const rect = (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect()
+    setResizeOffset({
+      x: e.clientX - rect.right,
+      y: e.clientY - rect.bottom
+    })
+  }, [])
+  
   const handleToggleBenchCollapse = useCallback(() => {
     setBenchCollapsing(true)
     setTimeout(() => {
@@ -1301,10 +1355,16 @@ export const useMatchProgram = ({
     viewportSize,
     popupPosition,
     setPopupPosition,
+    popupSize,
+    setPopupSize,
     isDragging,
     setIsDragging,
+    isResizing,
+    setIsResizing,
     dragOffset,
     setDragOffset,
+    resizeOffset,
+    setResizeOffset,
     
     // Internal refs
     dragOverSlotRef,
@@ -1326,6 +1386,7 @@ export const useMatchProgram = ({
     
     // UI handlers
     handleMouseDown,
+    handleResizeStart,
     handleToggleBenchCollapse,
     handleExtendedCapacityChange,
     handleTogglePreviousRounds,

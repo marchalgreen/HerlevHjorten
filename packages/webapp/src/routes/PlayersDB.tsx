@@ -111,20 +111,20 @@ const PlayersPage = () => {
    */
   const openEdit = useCallback(
     (player: Player) => {
-      setDialogMode('edit')
-      setCurrentPlayer(player)
+    setDialogMode('edit')
+    setCurrentPlayer(player)
       const playerAny = player as any
-      setFormName(player.name)
-      setFormAlias(player.alias ?? '')
+    setFormName(player.name)
+    setFormAlias(player.alias ?? '')
       setFormLevelSingle((playerAny.levelSingle ?? null)?.toString() ?? '')
       setFormLevelDouble((playerAny.levelDouble ?? null)?.toString() ?? '')
       setFormLevelMix((playerAny.levelMix ?? null)?.toString() ?? '')
-      setFormGender(player.gender ?? '')
-      setFormPrimaryCategory(player.primaryCategory ?? '')
-      setFormActive(player.active)
+    setFormGender(player.gender ?? '')
+    setFormPrimaryCategory(player.primaryCategory ?? '')
+    setFormActive(player.active)
       setFormPreferredDoublesPartners((playerAny.preferredDoublesPartners ?? null) ?? [])
       setFormPreferredMixedPartners((playerAny.preferredMixedPartners ?? null) ?? [])
-      setIsSheetOpen(true)
+    setIsSheetOpen(true)
     },
     []
   )
@@ -134,30 +134,30 @@ const PlayersPage = () => {
    */
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
-      event.preventDefault()
-      if (!formName.trim()) return
+    event.preventDefault()
+    if (!formName.trim()) return
 
       // Save scroll position before update (for edit mode)
       if (dialogMode === 'edit') {
         saveScrollPosition()
       }
 
-      try {
-        if (dialogMode === 'create') {
+    try {
+      if (dialogMode === 'create') {
           const createInput: any = {
-            name: formName.trim(),
-            alias: formAlias.trim() || undefined,
+          name: formName.trim(),
+          alias: formAlias.trim() || undefined,
             levelSingle: formLevelSingle ? Number(formLevelSingle) : undefined,
             levelDouble: formLevelDouble ? Number(formLevelDouble) : undefined,
             levelMix: formLevelMix ? Number(formLevelMix) : undefined,
-            gender: formGender || undefined,
-            primaryCategory: formPrimaryCategory || undefined,
+          gender: formGender || undefined,
+          primaryCategory: formPrimaryCategory || undefined,
             active: formActive,
             preferredDoublesPartners: formPreferredDoublesPartners.length > 0 ? formPreferredDoublesPartners : undefined,
             preferredMixedPartners: formPreferredMixedPartners.length > 0 ? formPreferredMixedPartners : undefined
           }
           await createPlayer(createInput)
-        } else if (currentPlayer) {
+      } else if (currentPlayer) {
           const patch: any = {
             name: formName.trim(),
             alias: formAlias || null,
@@ -169,13 +169,13 @@ const PlayersPage = () => {
             active: formActive,
             preferredDoublesPartners: formPreferredDoublesPartners.length > 0 ? formPreferredDoublesPartners : null,
             preferredMixedPartners: formPreferredMixedPartners.length > 0 ? formPreferredMixedPartners : null
-          }
+      }
           await updatePlayer({
             id: currentPlayer.id,
             patch
           })
         }
-        setIsSheetOpen(false)
+      setIsSheetOpen(false)
       } catch (err) {
         // Error is handled by the hook
       }
@@ -206,7 +206,7 @@ const PlayersPage = () => {
     async (player: Player) => {
       // Save scroll position before update
       saveScrollPosition()
-
+      
       await updatePlayer({
         id: player.id,
         patch: { active: !player.active }
@@ -242,8 +242,8 @@ const PlayersPage = () => {
       // Use multiple RAFs to ensure we restore after DataTable's effects have run
       // This ensures the table has fully rendered before we restore scroll
       const restoreScroll = () => {
-        const tableContainer = document.querySelector('[data-table-container]') as HTMLElement
-        if (tableContainer) {
+      const tableContainer = document.querySelector('[data-table-container]') as HTMLElement
+      if (tableContainer) {
           const savedScroll = scrollPositionRef.current
           if (savedScroll > 0) {
             tableContainer.scrollTop = savedScroll
@@ -334,29 +334,29 @@ const PlayersPage = () => {
           <div className="flex items-center justify-center gap-1">
             {([PLAYER_CATEGORIES.SINGLE, PLAYER_CATEGORIES.DOUBLE, PLAYER_CATEGORIES.BOTH] as PlayerCategory[]).map(
               (category) => {
-                const isSelected = row.primaryCategory === category
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      updatePrimaryCategory(row, isSelected ? null : category)
-                    }}
-                    className={`px-2 py-1 text-xs font-medium rounded transition-all duration-200 ${
-                      isSelected
-                        ? 'bg-[hsl(var(--primary))] text-white ring-1 ring-[hsl(var(--primary)/.3)]'
-                        : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] hover:bg-[hsl(var(--surface-glass)/.85)] hover:text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)]'
-                    }`}
-                    title={isSelected ? 'Klik for at fjerne' : `Klik for at sætte til ${category}`}
-                  >
+              const isSelected = row.primaryCategory === category
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    updatePrimaryCategory(row, isSelected ? null : category)
+                  }}
+                  className={`px-2 py-1 text-xs font-medium rounded transition-all duration-200 ${
+                    isSelected
+                      ? 'bg-[hsl(var(--primary))] text-white ring-1 ring-[hsl(var(--primary)/.3)]'
+                      : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] hover:bg-[hsl(var(--surface-glass)/.85)] hover:text-[hsl(var(--foreground))] ring-1 ring-[hsl(var(--line)/.12)]'
+                  }`}
+                  title={isSelected ? 'Klik for at fjerne' : `Klik for at sætte til ${category}`}
+                >
                     {category === PLAYER_CATEGORIES.SINGLE
                       ? 'S'
                       : category === PLAYER_CATEGORIES.DOUBLE
                         ? 'D'
                         : 'B'}
-                  </button>
-                )
+                </button>
+              )
               }
             )}
           </div>

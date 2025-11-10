@@ -25,6 +25,22 @@ They ensure maintainability, data safety, and design consistency across all epic
 • ✅ `ring-1 ring-[hsl(var(--line)/.12)]`
 • ❌ `border-[hsl(var(--line))]`
 
+📱 Responsive Design (CRITICAL)
+• **ALL UI components MUST be responsive by default.** This is non-negotiable.
+• **Mobile-first approach**: Always start with mobile styles, then enhance for larger screens.
+• **Standard breakpoints**: Use Tailwind's `sm:` (640px), `md:` (768px), `lg:` (1024px), `xl:` (1280px).
+• **Device targets**: Mobile (0-639px), Tablet (640-1023px), Desktop (1024px+).
+• **Responsive spacing**: Use responsive padding/margins (`px-4 sm:px-6 md:px-8`).
+• **Responsive typography**: Scale text sizes appropriately (`text-sm sm:text-base md:text-lg`).
+• **Responsive layouts**: Grids and flex layouts must adapt (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`).
+• **Touch targets**: Buttons/links must be at least 44px on mobile (`px-3 py-2` minimum).
+• **Testing requirement**: Test at 375px, 768px, 1024px, 1280px before committing.
+• **No fixed widths**: Never use fixed pixel widths without responsive alternatives.
+• **No desktop-only layouts**: Always provide mobile/tablet alternatives.
+• See RESPONSIVE_DESIGN_GUIDE.md for complete patterns and examples.
+• ❌ `className="w-[620px] px-6"` (fixed width, no responsive)
+• ✅ `className="w-full sm:max-w-[620px] px-4 sm:px-6"` (responsive)
+
 ⸻
 
 🧾 Docs & Documentation System

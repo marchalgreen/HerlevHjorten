@@ -18,15 +18,15 @@ const Header = () => {
   const logoPath = `${import.meta.env.BASE_URL}${config.logo}`
 
   return (
-    <header className="relative flex items-center ring-1 ring-[hsl(var(--line)/.12)] bg-[hsl(var(--surface)/.7)] px-6 py-4 backdrop-blur shadow-[inset_0_-1px_0_hsl(var(--line)/.08)]">
+    <header className="relative flex items-center ring-1 ring-[hsl(var(--line)/.12)] bg-[hsl(var(--surface)/.7)] px-3 sm:px-6 py-3 sm:py-4 backdrop-blur shadow-[inset_0_-1px_0_hsl(var(--line)/.08)]">
       {/* Left section: Logo and text */}
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         <img 
           src={logoPath} 
           alt={config.name} 
-          className="h-12 w-12 rounded-full ring-1 ring-[hsl(var(--line)/.2)] object-cover flex-shrink-0" 
+          className="h-10 w-10 sm:h-12 sm:w-12 rounded-full ring-1 ring-[hsl(var(--line)/.2)] object-cover flex-shrink-0" 
         />
-        <p className="text-lg font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] whitespace-nowrap">
+        <p className="text-sm sm:text-lg font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] whitespace-nowrap">
           {config.name}
         </p>
       </div>
@@ -35,8 +35,8 @@ const Header = () => {
       {/* A11y: Navigation landmark with aria-label for screen readers */}
       <nav 
         aria-label="Primær navigation" 
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2"
-        style={{ width: '620px' }}
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 sm:gap-2 max-w-[calc(100vw-200px)] sm:max-w-none"
+        style={{ width: 'min(620px, calc(100vw - 200px))' }}
       >
         <SidebarItem to={buildPath('/check-in')} icon={<UserCheck />} label="Indtjekning" />
         <SidebarItem to={buildPath('/match-program')} icon={<Grid2x2 />} label="Kampprogram" />
@@ -45,7 +45,7 @@ const Header = () => {
       </nav>
 
       {/* Right section: Spacer for balance */}
-      <div className="flex-shrink-0" style={{ width: '200px' }} aria-hidden="true">
+      <div className="hidden sm:block flex-shrink-0" style={{ width: '200px' }} aria-hidden="true">
         {/* Empty spacer */}
       </div>
     </header>
@@ -70,7 +70,7 @@ const AppInner = () => {
       <div className="flex min-h-screen flex-col text-[hsl(var(--foreground))]">
         <Header />
         <main className="flex-1 overflow-y-auto">
-          <div className="flex w-full flex-col gap-6 px-6 pb-10 pt-6 md:px-8 lg:px-12">
+          <div className="flex w-full flex-col gap-4 sm:gap-6 px-4 sm:px-6 pb-6 sm:pb-10 pt-4 sm:pt-6 md:px-8 lg:px-12">
             <Routes>
               <Route path="/players" element={<PlayersPage />} />
               <Route path="/check-in" element={<CheckInPage />} />

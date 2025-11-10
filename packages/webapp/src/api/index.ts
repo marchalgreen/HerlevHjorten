@@ -133,21 +133,21 @@ const listPlayers = async (filters?: PlayerListFilters): Promise<Player[]> => {
  */
 const createPlayer = async (input: PlayerCreateInput): Promise<Player> => {
   try {
-    const parsed = playerCreateSchema.parse(input)
-    const created = await createPlayerInDb({
-      name: parsed.name.trim(),
-      alias: parsed.alias ? parsed.alias.trim() : null,
-      level: parsed.level ?? null,
+  const parsed = playerCreateSchema.parse(input)
+  const created = await createPlayerInDb({
+    name: parsed.name.trim(),
+    alias: parsed.alias ? parsed.alias.trim() : null,
+    level: parsed.level ?? null,
       levelSingle: parsed.levelSingle ?? null,
       levelDouble: parsed.levelDouble ?? null,
       levelMix: parsed.levelMix ?? null,
-      gender: parsed.gender ?? null,
-      primaryCategory: parsed.primaryCategory ?? null,
+    gender: parsed.gender ?? null,
+    primaryCategory: parsed.primaryCategory ?? null,
       active: parsed.active ?? true,
       preferredDoublesPartners: parsed.preferredDoublesPartners ?? null,
       preferredMixedPartners: parsed.preferredMixedPartners ?? null
     } as Omit<Player, 'id' | 'createdAt'>)
-    return normalisePlayer(created)
+  return normalisePlayer(created)
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new ValidationError(
@@ -171,22 +171,22 @@ const createPlayer = async (input: PlayerCreateInput): Promise<Player> => {
  */
 const updatePlayer = async (input: PlayerUpdateInput): Promise<Player> => {
   try {
-    const parsed = playerUpdateSchema.parse(input)
+  const parsed = playerUpdateSchema.parse(input)
     const updateData: PlayerUpdateInput['patch'] = {}
-    if (parsed.patch.name !== undefined) updateData.name = parsed.patch.name.trim()
-    if (parsed.patch.alias !== undefined) updateData.alias = parsed.patch.alias
-    if (parsed.patch.level !== undefined) updateData.level = parsed.patch.level
+  if (parsed.patch.name !== undefined) updateData.name = parsed.patch.name.trim()
+  if (parsed.patch.alias !== undefined) updateData.alias = parsed.patch.alias
+  if (parsed.patch.level !== undefined) updateData.level = parsed.patch.level
     if (parsed.patch.levelSingle !== undefined) (updateData as any).levelSingle = parsed.patch.levelSingle
     if (parsed.patch.levelDouble !== undefined) (updateData as any).levelDouble = parsed.patch.levelDouble
     if (parsed.patch.levelMix !== undefined) (updateData as any).levelMix = parsed.patch.levelMix
-    if (parsed.patch.gender !== undefined) updateData.gender = parsed.patch.gender
-    if (parsed.patch.primaryCategory !== undefined) updateData.primaryCategory = parsed.patch.primaryCategory
-    if (parsed.patch.active !== undefined) updateData.active = parsed.patch.active
+  if (parsed.patch.gender !== undefined) updateData.gender = parsed.patch.gender
+  if (parsed.patch.primaryCategory !== undefined) updateData.primaryCategory = parsed.patch.primaryCategory
+  if (parsed.patch.active !== undefined) updateData.active = parsed.patch.active
     if (parsed.patch.preferredDoublesPartners !== undefined) (updateData as any).preferredDoublesPartners = parsed.patch.preferredDoublesPartners
     if (parsed.patch.preferredMixedPartners !== undefined) (updateData as any).preferredMixedPartners = parsed.patch.preferredMixedPartners
 
     const updated = await updatePlayerInDb(parsed.id, updateData as any)
-    return normalisePlayer(updated)
+  return normalisePlayer(updated)
   } catch (error) {
     if (error instanceof z.ZodError) {
       throw new ValidationError(
@@ -358,34 +358,34 @@ const sessionApi = {
  */
 const addCheckIn = async (input: { playerId: string; maxRounds?: number }) => {
   try {
-    const session = await ensureActiveSession()
-    const players = await getPlayers()
-    const player = players.find((item) => item.id === input.playerId)
+  const session = await ensureActiveSession()
+  const players = await getPlayers()
+  const player = players.find((item) => item.id === input.playerId)
     
-    if (!player) {
+  if (!player) {
       throw createPlayerNotFoundError(input.playerId)
-    }
+  }
     
-    if (!player.active) {
+  if (!player.active) {
       throw createPlayerInactiveError(player.name)
-    }
+  }
     
-    const checkIns = await getCheckIns()
-    const existing = checkIns.find(
-      (checkIn) => checkIn.sessionId === session.id && checkIn.playerId === input.playerId
-    )
+  const checkIns = await getCheckIns()
+  const existing = checkIns.find(
+    (checkIn) => checkIn.sessionId === session.id && checkIn.playerId === input.playerId
+  )
     
-    if (existing) {
+  if (existing) {
       throw createCheckInExistsError(player.name)
-    }
+  }
     
-    const checkIn = await createCheckInInDb({
-      sessionId: session.id,
-      playerId: input.playerId,
-      maxRounds: input.maxRounds ?? null
-    })
+  const checkIn = await createCheckInInDb({
+    sessionId: session.id,
+    playerId: input.playerId,
+    maxRounds: input.maxRounds ?? null
+  })
     
-    return checkIn
+  return checkIn
   } catch (error) {
     // Re-throw AppError instances as-is
     if (error instanceof Error && 'code' in error) {
@@ -427,21 +427,21 @@ const listActiveCheckIns = async (): Promise<CheckedInPlayer[]> => {
  */
 const removeCheckIn = async (input: { playerId: string }) => {
   try {
-    const session = await ensureActiveSession()
-    const checkIns = await getCheckIns()
-    const checkIn = checkIns.find(
-      (checkIn: CheckIn) => checkIn.sessionId === session.id && checkIn.playerId === input.playerId
-    )
+  const session = await ensureActiveSession()
+  const checkIns = await getCheckIns()
+  const checkIn = checkIns.find(
+    (checkIn: CheckIn) => checkIn.sessionId === session.id && checkIn.playerId === input.playerId
+  )
     
-    if (!checkIn) {
+  if (!checkIn) {
       // Try to get player name for better error message
       const players = await getPlayers()
       const player = players.find((p) => p.id === input.playerId)
       const playerName = player?.name || 'Spilleren'
       throw createCheckInNotFoundError(playerName)
-    }
+  }
     
-    await deleteCheckInInDb(checkIn.id)
+  await deleteCheckInInDb(checkIn.id)
   } catch (error) {
     // Re-throw AppError instances as-is
     if (error instanceof Error && 'code' in error) {
@@ -1109,11 +1109,11 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
         if (otherSinglesLeftovers.length > 0 && getTotalAssignedPlayers() + 2 <= MAX_PLAYERS_ON_COURTS) {
           // Pair with another leftover player
           const partner = otherSinglesLeftovers[0]
-          assignments.push({
-            courtIdx: availableCourtIdxs[courtIdxIndex++],
+        assignments.push({
+          courtIdx: availableCourtIdxs[courtIdxIndex++],
             playerIds: [leftoverPlayer.id, partner.id]
-          })
-          usedPlayerIds.add(leftoverPlayer.id)
+        })
+        usedPlayerIds.add(leftoverPlayer.id)
           usedPlayerIds.add(partner.id)
           added = true
         } else {
