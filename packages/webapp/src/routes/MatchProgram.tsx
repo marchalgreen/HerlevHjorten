@@ -362,8 +362,8 @@ const MatchProgramPage = () => {
       void loadMatches()
     }
     
-    // Always load check-ins
-    void loadCheckIns()
+    // No need to refetch check-ins when switching rounds - check-ins don't change
+    // This prevents unnecessary loading states and maintains smooth UX
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.id, selectedRound])
 
