@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Player } from '@herlev-hjorten/common'
 import api from '../../api'
 import { formatPlayerName } from '../../lib/formatting'
+import { normalizeError } from '../../lib/errors'
 import { PLAYER_GENDERS } from '../../constants'
 import { useToast } from '../ui/Toast'
 
@@ -191,9 +192,10 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
    * Resets editing state when player changes.
    */
   useEffect(() => {
+    const playerAny = player as any
     const currentPartnerId = partnerType === 'doubles'
-      ? (player.preferredDoublesPartners?.[0] ?? null)
-      : (player.preferredMixedPartners?.[0] ?? null)
+      ? (playerAny.preferredDoublesPartners?.[0] ?? null)
+      : (playerAny.preferredMixedPartners?.[0] ?? null)
     if (!isEditing) {
       setEditingPartnerId(currentPartnerId)
     }
@@ -224,7 +226,7 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
 
         if (currentPartnerId && currentPartnerId !== selectedId) {
         // Clear the old partner's relationship
-        const clearOldPartnerData: Parameters<typeof api.players.update>[0]['patch'] = partnerType === 'doubles'
+        const clearOldPartnerData: any = partnerType === 'doubles'
           ? { preferredDoublesPartners: [] }
           : { preferredMixedPartners: [] }
 
@@ -250,7 +252,7 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
             // If they have an existing partner (and it's not the current player), remove that relationship
             if (existingPartnerId && existingPartnerId !== player.id) {
               // Clear the existing partner's relationship
-              const clearExistingData: Parameters<typeof api.players.update>[0]['patch'] = partnerType === 'doubles'
+              const clearExistingData: any = partnerType === 'doubles'
                 ? { preferredDoublesPartners: [] }
                 : { preferredMixedPartners: [] }
 
@@ -263,7 +265,7 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
         }
 
         // Step 4: Update the current player with the new partner
-        const updateData: Parameters<typeof api.players.update>[0]['patch'] = partnerType === 'doubles'
+        const updateData: any = partnerType === 'doubles'
           ? { preferredDoublesPartners: selectedId ? [selectedId] : [] }
           : { preferredMixedPartners: selectedId ? [selectedId] : [] }
 
@@ -274,7 +276,7 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
 
         // Step 5: If a partner was selected, set the bidirectional relationship
         if (selectedId) {
-          const partnerUpdateData: Parameters<typeof api.players.update>[0]['patch'] = partnerType === 'doubles'
+          const partnerUpdateData: any = partnerType === 'doubles'
             ? { preferredDoublesPartners: [player.id] }
             : { preferredMixedPartners: [player.id] }
 
@@ -298,11 +300,11 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
             : `${partnerType === 'doubles' ? 'Double' : 'Mix'} makker fjernet`
         })
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Ukendt fejl'
+        const normalizedError = normalizeError(err)
         notify({
           variant: 'danger',
           title: `Kunne ikke opdatere ${partnerType === 'doubles' ? 'double' : 'mix'} makker`,
-          description: errorMessage
+          description: normalizedError.message
         })
         setShowConfirmDialog(false)
         setPendingPartnerId(null)
@@ -317,22 +319,32 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
    */
   const handleSelectPlayer = useCallback(
     async (selectedId: string | null) => {
-      // If clearing, proceed directly
-      if (!selectedId) {
-        await performPartnerUpdate(null)
-        return
-      }
+      try {
+        // If clearing, proceed directly
+        if (!selectedId) {
+          await performPartnerUpdate(null)
+          return
+        }
 
-      // Check if the selected partner already has a preferred partner
-      const selectedPartner = allPlayers.find((p) => p.id === selectedId)
-      if (selectedPartner) {
+        // Step 1: Reload fresh data to ensure we have the latest state
+        // Note: We fetch fresh data directly without calling onUpdate() first
+        // to avoid triggering a re-render that might reset our state
+        const freshPlayers = await api.players.list({})
+
+        // Step 2: Check if the selected partner already has a preferred partner using fresh data
+        const selectedPartner = freshPlayers.find((p) => p.id === selectedId)
+        if (selectedPartner) {
+          const selectedPartnerWithPartners = selectedPartner as Player & {
+            preferredDoublesPartners?: string[] | null
+            preferredMixedPartners?: string[] | null
+          }
         const existingPartnerId = partnerType === 'doubles'
-          ? (selectedPartner.preferredDoublesPartners?.[0] ?? null)
-          : (selectedPartner.preferredMixedPartners?.[0] ?? null)
+          ? (selectedPartnerWithPartners.preferredDoublesPartners?.[0] ?? null)
+          : (selectedPartnerWithPartners.preferredMixedPartners?.[0] ?? null)
 
         // If they already have a partner and it's not the current player, show confirmation
         if (existingPartnerId && existingPartnerId !== player.id) {
-          const existingPartner = allPlayers.find((p) => p.id === existingPartnerId)
+          const existingPartner = freshPlayers.find((p) => p.id === existingPartnerId)
           if (existingPartner) {
             setPendingPartnerId(selectedId)
             setExistingPartnerName(existingPartner.name)
@@ -344,8 +356,16 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
 
       // No existing partner or it's the current player, proceed directly
       await performPartnerUpdate(selectedId)
+      } catch (err: unknown) {
+        const normalizedError = normalizeError(err)
+        notify({
+          variant: 'danger',
+          title: `Kunne ikke vælge ${partnerType === 'doubles' ? 'double' : 'mix'} makker`,
+          description: normalizedError.message
+        })
+      }
     },
-    [allPlayers, partnerType, player.id, performPartnerUpdate]
+    [partnerType, player.id, performPartnerUpdate, notify]
   )
 
   /**
@@ -388,6 +408,7 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
     )
   }
 
+
   // Editing state - render the editing UI
   return (
     <>
@@ -422,17 +443,17 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
         <div className="absolute top-[28px] left-0 w-full min-w-[200px] bg-[hsl(var(--surface))] border border-[hsl(var(--line)/.14)] rounded shadow-lg max-h-[150px] overflow-y-auto z-[100]">
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              e.preventDefault()
-              handleSelectPlayer(null)
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                e.stopPropagation()
-                handleSelectPlayer(null)
-              } else if (e.key === 'ArrowDown') {
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  void handleSelectPlayer(null)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    void handleSelectPlayer(null)
+                  } else if (e.key === 'ArrowDown') {
                 e.preventDefault()
                 const next = e.currentTarget.nextElementSibling as HTMLButtonElement
                 next?.focus()
@@ -457,13 +478,13 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
                 onClick={(e) => {
                   e.stopPropagation()
                   e.preventDefault()
-                  handleSelectPlayer(p.id)
+                  void handleSelectPlayer(p.id)
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
                     e.stopPropagation()
-                    handleSelectPlayer(p.id)
+                    void handleSelectPlayer(p.id)
                   } else if (e.key === 'ArrowDown') {
                     e.preventDefault()
                     const next = e.currentTarget.nextElementSibling as HTMLButtonElement

@@ -140,28 +140,48 @@ export const createMatchAssignments = (
 
 ### 3. Error Handling Pattern
 
+**Best Practice: Use centralized error handling for user-facing errors. Use local error state only for UI-specific validation that doesn't need user notification.**
+
 Centralized error handling:
 
 ```typescript
 // lib/errors.ts
-export class AppError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public statusCode?: number
-  ) {
-    super(message)
-    this.name = 'AppError'
-  }
+import { normalizeError } from '../lib/errors'
+import { useToast } from '../components/ui/Toast'
+
+// ❌ BAD: Local error handling
+try {
+  await api.players.update(...)
+} catch (err) {
+  const msg = err instanceof Error ? err.message : 'Error'
+  console.error('Error:', err)
+  notify({ variant: 'danger', title: 'Error', description: msg })
 }
 
-// Usage in API layer
+// ✅ GOOD: Centralized error handling (follow this pattern)
 try {
-  // operation
-} catch (error) {
-  throw new AppError('User-friendly message', 'PLAYER_NOT_FOUND', 404)
+  await api.players.update(...)
+} catch (err) {
+  const normalizedError = normalizeError(err)
+  notify({
+    variant: 'danger',
+    title: 'Kunne ikke opdatere spiller',
+    description: normalizedError.message
+  })
 }
 ```
+
+**Pattern to follow:**
+1. Import `normalizeError` from `src/lib/errors.ts`
+2. Use `normalizeError(err)` in all catch blocks
+3. Use `normalizedError.message` for user-facing messages
+4. Never use `console.log` or `console.error` in production code
+5. Follow the exact pattern used in `usePlayers`, `useSession`, `useCheckIns` hooks
+
+**Reference implementations:**
+- `src/hooks/usePlayers.ts` - See `createPlayer`, `updatePlayer` methods
+- `src/hooks/useSession.ts` - See `startSession`, `endSession` methods
+- `src/hooks/useCheckIns.ts` - See `checkIn`, `checkOut` methods
 
 ### 4. Type Safety Pattern
 
