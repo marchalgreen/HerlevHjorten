@@ -9,10 +9,14 @@ CREATE TABLE players (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
   alias TEXT,
-  level INTEGER,
+  level_single INTEGER,
+  level_double INTEGER,
+  level_mix INTEGER,
   gender TEXT CHECK (gender IN ('Herre', 'Dame')),
   primary_category TEXT CHECK (primary_category IN ('Single', 'Double', 'Begge')),
   active BOOLEAN NOT NULL DEFAULT true,
+  preferred_doubles_partners UUID[] DEFAULT '{}',
+  preferred_mixed_partners UUID[] DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -25,9 +29,10 @@ CREATE TABLE training_sessions (
 );
 
 -- Courts table
+-- Note: Court limit is now enforced at application level via tenant config
 CREATE TABLE courts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  idx INTEGER NOT NULL UNIQUE CHECK (idx >= 1 AND idx <= 8)
+  idx INTEGER NOT NULL UNIQUE CHECK (idx >= 1)
 );
 
 -- Check-ins table
@@ -75,6 +80,8 @@ CREATE TABLE statistics_snapshots (
 -- Create indexes for common queries
 CREATE INDEX idx_players_active ON players(active);
 CREATE INDEX idx_players_name ON players(name);
+CREATE INDEX idx_players_preferred_doubles_partners ON players USING GIN(preferred_doubles_partners);
+CREATE INDEX idx_players_preferred_mixed_partners ON players USING GIN(preferred_mixed_partners);
 CREATE INDEX idx_training_sessions_status ON training_sessions(status);
 CREATE INDEX idx_training_sessions_date ON training_sessions(date);
 CREATE INDEX idx_check_ins_session_id ON check_ins(session_id);
@@ -191,7 +198,6 @@ CREATE POLICY "Allow public update access on statistics_snapshots" ON statistics
 CREATE POLICY "Allow public delete access on statistics_snapshots" ON statistics_snapshots
   FOR DELETE USING (true);
 
--- Seed initial courts data (8 courts)
-INSERT INTO courts (idx) VALUES (1), (2), (3), (4), (5), (6), (7), (8)
-ON CONFLICT (idx) DO NOTHING;
+-- Note: Courts are seeded via application scripts based on tenant's maxCourts configuration
+-- Run the setup-supabase.ts script or seed courts manually based on your tenant's needs
 

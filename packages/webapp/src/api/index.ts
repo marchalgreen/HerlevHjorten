@@ -37,6 +37,7 @@ import {
   updateMatchPlayer as updateMatchPlayerInDb,
   deleteMatchPlayer as deleteMatchPlayerInDb
 } from './supabase'
+import { getCurrentTenantConfig } from '../lib/supabase'
 import statsApi from './stats'
 
 /**
@@ -71,9 +72,14 @@ const playerUpdateSchema = z.object({
       name: z.string().min(1).optional(),
       alias: z.string().nullable().optional(),
       level: z.number().nullable().optional(),
+      levelSingle: z.number().nullable().optional(),
+      levelDouble: z.number().nullable().optional(),
+      levelMix: z.number().nullable().optional(),
       gender: z.enum(['Herre', 'Dame']).nullable().optional(),
       primaryCategory: z.enum(['Single', 'Double', 'Begge']).nullable().optional(),
-      active: z.boolean().optional()
+      active: z.boolean().optional(),
+      preferredDoublesPartners: z.array(z.string()).nullable().optional(),
+      preferredMixedPartners: z.array(z.string()).nullable().optional()
     })
     .refine((value) => Object.keys(value).length > 0, 'patch must update mindst ét felt')
 })
@@ -129,9 +135,14 @@ const updatePlayer = async (input: PlayerUpdateInput): Promise<Player> => {
   if (parsed.patch.name !== undefined) updateData.name = parsed.patch.name.trim()
   if (parsed.patch.alias !== undefined) updateData.alias = parsed.patch.alias
   if (parsed.patch.level !== undefined) updateData.level = parsed.patch.level
+  if (parsed.patch.levelSingle !== undefined) updateData.levelSingle = parsed.patch.levelSingle
+  if (parsed.patch.levelDouble !== undefined) updateData.levelDouble = parsed.patch.levelDouble
+  if (parsed.patch.levelMix !== undefined) updateData.levelMix = parsed.patch.levelMix
   if (parsed.patch.gender !== undefined) updateData.gender = parsed.patch.gender
   if (parsed.patch.primaryCategory !== undefined) updateData.primaryCategory = parsed.patch.primaryCategory
   if (parsed.patch.active !== undefined) updateData.active = parsed.patch.active
+  if (parsed.patch.preferredDoublesPartners !== undefined) updateData.preferredDoublesPartners = parsed.patch.preferredDoublesPartners
+  if (parsed.patch.preferredMixedPartners !== undefined) updateData.preferredMixedPartners = parsed.patch.preferredMixedPartners
 
   const updated = await updatePlayerInDb(parsed.id, updateData)
   return normalisePlayer(updated)
@@ -686,8 +697,11 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
     }
   }
 
-  // Hard limit: Maximum 32 players can be assigned (8 courts × 4 players)
-  const MAX_PLAYERS_ON_COURTS = 32
+  // Get tenant config for maxCourts
+  const tenantConfig = getCurrentTenantConfig()
+  const maxCourts = tenantConfig.maxCourts
+  // Hard limit: Maximum players can be assigned (maxCourts × 4 players)
+  const MAX_PLAYERS_ON_COURTS = maxCourts * 4
   
   // Helper function to count total assigned players across all assignments
   const getTotalAssignedPlayers = () => {
@@ -1070,10 +1084,12 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
     matchesByCourt.set(courtIdx, slots)
   }
 
-  // Build final matches array - ALWAYS include all 8 courts, even if empty
-  const matches: CourtWithPlayers[] = stateCourts.map((court) => ({
-    courtIdx: court.idx,
-    slots: (matchesByCourt.get(court.idx) ?? []).sort((a, b) => a.slot - b.slot)
+  // Build final matches array - ALWAYS include all courts up to maxCourts, even if empty
+  // Ensure we have exactly maxCourts courts in the result
+  const allCourtIdxs = Array.from({ length: maxCourts }, (_, i) => i + 1)
+  const matches: CourtWithPlayers[] = allCourtIdxs.map((courtIdx) => ({
+    courtIdx,
+    slots: (matchesByCourt.get(courtIdx) ?? []).sort((a, b) => a.slot - b.slot)
   }))
 
   return {

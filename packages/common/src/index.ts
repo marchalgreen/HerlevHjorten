@@ -5,10 +5,15 @@ export type Player = {
   id: string
   name: string
   alias?: string | null
-  level?: number | null
+  level?: number | null // Deprecated: kept for backward compatibility, use levelSingle/levelDouble/levelMix instead
+  levelSingle?: number | null
+  levelDouble?: number | null
+  levelMix?: number | null
   gender?: PlayerGender | null
   primaryCategory?: PlayerCategory | null
   active: boolean
+  preferredDoublesPartners?: string[] | null
+  preferredMixedPartners?: string[] | null
   createdAt: string
 }
 
@@ -65,15 +70,20 @@ export type PlayerListFilters = {
 export type PlayerCreateInput = {
   name: string
   alias?: string
-  level?: number
+  level?: number // Deprecated: kept for backward compatibility
+  levelSingle?: number
+  levelDouble?: number
+  levelMix?: number
   gender?: PlayerGender
   primaryCategory?: PlayerCategory
   active?: boolean
+  preferredDoublesPartners?: string[]
+  preferredMixedPartners?: string[]
 }
 
 export type PlayerUpdateInput = {
   id: string
-  patch: Partial<Pick<Player, 'name' | 'alias' | 'level' | 'gender' | 'primaryCategory' | 'active'>>
+  patch: Partial<Pick<Player, 'name' | 'alias' | 'level' | 'levelSingle' | 'levelDouble' | 'levelMix' | 'gender' | 'primaryCategory' | 'active' | 'preferredDoublesPartners' | 'preferredMixedPartners'>>
 }
 
 export type MatchMovePayload = {
@@ -119,6 +129,18 @@ export type StatisticsFilters = {
   season?: string
   dateFrom?: string
   dateTo?: string
+}
+
+export type TenantConfig = {
+  id: string
+  name: string
+  logo: string
+  maxCourts: number
+  supabaseUrl: string
+  supabaseKey: string
+  features?: {
+    [key: string]: boolean | string | number
+  }
 }
 
 export type RendererApi = {
