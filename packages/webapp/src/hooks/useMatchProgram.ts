@@ -698,13 +698,16 @@ export const useMatchProgram = ({
   const handleMove = useCallback(async (playerId: string, courtIdx?: number, slot?: number) => {
     if (!session) return
     try {
-      const currentMatches = inMemoryMatches[selectedRound] || await api.matches.list(selectedRound)
+      // Use ref to get the latest in-memory matches to avoid stale state
+      const currentMatches = inMemoryMatchesRef.current[selectedRound] || matches || await api.matches.list(selectedRound)
       const player = checkedIn.find((p) => p.id === playerId)
       if (!player) return
 
       const updatedMatches = currentMatches.map((court) => {
+        // Remove the player from this court's slots
         const updatedSlots = court.slots.filter((s) => s.player?.id !== playerId)
         
+        // If this is the target court and slot, add the player
         if (courtIdx !== undefined && court.courtIdx === courtIdx && slot !== undefined) {
           const slotEntry = updatedSlots.find((s) => s.slot === slot)
           if (!slotEntry) {
@@ -715,9 +718,11 @@ export const useMatchProgram = ({
         return { ...court, slots: updatedSlots }
       })
 
+      // Ensure all courts are present
       const allCourts = Array.from({ length: maxCourts }, (_, i) => i + 1)
       const matchesByCourt = new Map(updatedMatches.map((court) => [court.courtIdx, court]))
       
+      // If target court doesn't exist, create it
       if (courtIdx !== undefined && slot !== undefined) {
         if (!matchesByCourt.has(courtIdx)) {
           matchesByCourt.set(courtIdx, { courtIdx, slots: [{ slot, player }] })
@@ -733,7 +738,7 @@ export const useMatchProgram = ({
     } catch (err: any) {
       setError(err.message ?? 'Kunne ikke flytte spiller')
     }
-  }, [session, selectedRound, checkedIn, maxCourts, updateInMemoryMatches])
+  }, [session, selectedRound, checkedIn, maxCourts, matches, updateInMemoryMatches])
   
   const handleAutoMatch = useCallback(async () => {
     if (!session) return
@@ -851,7 +856,8 @@ export const useMatchProgram = ({
     if (!playerId) return
     event.preventDefault()
     
-    const currentMatches = inMemoryMatches[selectedRound] || matches
+    // Use ref to get the latest in-memory matches to avoid stale state
+    const currentMatches = inMemoryMatchesRef.current[selectedRound] || matches
     const targetCourt = currentMatches.find((c) => c.courtIdx === courtIdx)
     const targetSlotEntry = targetCourt?.slots.find((s) => s.slot === slot)
     const occupyingPlayer = targetSlotEntry?.player
