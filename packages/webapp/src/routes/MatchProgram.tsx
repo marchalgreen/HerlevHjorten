@@ -970,7 +970,8 @@ const MatchProgramPage = () => {
       
       // Update in-memory state with the final matches
       updateInMemoryMatches(selectedRound, finalMatches)
-      await loadCheckIns()
+      // No need to refetch check-ins - we're only updating in-memory state
+      // This prevents full page reloads and maintains smooth UX
       
       notify({ 
         variant: 'success', 
@@ -1018,7 +1019,8 @@ const MatchProgramPage = () => {
       })
       
       updateInMemoryMatches(selectedRound, updatedMatches)
-      await loadCheckIns()
+      // No need to refetch check-ins - we're only updating in-memory state
+      // This prevents full page reloads and maintains smooth UX
       
       notify({ 
         variant: 'success', 
@@ -1084,7 +1086,8 @@ const MatchProgramPage = () => {
       })
 
       updateInMemoryMatches(selectedRound, completeMatches)
-      await loadCheckIns()
+      // No need to refetch check-ins - we're only updating in-memory state
+      // This prevents full page reloads and maintains smooth UX during drag operations
     } catch (err: any) {
       setError(err.message ?? 'Kunne ikke flytte spiller')
     }
