@@ -172,9 +172,10 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
 
   /**
    * Closes dropdown when clicking outside.
+   * Note: Don't close if confirmation dialog is showing.
    */
   useEffect(() => {
-    if (!isEditing) return
+    if (!isEditing || showConfirmDialog) return
 
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -186,7 +187,7 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isEditing, partnerId])
+  }, [isEditing, partnerId, showConfirmDialog])
 
   /**
    * Resets editing state when player changes.
@@ -207,8 +208,8 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
   const performPartnerUpdate = useCallback(
     async (selectedId: string | null) => {
       try {
-        // Step 1: Reload fresh data to ensure we have the latest state
-        await onUpdate()
+        // Step 1: Fetch fresh data directly from API to ensure we have the latest state
+        // Note: We don't call onUpdate() here to avoid triggering a re-render before updates are complete
         const freshPlayers = await api.players.list({})
         const freshCurrentPlayer = freshPlayers.find((p) => p.id === player.id)
         if (!freshCurrentPlayer) {
@@ -333,11 +334,16 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
 
         // Step 2: Check if the selected partner already has a preferred partner using fresh data
         const selectedPartner = freshPlayers.find((p) => p.id === selectedId)
-        if (selectedPartner) {
-          const selectedPartnerWithPartners = selectedPartner as Player & {
-            preferredDoublesPartners?: string[] | null
-            preferredMixedPartners?: string[] | null
-          }
+        if (!selectedPartner) {
+          // Selected partner not found, proceed anyway (will fail gracefully in performPartnerUpdate)
+          await performPartnerUpdate(selectedId)
+          return
+        }
+
+        const selectedPartnerWithPartners = selectedPartner as Player & {
+          preferredDoublesPartners?: string[] | null
+          preferredMixedPartners?: string[] | null
+        }
         const existingPartnerId = partnerType === 'doubles'
           ? (selectedPartnerWithPartners.preferredDoublesPartners?.[0] ?? null)
           : (selectedPartnerWithPartners.preferredMixedPartners?.[0] ?? null)
@@ -346,16 +352,16 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
         if (existingPartnerId && existingPartnerId !== player.id) {
           const existingPartner = freshPlayers.find((p) => p.id === existingPartnerId)
           if (existingPartner) {
+            // Set state synchronously to ensure dialog shows
             setPendingPartnerId(selectedId)
             setExistingPartnerName(existingPartner.name)
             setShowConfirmDialog(true)
             return
           }
         }
-      }
 
-      // No existing partner or it's the current player, proceed directly
-      await performPartnerUpdate(selectedId)
+        // No existing partner or it's the current player, proceed directly
+        await performPartnerUpdate(selectedId)
       } catch (err: unknown) {
         const normalizedError = normalizeError(err)
         notify({
@@ -393,36 +399,47 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
     await performPartnerUpdate(editingPartnerId)
   }, [editingPartnerId, performPartnerUpdate])
 
+  // Render confirmation dialog even when not in editing mode (if it's showing)
+  const dialogElement = showConfirmDialog ? (
+    <PartnerOverrideDialog
+      existingPartnerName={existingPartnerName}
+      onConfirm={handleConfirmOverride}
+      onCancel={() => {
+        setShowConfirmDialog(false)
+        setPendingPartnerId(null)
+        setExistingPartnerName('')
+        // If we were editing, close editing mode
+        if (isEditing) {
+          setIsEditing(false)
+          setEditingPartnerId(partnerId)
+          setSearchTerm('')
+        }
+      }}
+    />
+  ) : null
+
   // Early return for non-editing state
   if (!isEditing) {
     return (
-      <div className="w-full max-w-[200px] mx-auto">
-        <button
-          type="button"
-          onClick={() => setIsEditing(true)}
-          className="w-full text-xs rounded bg-[hsl(var(--surface))] px-2 py-1 ring-1 ring-[hsl(var(--line)/.14)] hover:ring-2 hover:ring-[hsl(var(--ring))] transition-colors text-left"
-        >
-          {partner ? formatPlayerName(partner.name, partner.alias) : 'Ingen'}
-        </button>
-      </div>
+      <>
+        {dialogElement}
+        <div className="w-full max-w-[200px] mx-auto">
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="w-full text-xs rounded bg-[hsl(var(--surface))] px-2 py-1 ring-1 ring-[hsl(var(--line)/.14)] hover:ring-2 hover:ring-[hsl(var(--ring))] transition-colors text-left"
+          >
+            {partner ? formatPlayerName(partner.name, partner.alias) : 'Ingen'}
+          </button>
+        </div>
+      </>
     )
   }
-
 
   // Editing state - render the editing UI
   return (
     <>
-      {showConfirmDialog && (
-        <PartnerOverrideDialog
-          existingPartnerName={existingPartnerName}
-          onConfirm={handleConfirmOverride}
-          onCancel={() => {
-            setShowConfirmDialog(false)
-            setPendingPartnerId(null)
-            setExistingPartnerName('')
-          }}
-        />
-      )}
+      {dialogElement}
       <div ref={dropdownRef} className="relative w-full max-w-[200px]">
         <input
           type="text"
