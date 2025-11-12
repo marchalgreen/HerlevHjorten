@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Shuttlecock body (cork base) -->
+  <circle cx="50" cy="85" r="8" fill="#8B4513" stroke="#654321" stroke-width="1"/>
+  
+  <!-- Feathers (16 feathers arranged in a circle) -->
+  <g fill="#FFFFFF" stroke="#CCCCCC" stroke-width="0.5">
+    <!-- Top feathers -->
+    <ellipse cx="50" cy="20" rx="3" ry="25" opacity="0.9"/>
+    <ellipse cx="50" cy="20" rx="25" ry="3" opacity="0.9"/>
+    
+    <!-- Diagonal feathers -->
+    <ellipse cx="35" cy="30" rx="3" ry="20" opacity="0.85" transform="rotate(-45 35 30)"/>
+    <ellipse cx="65" cy="30" rx="3" ry="20" opacity="0.85" transform="rotate(45 65 30)"/>
+    <ellipse cx="35" cy="30" rx="20" ry="3" opacity="0.85" transform="rotate(45 35 30)"/>
+    <ellipse cx="65" cy="30" rx="20" ry="3" opacity="0.85" transform="rotate(-45 65 30)"/>
+    
+    <!-- More feathers for fullness -->
+    <ellipse cx="28" cy="35" rx="2.5" ry="18" opacity="0.8" transform="rotate(-60 28 35)"/>
+    <ellipse cx="72" cy="35" rx="2.5" ry="18" opacity="0.8" transform="rotate(60 72 35)"/>
+    <ellipse cx="28" cy="35" rx="18" ry="2.5" opacity="0.8" transform="rotate(60 28 35)"/>
+    <ellipse cx="72" cy="35" rx="18" ry="2.5" opacity="0.8" transform="rotate(-60 72 35)"/>
+    
+    <!-- Bottom feathers -->
+    <ellipse cx="42" cy="40" rx="2" ry="15" opacity="0.75" transform="rotate(-30 42 40)"/>
+    <ellipse cx="58" cy="40" rx="2" ry="15" opacity="0.75" transform="rotate(30 58 40)"/>
+    <ellipse cx="42" cy="40" rx="15" ry="2" opacity="0.75" transform="rotate(30 42 40)"/>
+    <ellipse cx="58" cy="40" rx="15" ry="2" opacity="0.75" transform="rotate(-30 58 40)"/>
+  </g>
+  
+  <!-- Connecting lines from cork to feathers -->
+  <line x1="50" y1="77" x2="50" y2="45" stroke="#D3D3D3" stroke-width="1" opacity="0.3"/>
+  <line x1="50" y1="77" x2="35" y2="50" stroke="#D3D3D3" stroke-width="1" opacity="0.3"/>
+  <line x1="50" y1="77" x2="65" y2="50" stroke="#D3D3D3" stroke-width="1" opacity="0.3"/>
+</svg>
+

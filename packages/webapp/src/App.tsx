@@ -11,6 +11,21 @@ import { TenantProvider, useTenant } from './contexts/TenantContext'
 import { extractTenantId } from './lib/tenant'
 
 /**
+ * Component that updates document title based on tenant config.
+ */
+const TenantTitleUpdater = () => {
+  const { config } = useTenant()
+  
+  useEffect(() => {
+    if (config?.name) {
+      document.title = config.name
+    }
+  }, [config?.name])
+  
+  return null
+}
+
+/**
  * Header component — app branding and primary navigation.
  * @remarks Renders logo and centered nav; uses absolute positioning for layout.
  * Uses tenant context for dynamic branding.
@@ -190,6 +205,7 @@ const AppInner = () => {
 
   return (
     <TenantProvider tenantId={tenantId}>
+      <TenantTitleUpdater />
       <div className="flex min-h-screen flex-col text-[hsl(var(--foreground))] overflow-x-hidden max-w-full">
         <Header />
         <main className="flex-1 overflow-y-auto overflow-x-hidden max-w-full">
