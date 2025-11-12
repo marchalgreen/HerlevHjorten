@@ -797,6 +797,20 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
     }
   }
 
+  // Helper function to create a 3-player match (for odd total players)
+  const create3PlayerMatch = (players: Player[]): { courtIdx: number; playerIds: string[] } | null => {
+    if (players.length < 3) return null
+    
+    // Completely random selection of 3 players
+    const shuffled = [...players].sort(() => random() - 0.5)
+    const selected = shuffled.slice(0, 3)
+    
+    return {
+      courtIdx: availableCourtIdxs[courtIdxIndex++],
+      playerIds: selected.map(p => p.id)
+    }
+  }
+
   // Get tenant config for maxCourts
   const tenantConfig = getCurrentTenantConfig()
   const maxCourts = tenantConfig.maxCourts
@@ -806,6 +820,44 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   // Helper function to count total assigned players across all assignments
   const getTotalAssignedPlayers = () => {
     return assignments.reduce((total, assignment) => total + assignment.playerIds.length, 0)
+  }
+  
+  // CRITICAL: If total players is odd, create ONE 3-player court FIRST (before other matches)
+  // This ensures we have enough singles-eligible players available for the 3-player court
+  // Total = bench players + players on locked courts
+  const totalPlayersCount = benchPlayers.length + playersOnLockedCourts.size
+  const isOddTotal = totalPlayersCount % 2 === 1
+  
+  if (isOddTotal) {
+    // Separate singles-eligible players (only these can be in 3-player court)
+    const singlesEligible = remainingPlayers.filter((p) => p.primaryCategory !== 'Double')
+    
+    if (singlesEligible.length >= 3 && courtIdxIndex < availableCourtIdxs.length && getTotalAssignedPlayers() + 3 <= MAX_PLAYERS_ON_COURTS) {
+      // Prioritize 3 males for fairer game
+      const malesEligible = singlesEligible.filter((p) => p.gender === 'Herre')
+      
+      let playersFor3Court: CheckedInPlayer[]
+      if (malesEligible.length >= 3) {
+        // Use 3 males if available
+        playersFor3Court = malesEligible
+      } else {
+        // Fall back to any singles-eligible players
+        playersFor3Court = singlesEligible
+      }
+      
+      // Create 3-player court
+      const match = create3PlayerMatch(playersFor3Court)
+      if (match) {
+        assignments.push(match)
+        match.playerIds.forEach((id) => {
+          usedPlayerIds.add(id)
+          const idx = remainingPlayers.findIndex((p) => p.id === id)
+          if (idx >= 0) remainingPlayers.splice(idx, 1)
+        })
+      }
+    }
+    // If we can't create a 3-player court (not enough singles-eligible players),
+    // proceed with normal matching - the odd player(s) will remain on bench
   }
   
   // Main algorithm: Maximum randomization with only two constraints
@@ -1098,27 +1150,114 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   // CRITICAL: First, merge single-player courts into 2-player courts (no singletons allowed)
   while (true) {
     const singlePlayerCourts = assignments.filter(a => a.playerIds.length === 1)
-    if (singlePlayerCourts.length <= 1) {
+    if (singlePlayerCourts.length === 0) {
       break
     }
     
-    // Merge the first two single-player courts
-    const court1 = singlePlayerCourts[0]
-    const court2 = singlePlayerCourts[1]
-    
-    // Merge court2 into court1, remove court2
-    court1.playerIds.push(...court2.playerIds)
-    const court2Index = assignments.findIndex(a => a.courtIdx === court2.courtIdx)
-    if (court2Index >= 0) {
-      assignments.splice(court2Index, 1)
+    if (singlePlayerCourts.length >= 2) {
+      // Merge the first two single-player courts
+      const court1 = singlePlayerCourts[0]
+      const court2 = singlePlayerCourts[1]
+      
+      // Merge court2 into court1, remove court2
+      court1.playerIds.push(...court2.playerIds)
+      const court2Index = assignments.findIndex(a => a.courtIdx === court2.courtIdx)
+      if (court2Index >= 0) {
+        assignments.splice(court2Index, 1)
+      }
+    } else if (singlePlayerCourts.length === 1) {
+      // Only one single-player court left - try to move player to another court with space
+      const singleCourt = singlePlayerCourts[0]
+      const playerToMove = singleCourt.playerIds[0]
+      const lonePlayer = benchPlayers.find(p => p.id === playerToMove)
+      
+      // Try to find a court with space (less than 4 players)
+      const targetCourt = assignments.find(
+        a => a.courtIdx !== singleCourt.courtIdx && a.playerIds.length < 4
+      )
+      
+      if (targetCourt) {
+        // For Double players, only move to courts with 2+ players (avoid 1v1)
+        if (lonePlayer?.primaryCategory === 'Double' && targetCourt.playerIds.length < 2) {
+          // Try to find a better target with 2+ players
+          const betterTarget = assignments.find(
+            a => a.courtIdx !== singleCourt.courtIdx && 
+            a.playerIds.length >= 2 && 
+            a.playerIds.length < 4
+          )
+          if (betterTarget) {
+            betterTarget.playerIds.push(playerToMove)
+            const singleIndex = assignments.findIndex(a => a.courtIdx === singleCourt.courtIdx)
+            if (singleIndex >= 0) {
+              assignments.splice(singleIndex, 1)
+            }
+            break
+          }
+          // No better target - remove single-player court (player goes to bench)
+          // Players cannot play alone, even with odd total - the odd player stays on bench
+          const singleIndex = assignments.findIndex(a => a.courtIdx === singleCourt.courtIdx)
+          if (singleIndex >= 0) {
+            assignments.splice(singleIndex, 1)
+            usedPlayerIds.delete(playerToMove)
+          }
+          break
+        }
+        
+        // Move player to target court
+        targetCourt.playerIds.push(playerToMove)
+        const singleIndex = assignments.findIndex(a => a.courtIdx === singleCourt.courtIdx)
+        if (singleIndex >= 0) {
+          assignments.splice(singleIndex, 1)
+        }
+        break
+      } else {
+        // No court with space - remove single-player court (player goes to bench)
+        // Players cannot play alone, even with odd total - the odd player stays on bench
+        const singleIndex = assignments.findIndex(a => a.courtIdx === singleCourt.courtIdx)
+        if (singleIndex >= 0) {
+          assignments.splice(singleIndex, 1)
+          usedPlayerIds.delete(playerToMove)
+        }
+        break
+      }
     }
   }
   
   // CRITICAL: Assign any leftover players to existing courts with space
   // This prevents players from being left on the bench when courts have space
   const stillLeftoverPlayers = benchPlayers.filter((p) => !usedPlayerIds.has(p.id))
-  if (stillLeftoverPlayers.length > 0) {
-    for (const leftoverPlayer of stillLeftoverPlayers) {
+  
+  // Check if we already have a 3-player court (created upfront for odd totals)
+  const has3PlayerCourt = assignments.some(a => a.playerIds.length === 3)
+  
+  // If we have an odd total but no 3-player court yet, try to create one from leftovers FIRST
+  // This ensures we prioritize 3 males before other leftover assignment logic runs
+  if (isOddTotal && !has3PlayerCourt && stillLeftoverPlayers.length > 0) {
+    const leftoverSinglesEligible = stillLeftoverPlayers.filter(
+      p => !usedPlayerIds.has(p.id) && p.primaryCategory !== 'Double'
+    )
+    
+    // Prioritize 3 males
+    const leftoverMales = leftoverSinglesEligible.filter(p => p.gender === 'Herre')
+    const playersFor3Court = leftoverMales.length >= 3 ? leftoverMales : leftoverSinglesEligible
+    
+    if (playersFor3Court.length >= 3 && courtIdxIndex < availableCourtIdxs.length && getTotalAssignedPlayers() + 3 <= MAX_PLAYERS_ON_COURTS) {
+      const match = create3PlayerMatch(playersFor3Court.slice(0, 3))
+      if (match) {
+        assignments.push(match)
+        match.playerIds.forEach((id) => {
+          usedPlayerIds.add(id)
+        })
+      }
+    }
+  }
+  
+  // Recalculate leftover players after potential 3-player court creation
+  const finalLeftoverPlayers = benchPlayers.filter((p) => !usedPlayerIds.has(p.id))
+  const finalHas3PlayerCourt = assignments.some(a => a.playerIds.length === 3)
+  
+  if (finalLeftoverPlayers.length > 0) {
+    for (const leftoverPlayer of finalLeftoverPlayers) {
       if (usedPlayerIds.has(leftoverPlayer.id)) continue
       if (getTotalAssignedPlayers() >= MAX_PLAYERS_ON_COURTS) break
       
@@ -1131,6 +1270,15 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
           if (leftoverPlayer.primaryCategory === 'Double' && assignment.playerIds.length < 2) {
             continue
           }
+          
+          // CRITICAL: If we have an odd total and already have a 3-player court,
+          // don't add a third player to any 2-player court (would create another 3-player court)
+          // Only fill to 2 or 4 players
+          if (isOddTotal && finalHas3PlayerCourt && assignment.playerIds.length === 2) {
+            // Skip adding third player - would create another 3-player court
+            continue
+          }
+          
           assignment.playerIds.push(leftoverPlayer.id)
           usedPlayerIds.add(leftoverPlayer.id)
           added = true
@@ -1140,7 +1288,7 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
       
       // If couldn't add to existing court, try to pair with another leftover
       if (!added && leftoverPlayer.primaryCategory !== 'Double') {
-        const otherLeftover = stillLeftoverPlayers.find(
+        const otherLeftover = finalLeftoverPlayers.find(
           p => p.id !== leftoverPlayer.id && 
           !usedPlayerIds.has(p.id) && 
           p.primaryCategory !== 'Double'
@@ -1149,7 +1297,7 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
           // Find an available court
           const usedCourtIdxs = new Set(assignments.map(a => a.courtIdx))
           const availableCourtIdx = availableCourtIdxs.find(idx => !usedCourtIdxs.has(idx))
-          if (availableCourtIdx) {
+          if (availableCourtIdx !== undefined) {
             assignments.push({
               courtIdx: availableCourtIdx,
               playerIds: [leftoverPlayer.id, otherLeftover.id]
@@ -1458,8 +1606,100 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
     }
   }
 
+  // FINAL CHECK: Ensure no single-player courts exist (regardless of total parity)
+  // This is a critical invariant - players cannot play alone
+  // Even with odd total, the odd player should stay on bench, not be alone on a court
+  const finalSingles = assignments.filter(a => a.playerIds.length === 1)
+  if (finalSingles.length > 0) {
+    for (const single of finalSingles) {
+      // Try to merge with another single-player court first
+      const otherSingle = assignments.find(
+        a => a.courtIdx !== single.courtIdx && a.playerIds.length === 1
+      )
+      if (otherSingle) {
+        // Merge the two single-player courts
+        single.playerIds.push(...otherSingle.playerIds)
+        const otherIndex = assignments.findIndex(a => a.courtIdx === otherSingle.courtIdx)
+        if (otherIndex >= 0) {
+          assignments.splice(otherIndex, 1)
+        }
+        continue
+      }
+      
+      // If no other single-player court, try to move this player to any court with space
+      const targetCourt = assignments.find(
+        a => a.courtIdx !== single.courtIdx && a.playerIds.length < 4
+      )
+      if (targetCourt) {
+        const playerToMove = single.playerIds[0]
+        const lonePlayer = benchPlayers.find(p => p.id === playerToMove)
+        
+        // For Double players, only move to courts with 2+ players (avoid 1v1)
+        if (lonePlayer?.primaryCategory === 'Double' && targetCourt.playerIds.length < 2) {
+          // Try to find a court with 2+ players instead
+          const betterTarget = assignments.find(
+            a => a.courtIdx !== single.courtIdx && 
+            a.playerIds.length >= 2 && 
+            a.playerIds.length < 4
+          )
+          if (betterTarget) {
+            betterTarget.playerIds.push(playerToMove)
+            const singleIndex = assignments.findIndex(a => a.courtIdx === single.courtIdx)
+            if (singleIndex >= 0) {
+              assignments.splice(singleIndex, 1)
+            }
+            continue
+          }
+          // If no better target, leave on bench rather than create Double 1v1
+          const singleIndex = assignments.findIndex(a => a.courtIdx === single.courtIdx)
+          if (singleIndex >= 0) {
+            assignments.splice(singleIndex, 1)
+            usedPlayerIds.delete(playerToMove)
+          }
+          continue
+        }
+        
+        // Move player to target court
+        targetCourt.playerIds.push(playerToMove)
+        const singleIndex = assignments.findIndex(a => a.courtIdx === single.courtIdx)
+        if (singleIndex >= 0) {
+          assignments.splice(singleIndex, 1)
+        }
+      } else {
+        // No court with space - remove this single-player court (player goes back to bench)
+        const playerToMove = single.playerIds[0]
+        const singleIndex = assignments.findIndex(a => a.courtIdx === single.courtIdx)
+        if (singleIndex >= 0) {
+          assignments.splice(singleIndex, 1)
+          usedPlayerIds.delete(playerToMove)
+        }
+      }
+    }
+  }
+
   // Calculate final leftover players (after all assignments and merges)
   const leftoverPlayerIds = benchPlayers.filter((p) => !usedPlayerIds.has(p.id)).map((p) => p.id)
+
+  // FINAL VALIDATION: Log and fix any remaining single-player courts (should never happen)
+  // Players cannot play alone - always remove single-player courts, regardless of total parity
+  // The odd player (if any) should stay on the bench, not be alone on a court
+  const remainingSingles = assignments.filter(a => a.playerIds.length === 1)
+  if (remainingSingles.length > 0) {
+    console.warn(`[autoArrange] WARNING: Found ${remainingSingles.length} single-player court(s) after all fixes:`, 
+      remainingSingles.map(s => ({ courtIdx: s.courtIdx, playerId: s.playerIds[0] }))
+    )
+    
+    // Always remove single-player courts - players cannot play alone
+    for (const single of remainingSingles) {
+      const playerId = single.playerIds[0]
+      console.warn(`[autoArrange] Removing single-player court ${single.courtIdx} with player ${playerId} (players cannot play alone)`)
+      const singleIndex = assignments.findIndex(a => a.courtIdx === single.courtIdx)
+      if (singleIndex >= 0) {
+        assignments.splice(singleIndex, 1)
+        usedPlayerIds.delete(playerId)
+      }
+    }
+  }
 
   if (!assignments.length) {
     return { 
