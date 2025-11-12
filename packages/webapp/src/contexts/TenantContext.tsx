@@ -7,7 +7,7 @@ import { createTenantSupabaseClient, setCurrentTenantSupabaseClient, setCurrentT
 interface TenantContextValue {
   tenantId: string
   config: TenantConfig
-  supabase: SupabaseClient
+  supabase: SupabaseClient // Non-null when context is provided (guarded by null check)
   buildPath: (path: string) => string
 }
 
@@ -60,16 +60,9 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ tenantId, childr
 
   const supabase = useMemo(() => {
     if (!config) {
-      // Return a dummy client during loading - this should not be used
-      // but prevents errors during initialization
-      return createTenantSupabaseClient({
-        id: 'loading',
-        name: 'Loading...',
-        logo: '',
-        maxCourts: 8,
-        supabaseUrl: 'https://placeholder.supabase.co',
-        supabaseKey: 'placeholder-key'
-      })
+      // Don't create a client during loading - return null and handle in render
+      // The loading state will prevent children from rendering anyway
+      return null
     }
     const client = createTenantSupabaseClient(config)
     // Update module-level client and config for API access
@@ -106,6 +99,17 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ tenantId, childr
         <div className="text-center">
           <p className="text-lg text-red-500">Failed to load tenant configuration</p>
           <p className="text-sm text-[hsl(var(--muted))] mt-2">{error || 'Unknown error'}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Ensure supabase client is available before providing context
+  if (!supabase) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-lg text-[hsl(var(--foreground))]">Loading tenant configuration...</p>
         </div>
       </div>
     )

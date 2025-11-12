@@ -2,31 +2,55 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { TenantConfig } from '@herlev-hjorten/common'
 
 /**
+ * Cache of Supabase clients by tenant ID to avoid creating duplicate instances.
+ */
+const clientCache = new Map<string, SupabaseClient>()
+
+/**
  * Creates a Supabase client for a specific tenant.
+ * Caches clients by tenant ID to avoid creating duplicate instances.
  * @param config - Tenant configuration containing Supabase credentials
  * @returns Supabase client instance
  */
 export const createTenantSupabaseClient = (config: TenantConfig): SupabaseClient => {
+  // Skip creating client for placeholder/loading state
+  if (config.id === 'loading' || config.supabaseUrl === 'https://placeholder.supabase.co') {
+    // Return a cached placeholder or create one if needed
+    if (!clientCache.has('loading')) {
+      // Create a minimal client that won't actually be used
+      const placeholderClient = createClient('https://placeholder.supabase.co', 'placeholder-key')
+      clientCache.set('loading', placeholderClient)
+    }
+    return clientCache.get('loading')!
+  }
+
+  // Check cache first
+  if (clientCache.has(config.id)) {
+    return clientCache.get(config.id)!
+  }
+
   if (!config.supabaseUrl || !config.supabaseKey) {
     console.error('Missing Supabase credentials in tenant config:', {
       tenantId: config.id,
       url: config.supabaseUrl ? '✓ Set' : '✗ Missing',
       key: config.supabaseKey ? '✓ Set' : '✗ Missing'
-  })
-  throw new Error(
+    })
+    throw new Error(
       `Missing Supabase credentials for tenant "${config.id}". Please configure supabaseUrl and supabaseKey in the tenant config file.`
-  )
-}
+    )
+  }
 
-// Log connection info in development
-if (import.meta.env.DEV) {
+  // Log connection info in development (only for real tenants)
+  if (import.meta.env.DEV) {
     console.log(`Supabase client initialized for tenant "${config.id}":`, {
       url: config.supabaseUrl,
       keyPrefix: config.supabaseKey?.substring(0, 20) + '...'
     })
   }
 
-  return createClient(config.supabaseUrl, config.supabaseKey)
+  const client = createClient(config.supabaseUrl, config.supabaseKey)
+  clientCache.set(config.id, client)
+  return client
 }
 
 /**
