@@ -67,10 +67,6 @@ export const PreviousRoundsPopup: React.FC<PreviousRoundsPopupProps> = ({
   onMouseDown,
   onResizeStart
 }) => {
-  if (previousRoundsVisible.size === 0) {
-    return null
-  }
-
   // Calculate optimal number of columns based on popup width
   // This creates a responsive grid that smoothly adapts to the popup size
   // Minimum card width: ~140px (to ensure readability and good UX)
@@ -80,6 +76,7 @@ export const PreviousRoundsPopup: React.FC<PreviousRoundsPopupProps> = ({
   const gap = 8
   const horizontalPadding = 32 // 16px on each side (p-4)
   
+  // Hooks must be called unconditionally, before any early returns
   const optimalColumns = useMemo(() => {
     const availableWidth = popupSize.width - horizontalPadding
     
@@ -94,6 +91,11 @@ export const PreviousRoundsPopup: React.FC<PreviousRoundsPopupProps> = ({
     
     return columns
   }, [popupSize.width])
+
+  // Early return after hooks
+  if (previousRoundsVisible.size === 0) {
+    return null
+  }
 
   return (
     <>

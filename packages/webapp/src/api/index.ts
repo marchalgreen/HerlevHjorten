@@ -13,7 +13,6 @@ import type {
   TrainingSession
 } from '@herlev-hjorten/common'
 import {
-  createId,
   createBackup,
   restoreFromBackup,
   hasBackup,
@@ -27,7 +26,6 @@ import {
   getCheckIns,
   createCheckIn as createCheckInInDb,
   deleteCheckIn as deleteCheckInInDb,
-  getCourts,
   getMatches,
   createMatch as createMatchInDb,
   updateMatch as updateMatchInDb,
@@ -46,12 +44,8 @@ import {
   createSessionNotFoundError,
   createCheckInExistsError,
   createCheckInNotFoundError,
-  createCourtNotFoundError,
-  createCourtFullError,
-  createSlotOccupiedError,
   normalizeError,
-  ValidationError,
-  DatabaseError
+  ValidationError
 } from '../lib/errors'
 
 /**
@@ -282,7 +276,7 @@ const saveAllMatches = async (matchesData: Array<{ round: number; matches: Court
   // Create all matches and match players for all rounds
   for (const { round, matches: roundMatches } of matchesData) {
     for (const courtMatch of roundMatches) {
-      let court = courts.find((c) => c.idx === courtMatch.courtIdx)
+      const court = courts.find((c) => c.idx === courtMatch.courtIdx)
       if (!court) {
         // If court doesn't exist in state, skip creating matches for this court
         // (dynamic court creation is disabled in this build)
@@ -1419,11 +1413,11 @@ const autoArrangeMatches = async (round?: number, unavailablePlayerIds?: Set<str
   if (hasOddTotalPlayers) {
     // Identify current odd courts and pick the one to keep (prefer size 3)
     const currentOdd = assignments.filter(a => a.playerIds.length % 2 === 1)
-    let keep = currentOdd.find(a => a.playerIds.length === 3) ?? currentOdd[0]
+    const keep = currentOdd.find(a => a.playerIds.length === 3) ?? currentOdd[0]
     if (keep) {
       // Reduce kept odd court to exactly 3 by moving pairs of players out
       const usedCourtIdxsSet = new Set(assignments.map(a => a.courtIdx))
-      let unusedCourtIdxsLocal = availableCourtIdxs.filter(idx => !usedCourtIdxsSet.has(idx))
+      const unusedCourtIdxsLocal = availableCourtIdxs.filter(idx => !usedCourtIdxsSet.has(idx))
       while (keep.playerIds.length > 3) {
         const moved = keep.playerIds.splice(0, 2)
         const nextIdx = unusedCourtIdxsLocal.shift()
@@ -1842,7 +1836,7 @@ const movePlayer = async (payload: MatchMovePayload, round?: number): Promise<vo
     return
   }
 
-  let court = state.courts.find((court) => court.idx === parsed.toCourtIdx)
+  const court = state.courts.find((court) => court.idx === parsed.toCourtIdx)
   if (!court) {
     throw new Error('Ukendt bane')
   }
@@ -1964,9 +1958,7 @@ const movePlayer = async (payload: MatchMovePayload, round?: number): Promise<vo
     const hasExtendedCapacity = existingSlots.some((mp) => mp.slot >= 4)
     let maxCapacity = 4
     if (hasExtendedCapacity) {
-      // If any player is in slot 4+, check the highest slot to determine if it's 5, 6, 7, or 8
-      const maxSlot = Math.max(...existingSlots.map((mp) => mp.slot))
-      // If max slot is 4, could be 5 capacity; if 5, could be 6; if 6, could be 7; if 7, must be 8
+      // If any player is in slot 4+, allow up to 8 capacity
       // For safety, if slot >= 4 exists, allow up to 8 (we'll validate based on actual slot being added)
       maxCapacity = 8
     }
