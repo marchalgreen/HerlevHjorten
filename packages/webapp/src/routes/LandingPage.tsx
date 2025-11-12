@@ -6,6 +6,7 @@ import useLandingState from '../hooks/useLandingState'
 import type { Coach } from './landing/types'
 import { useTenant } from '../contexts/TenantContext'
 import courtsSettings from '../services/courtsSettings'
+import { useCheckIns } from '../hooks/useCheckIns'
 
 export type LandingPageProps = {
   coach?: Coach
@@ -218,10 +219,6 @@ const StartSessionControls: React.FC<{
             <Play className="w-4 h-4" aria-hidden />
             Start session
           </Button>
-          <div className="ml-auto text-sm text-[hsl(var(--muted))] flex items-center gap-2">
-            <Users className="w-4 h-4" aria-hidden />
-            Ekstra spillere: {addedPlayers.length}
-          </div>
         </div>
         {addedPlayers.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-1">
@@ -260,12 +257,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin })
   const pickedIds = useMemo(() => new Set(state.crossGroupPlayers.map((p) => p.id)), [state.crossGroupPlayers])
   const searchOpenerRef = useRef<HTMLElement | null>(null)
   const [courtsInUse, setCourtsInUse] = useState<number>(() => courtsSettings.getEffectiveCourtsInUse(tenantId, config.maxCourts))
+  
+  // Get checked-in players for active session
+  const { checkedIn } = useCheckIns(landing.activeSession?.sessionId ?? null)
 
   const activeGroupName = useMemo(() => {
     if (!state.activeSession?.groupId) return null
     const g = state.groups.find((x) => x.id === state.activeSession?.groupId)
     return g?.name ?? state.activeSession.groupId
   }, [state.activeSession?.groupId, state.groups])
+  
+  // Calculate extra players: checked-in players NOT in the permanent training group
+  const extraPlayersCount = useMemo(() => {
+    if (!landing.activeSession?.groupId || !checkedIn.length) return 0
+    
+    return checkedIn.filter((player) => {
+      const trainingGroups = ((player as any).trainingGroups as string[] | undefined) ?? []
+      return !trainingGroups.includes(landing.activeSession!.groupId!)
+    }).length
+  }, [checkedIn, landing.activeSession?.groupId])
 
   useEffect(() => {
     courtsSettings.setStoredCourtsInUse(tenantId, courtsInUse)
@@ -316,6 +326,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin })
             <CourtsControl value={courtsInUse} min={1} onChange={setCourtsInUse} />
             <p className="text-xs text-[hsl(var(--muted))] mt-1">Kan ændres undervejs uden at påvirke indtjekninger.</p>
           </div>
+          {extraPlayersCount > 0 && (
+            <div className="mt-3 text-sm text-[hsl(var(--muted))] flex items-center gap-2">
+              <Users className="w-4 h-4" aria-hidden />
+              Ekstra spillere: {extraPlayersCount}
+            </div>
+          )}
         </PageCard>
       ) : (
         <>
