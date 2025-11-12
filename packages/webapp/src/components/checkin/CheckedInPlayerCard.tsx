@@ -116,7 +116,7 @@ export const CheckedInPlayerCard: React.FC<CheckedInPlayerCardProps> = ({
         <InitialsAvatar seed={player.id} name={player.name} gender={player.gender ?? null} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <p className={`font-semibold text-[hsl(var(--foreground))] truncate text-sm sm:text-base`}>
+            <p className={`font-semibold text-[hsl(var(--foreground))] truncate text-base sm:text-lg`}>
               {formatPlayerCardName(player.name, player.alias)}
             </p>
             {isOneRoundOnly && (

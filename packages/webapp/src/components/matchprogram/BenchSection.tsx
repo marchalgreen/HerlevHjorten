@@ -164,7 +164,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center gap-2 rounded-md px-3 py-3 sm:px-4 sm:py-3.5 h-[72px] sm:h-[76px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                  className={`flex items-center gap-2 rounded-md px-3 py-2 sm:px-4 sm:py-2.5 h-[64px] sm:h-[68px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
                   data-cat={catLetter || undefined}
                   draggable
                   onDragStart={(event) => onBenchDragStart(event, player.id)}
@@ -197,7 +197,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center gap-2 rounded-md px-3 py-3 sm:px-4 sm:py-3.5 h-[72px] sm:h-[76px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                  className={`flex items-center gap-2 rounded-md px-3 py-2 sm:px-4 sm:py-2.5 h-[64px] sm:h-[68px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
                   data-cat={catLetter || undefined}
                   draggable
                   onDragStart={(event) => onBenchDragStart(event, player.id)}
@@ -232,7 +232,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center gap-2 rounded-md px-3 py-3 sm:px-4 sm:py-3.5 h-[72px] sm:h-[76px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                  className={`flex items-center gap-2 rounded-md px-3 py-2 sm:px-4 sm:py-2.5 h-[64px] sm:h-[68px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
                   data-cat={catLetter || undefined}
                   draggable
                   onDragStart={(event) => onBenchDragStart(event, player.id)}
