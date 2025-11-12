@@ -49,7 +49,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       {...props}
     >
       {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-      <span>{children}</span>
+      <span className="inline-flex items-center gap-2 whitespace-nowrap">{children}</span>
     </button>
   )
 )

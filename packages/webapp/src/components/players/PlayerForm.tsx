@@ -5,11 +5,12 @@
  * with all player fields including preferred partners.
  */
 
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import type { Player, PlayerCategory, PlayerGender } from '@herlev-hjorten/common'
 import { Button } from '../ui'
 import { formatPlayerName } from '../../lib/formatting'
 import { PLAYER_CATEGORIES, PLAYER_GENDERS } from '../../constants'
+import { fetchTrainingGroups } from '../../services/coachLandingApi'
 
 /**
  * Props for PlayerForm component.
@@ -39,6 +40,7 @@ interface PlayerFormProps {
     active: boolean
     preferredDoublesPartners: string[]
     preferredMixedPartners: string[]
+    trainingGroups: string[]
   }
   
   /** Form state setters. */
@@ -53,6 +55,7 @@ interface PlayerFormProps {
     setActive: (value: boolean) => void
     setPreferredDoublesPartners: (value: string[]) => void
     setPreferredMixedPartners: (value: string[]) => void
+    setTrainingGroups: (value: string[]) => void
   }
   
   /** Callback when form is submitted. */
@@ -89,6 +92,46 @@ export const PlayerForm: React.FC<PlayerFormProps> = ({
   onSubmit,
   onClose
 }) => {
+  const [availableGroups, setAvailableGroups] = useState<string[]>([])
+  const [newGroupInput, setNewGroupInput] = useState('')
+
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        const groups = await fetchTrainingGroups()
+        if (!mounted) return
+        setAvailableGroups(groups.map((g) => g.name))
+      } catch {
+        setAvailableGroups([])
+      }
+    }
+    void load()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const toggleGroup = useCallback((name: string) => {
+    formSetters.setTrainingGroups(
+      formState.trainingGroups.includes(name)
+        ? formState.trainingGroups.filter((n) => n !== name)
+        : [...formState.trainingGroups, name]
+    )
+  }, [formSetters, formState.trainingGroups])
+
+  const addNewGroup = useCallback(() => {
+    const name = newGroupInput.trim()
+    if (!name) return
+    if (!availableGroups.includes(name)) {
+      setAvailableGroups((prev) => [...prev, name])
+    }
+    if (!formState.trainingGroups.includes(name)) {
+      formSetters.setTrainingGroups([...formState.trainingGroups, name])
+    }
+    setNewGroupInput('')
+  }, [newGroupInput, availableGroups, formSetters, formState.trainingGroups])
+
   /**
    * Filters players for doubles partner selection.
    */
@@ -149,6 +192,62 @@ export const PlayerForm: React.FC<PlayerFormProps> = ({
               required
             />
           </label>
+          <div className="space-y-2 pt-1">
+            <h4 className="text-sm font-medium text-[hsl(var(--foreground))]">Træningsgrupper</h4>
+            <div className="flex flex-wrap gap-2">
+              {availableGroups.length === 0 ? (
+                <span className="text-xs text-[hsl(var(--muted))]">Ingen eksisterende grupper</span>
+              ) : (
+                availableGroups
+                  .slice()
+                  .sort((a, b) => a.localeCompare(b, 'da'))
+                  .map((name) => {
+                    const selected = formState.trainingGroups.includes(name)
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => toggleGroup(name)}
+                        className={`text-xs px-2 py-1 rounded-full ring-1 transition-colors ${
+                          selected
+                            ? 'bg-[hsl(var(--primary))] text-white ring-[hsl(var(--primary)/.3)]'
+                            : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] ring-[hsl(var(--line)/.12)]'
+                        }`}
+                        title={selected ? 'Klik for at fjerne' : 'Klik for at tilføje'}
+                      >
+                        {name}
+                      </button>
+                    )
+                  })
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                value={newGroupInput}
+                onChange={(e) => setNewGroupInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    addNewGroup()
+                  }
+                }}
+                placeholder="Ny gruppe..."
+                className="flex-1 rounded-md bg-[hsl(var(--surface))] px-3 py-2 ring-1 ring-[hsl(var(--line)/.14)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 text-[hsl(var(--foreground))]"
+              />
+              <Button type="button" onClick={addNewGroup}>
+                Tilføj
+              </Button>
+            </div>
+            {formState.trainingGroups.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {formState.trainingGroups.map((g) => (
+                  <span key={g} className="text-[10px] px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] ring-1 ring-[hsl(var(--line)/.12)]">
+                    {g}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
           <label className="flex flex-col gap-2 text-sm">
             <span className="font-medium text-[hsl(var(--foreground))]">Kaldenavn</span>
             <input

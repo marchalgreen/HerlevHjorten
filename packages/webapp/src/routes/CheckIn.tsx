@@ -187,8 +187,8 @@ const CheckInPage = () => {
       // Exclude checked-in players from the main list
       if (checkedInIds.has(player.id)) return false
       // Default to selected group from landing, but include extra allowed cross-group players
-      const groupId = (player as any).trainingGroup ?? null
-      const matchesGroup = defaultGroupId ? (groupId === defaultGroupId || extraAllowedIds.has(player.id)) : true
+      const groups = ((player as any).trainingGroups as string[] | undefined) ?? []
+      const matchesGroup = defaultGroupId ? (groups.includes(defaultGroupId) || extraAllowedIds.has(player.id)) : true
       if (!matchesGroup) return false
       const matchesLetter =
         filterLetter === LETTER_FILTERS.ALL || (typeof filterLetter === 'string' && player.name.toLowerCase().startsWith(filterLetter.toLowerCase()))

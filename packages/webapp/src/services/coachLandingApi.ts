@@ -33,16 +33,17 @@ export const readAndClearPendingSeed = (): PendingSeed | null => {
 }
 
 /**
- * Derives training groups from players.trainingGroup values.
+ * Derives training groups from players.trainingGroups values.
  */
 export const fetchTrainingGroups = async (): Promise<Group[]> => {
   const players = await api.players.list({})
   const map = new Map<string, { count: number }>()
   players.forEach((p) => {
-    const id = (p as any).trainingGroup ?? null
-    if (!id) return
-    const prev = map.get(id) || { count: 0 }
-    map.set(id, { count: prev.count + 1 })
+    const groups = ((p as any).trainingGroups as string[] | undefined) ?? []
+    groups.forEach((id) => {
+      const prev = map.get(id) || { count: 0 }
+      map.set(id, { count: prev.count + 1 })
+    })
   })
 
   const groups: Group[] = Array.from(map.entries()).map(([name, stats]) => ({
@@ -64,11 +65,18 @@ export const searchPlayers = async (opts: { q?: string; groupId?: string | null;
   const { q, groupId, limit = 50 } = opts
   // Existing API supports q, active filtering; group we filter client-side.
   const players = await api.players.list({ q: q?.trim() || undefined, active: true })
-  const filtered = players.filter((p) => (groupId ? ((p as any).trainingGroup ?? null) === groupId : true))
+  const filtered = players.filter((p) => {
+    if (!groupId) return true
+    const groups = ((p as any).trainingGroups as string[] | undefined) ?? []
+    return groups.includes(groupId)
+  })
   const mapped: PlayerLite[] = filtered.slice(0, limit).map((p) => ({
     id: p.id,
     displayName: p.name,
-    groupId: ((p as any).trainingGroup ?? null) as string | null,
+    groupId: (() => {
+      const groups = ((p as any).trainingGroups as string[] | undefined) ?? []
+      return groups[0] ?? null
+    })(),
     avatarUrl: null,
     active: Boolean(p.active)
   }))

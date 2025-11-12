@@ -78,7 +78,7 @@ const playerCreateSchema = z.object({
   levelMix: z.number().optional(),
   gender: z.enum(['Herre', 'Dame']).optional(),
   primaryCategory: z.enum(['Single', 'Double', 'Begge']).optional(),
-  trainingGroup: z.string().min(1).optional(),
+  trainingGroups: z.array(z.string().min(1)).optional(),
   active: z.boolean().optional(),
   preferredDoublesPartners: z.array(z.string()).optional(),
   preferredMixedPartners: z.array(z.string()).optional()
@@ -97,7 +97,7 @@ const playerUpdateSchema = z.object({
       levelMix: z.number().nullable().optional(),
       gender: z.enum(['Herre', 'Dame']).nullable().optional(),
       primaryCategory: z.enum(['Single', 'Double', 'Begge']).nullable().optional(),
-      trainingGroup: z.string().nullable().optional(),
+      trainingGroups: z.array(z.string()).nullable().optional(),
       active: z.boolean().optional(),
       preferredDoublesPartners: z.array(z.string()).nullable().optional(),
       preferredMixedPartners: z.array(z.string()).nullable().optional()
@@ -146,7 +146,7 @@ const createPlayer = async (input: PlayerCreateInput): Promise<Player> => {
       levelMix: parsed.levelMix ?? null,
     gender: parsed.gender ?? null,
     primaryCategory: parsed.primaryCategory ?? null,
-      trainingGroup: parsed.trainingGroup ?? null,
+      trainingGroups: parsed.trainingGroups ?? [],
       active: parsed.active ?? true,
       preferredDoublesPartners: parsed.preferredDoublesPartners ?? null,
       preferredMixedPartners: parsed.preferredMixedPartners ?? null
@@ -185,7 +185,7 @@ const updatePlayer = async (input: PlayerUpdateInput): Promise<Player> => {
     if (parsed.patch.levelMix !== undefined) (updateData as any).levelMix = parsed.patch.levelMix
   if (parsed.patch.gender !== undefined) updateData.gender = parsed.patch.gender
   if (parsed.patch.primaryCategory !== undefined) updateData.primaryCategory = parsed.patch.primaryCategory
-  if (parsed.patch.trainingGroup !== undefined) (updateData as any).trainingGroup = parsed.patch.trainingGroup
+  if (parsed.patch.trainingGroups !== undefined) (updateData as any).trainingGroups = parsed.patch.trainingGroups ?? []
   if (parsed.patch.active !== undefined) updateData.active = parsed.patch.active
     if (parsed.patch.preferredDoublesPartners !== undefined) (updateData as any).preferredDoublesPartners = parsed.patch.preferredDoublesPartners
     if (parsed.patch.preferredMixedPartners !== undefined) (updateData as any).preferredMixedPartners = parsed.patch.preferredMixedPartners

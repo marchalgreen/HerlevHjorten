@@ -12,6 +12,7 @@ import { Pencil, Plus, Trash2, UsersRound } from 'lucide-react'
 import { Badge, Button, EmptyState, PageCard } from '../components/ui'
 import { DataTable, TableSearch, type Column } from '../components/ui/Table'
 import { EditablePartnerCell, PlayerForm } from '../components/players'
+import { EditableTrainingGroupsCell } from '../components/players/EditableTrainingGroupsCell'
 import { usePlayers } from '../hooks'
 import { formatDate, formatPlayerName } from '../lib/formatting'
 import { PLAYER_CATEGORIES, UI_CONSTANTS } from '../constants'
@@ -79,6 +80,7 @@ const PlayersPage = () => {
   const [formActive, setFormActive] = useState(true)
   const [formPreferredDoublesPartners, setFormPreferredDoublesPartners] = useState<string[]>([])
   const [formPreferredMixedPartners, setFormPreferredMixedPartners] = useState<string[]>([])
+  const [formTrainingGroups, setFormTrainingGroups] = useState<string[]>([])
 
   /**
    * Resets form state to initial values.
@@ -94,6 +96,7 @@ const PlayersPage = () => {
     setFormActive(true)
     setFormPreferredDoublesPartners([])
     setFormPreferredMixedPartners([])
+    setFormTrainingGroups([])
     setCurrentPlayer(null)
   }, [])
 
@@ -124,6 +127,7 @@ const PlayersPage = () => {
     setFormActive(player.active)
       setFormPreferredDoublesPartners((playerAny.preferredDoublesPartners ?? null) ?? [])
       setFormPreferredMixedPartners((playerAny.preferredMixedPartners ?? null) ?? [])
+      setFormTrainingGroups((playerAny.trainingGroups ?? null) ?? [])
     setIsSheetOpen(true)
     },
     []
@@ -152,6 +156,7 @@ const PlayersPage = () => {
             levelMix: formLevelMix ? Number(formLevelMix) : undefined,
           gender: formGender || undefined,
           primaryCategory: formPrimaryCategory || undefined,
+            trainingGroups: formTrainingGroups,
             active: formActive,
             preferredDoublesPartners: formPreferredDoublesPartners.length > 0 ? formPreferredDoublesPartners : undefined,
             preferredMixedPartners: formPreferredMixedPartners.length > 0 ? formPreferredMixedPartners : undefined
@@ -166,6 +171,7 @@ const PlayersPage = () => {
             levelMix: formLevelMix ? Number(formLevelMix) : null,
             gender: formGender || null,
             primaryCategory: formPrimaryCategory || null,
+            trainingGroups: formTrainingGroups,
             active: formActive,
             preferredDoublesPartners: formPreferredDoublesPartners.length > 0 ? formPreferredDoublesPartners : null,
             preferredMixedPartners: formPreferredMixedPartners.length > 0 ? formPreferredMixedPartners : null
@@ -191,6 +197,7 @@ const PlayersPage = () => {
       formActive,
       formPreferredDoublesPartners,
       formPreferredMixedPartners,
+      formTrainingGroups,
       dialogMode,
       currentPlayer,
       createPlayer,
@@ -363,12 +370,21 @@ const PlayersPage = () => {
         )
       },
       {
-        id: 'trainingGroup',
-        header: 'Træningsgruppe',
+        id: 'trainingGroups',
+        header: 'Træningsgrupper',
         align: 'center',
         sortable: true,
-        sortValue: (row: Player) => ((row as any).trainingGroup ?? '') as string,
-        accessor: (row: Player) => ((row as any).trainingGroup ?? '–') as string
+        sortValue: (row: Player) => {
+          const groups = (row as any).trainingGroups as string[] | undefined
+          return (groups ?? []).join(' | ')
+        },
+        cell: (row: Player) => (
+          <EditableTrainingGroupsCell
+            player={row}
+            onUpdate={refetch}
+            onBeforeUpdate={saveScrollPosition}
+          />
+        )
       },
       {
         id: 'preferredDoublesPartner',
@@ -521,7 +537,8 @@ const PlayersPage = () => {
           primaryCategory: formPrimaryCategory,
           active: formActive,
           preferredDoublesPartners: formPreferredDoublesPartners,
-          preferredMixedPartners: formPreferredMixedPartners
+          preferredMixedPartners: formPreferredMixedPartners,
+          trainingGroups: formTrainingGroups
         }}
         formSetters={{
           setName: setFormName,
@@ -533,7 +550,8 @@ const PlayersPage = () => {
           setPrimaryCategory: setFormPrimaryCategory,
           setActive: setFormActive,
           setPreferredDoublesPartners: setFormPreferredDoublesPartners,
-          setPreferredMixedPartners: setFormPreferredMixedPartners
+          setPreferredMixedPartners: setFormPreferredMixedPartners,
+          setTrainingGroups: setFormTrainingGroups
         }}
         onSubmit={handleSubmit}
         onClose={() => setIsSheetOpen(false)}
