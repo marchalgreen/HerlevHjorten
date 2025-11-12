@@ -109,29 +109,23 @@ export const PlayerSlot: React.FC<PlayerSlotProps> = ({
       onDragEnd={onDragEnd}
       className={`flex items-center gap-2 rounded-md px-2.5 py-2.5 sm:px-3 sm:py-3 xl:px-2.5 xl:py-2 h-[64px] sm:h-[72px] xl:h-[68px] w-full transition-all motion-reduce:transition-none ${
         isRecentlySwapped
-          ? `${getPlayerSlotBgColor()} ${variant === 'A' ? 'avatar-rail' : variant === 'D' ? (catLetter ? 'cat-rail' : '') : ''} animate-swap-in ring-2 ring-[hsl(var(--primary)/.5)] shadow-lg hover:shadow-sm cursor-grab active:cursor-grabbing ring-1 ring-[hsl(var(--line)/.12)]`
+          ? `${getPlayerSlotBgColor()} avatar-rail animate-swap-in ring-2 ring-[hsl(var(--primary)/.5)] shadow-lg hover:shadow-sm cursor-grab active:cursor-grabbing ring-1 ring-[hsl(var(--line)/.12)]`
           : isDragOverOccupied && player
-          ? `${getPlayerSlotBgColor()} ${variant === 'A' ? 'avatar-rail' : variant === 'D' ? (catLetter ? 'cat-rail' : '') : ''} ring-2 ring-[hsl(var(--primary)/.6)] shadow-lg hover:shadow-sm cursor-grab active:cursor-grabbing ring-1 ring-[hsl(var(--line)/.12)]`
+          ? `${getPlayerSlotBgColor()} avatar-rail ring-2 ring-[hsl(var(--primary)/.6)] shadow-lg hover:shadow-sm cursor-grab active:cursor-grabbing ring-1 ring-[hsl(var(--line)/.12)]`
           : player
-          ? `${getPlayerSlotBgColor()} ${variant === 'A' ? 'avatar-rail' : variant === 'D' ? (catLetter ? 'cat-rail' : '') : ''} hover:shadow-sm cursor-grab active:cursor-grabbing ring-1 ring-[hsl(var(--line)/.12)]`
+          ? `${getPlayerSlotBgColor()} avatar-rail hover:shadow-sm cursor-grab active:cursor-grabbing ring-1 ring-[hsl(var(--line)/.12)]`
           : isDragOver
           ? 'bg-[hsl(var(--primary)/.15)] ring-2 ring-[hsl(var(--primary)/.5)] shadow-md ring-1 ring-[hsl(var(--line)/.12)]'
           : isCourtHovered
           ? 'bg-[hsl(var(--primary)/.08)] ring-1 ring-[hsl(var(--primary)/.3)]'
           : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] ring-1 ring-[hsl(var(--line)/.12)]'
       }`}
-      data-cat={variant === 'A' ? undefined : catLetter || undefined}
+      data-cat={undefined}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
       style={{
         ...(variant === 'A' && avatarRailColor ? ({ ['--railColor' as any]: avatarRailColor } as React.CSSProperties) : {}),
-        ...(variant === 'C' && player
-          ? ({ backgroundColor: (() => {
-              const hue = getSeedHue(player.id || player.name, player.gender ?? null)
-              return `hsl(${hue} 55% 96%)`
-            })() } as React.CSSProperties)
-          : {})
       }}
     >
       {player ? (
@@ -140,9 +134,7 @@ export const PlayerSlot: React.FC<PlayerSlotProps> = ({
             {fullScreen ? (
               // Full-screen: icon and name on same row, larger font
               <div className="flex items-center gap-2">
-                {variant === 'D' && getCategoryBadge(player.primaryCategory)}
-                {(variant === 'A' || variant === 'C') && <InitialsAvatar seed={player.id} name={player.name} gender={player.gender ?? null} />}
-                {variant === 'B' && <MiniIdenticon seed={player.id} gender={player.gender ?? null} />}
+                <InitialsAvatar seed={player.id} name={player.name} gender={player.gender ?? null} />
                 <p className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))] truncate">{formatPlayerCardName(player.name, player.alias)}</p>
                 {isDuplicatePlayer && (
                   <span className="inline-flex h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[9px] sm:text-[10px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
@@ -153,10 +145,8 @@ export const PlayerSlot: React.FC<PlayerSlotProps> = ({
             ) : (
               // Normal view: icon and name on same row
               <div className="flex items-center gap-2">
-                {variant === 'D' && getCategoryBadge(player.primaryCategory)}
-                {(variant === 'A' || variant === 'C') && <InitialsAvatar seed={player.id} name={player.name} gender={player.gender ?? null} />}
-                {variant === 'B' && <MiniIdenticon seed={player.id} gender={player.gender ?? null} />}
-                <p className={`font-semibold text-[hsl(var(--foreground))] truncate ${variant === 'B' ? 'text-base sm:text-lg' : 'text-sm sm:text-base'}`}>{formatPlayerCardName(player.name, player.alias)}</p>
+                <InitialsAvatar seed={player.id} name={player.name} gender={player.gender ?? null} />
+                <p className={`font-semibold text-[hsl(var(--foreground))] truncate text-sm sm:text-base`}>{formatPlayerCardName(player.name, player.alias)}</p>
                 {isDuplicatePlayer && (
                   <span className="inline-flex h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.3)] text-[7px] sm:text-[8px] font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.4)]">
                     !

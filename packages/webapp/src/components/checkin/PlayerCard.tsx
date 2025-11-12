@@ -108,11 +108,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     const hue = getSeedHue(player.id || player.name, player.gender ?? null)
     return `hsl(${hue} 70% 75% / .26)`
   }, [variant, player])
-  const variantCardBg = useMemo(() => {
-    if (variant !== 'C') return undefined
-    const hue = getSeedHue(player.id || player.name, player.gender ?? null)
-    return `hsl(${hue} 55% 96%)`
-  }, [variant, player])
+  const variantCardBg = undefined as string | undefined
   
   return (
     <div
@@ -126,12 +122,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         'transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
         'cursor-pointer hover:shadow-sm ring-0 hover:ring-2 hover:ring-[hsl(var(--accent)/.15)]',
         'bg-[hsl(var(--surface-2))]',
-        variant === 'A' ? 'avatar-rail' : variant === 'D' ? (catLetter ? 'cat-rail' : '') : '',
+        'avatar-rail',
         isJustCheckedIn && 'ring-2 ring-[hsl(206_88%_60%)] scale-[1.02] shadow-lg',
         isAnimatingOut && 'opacity-0 scale-95 -translate-x-4 pointer-events-none',
         isAnimatingIn && 'opacity-0 scale-95 translate-x-4'
       )}
-      data-cat={variant === 'A' ? undefined : catLetter || undefined}
+      data-cat={undefined}
       style={{
         animation: isAnimatingIn ? 'slideInFromRight 0.3s ease-out forwards' : undefined,
         ...(variant === 'A' && avatarRailColor ? ({ ['--railColor' as any]: avatarRailColor } as React.CSSProperties) : {}),
@@ -139,13 +135,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
       }}
     >
       <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-        {variant === 'D' && <CategoryBadge category={player.primaryCategory} />}
-        {(variant === 'A' || variant === 'C') && (
-          <InitialsAvatar seed={player.id} name={player.name} gender={player.gender ?? null} />
-        )}
-        {variant === 'B' && <MiniIdenticon seed={player.id} gender={player.gender ?? null} />}
+        <InitialsAvatar seed={player.id} name={player.name} gender={player.gender ?? null} />
         <div className="min-w-0 flex-1">
-          <p className={`font-semibold text-[hsl(var(--foreground))] truncate ${variant === 'B' ? 'text-base sm:text-lg' : 'text-sm sm:text-base'}`}>
+          <p className={`font-semibold text-[hsl(var(--foreground))] truncate text-sm sm:text-base`}>
             {formatPlayerCardName(player.name, player.alias)}
           </p>
         </div>
