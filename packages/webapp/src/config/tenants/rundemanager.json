@@ -1,0 +1,10 @@
+{
+  "id": "rundemanager",
+  "name": "RundeManager Demo",
+  "logo": "logo.jpeg",
+  "maxCourts": 8,
+  "supabaseUrl": "",
+  "supabaseKey": "",
+  "features": {}
+}
+
