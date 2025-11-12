@@ -363,6 +363,14 @@ const PlayersPage = () => {
         )
       },
       {
+        id: 'trainingGroup',
+        header: 'Træningsgruppe',
+        align: 'center',
+        sortable: true,
+        sortValue: (row: Player) => ((row as any).trainingGroup ?? '') as string,
+        accessor: (row: Player) => ((row as any).trainingGroup ?? '–') as string
+      },
+      {
         id: 'preferredDoublesPartner',
         header: 'Double makker',
         align: 'center',

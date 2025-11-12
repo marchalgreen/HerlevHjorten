@@ -11,6 +11,7 @@ export type Player = {
   levelMix?: number | null
   gender?: PlayerGender | null
   primaryCategory?: PlayerCategory | null
+  trainingGroup?: string | null
   active: boolean
   preferredDoublesPartners?: string[] | null
   preferredMixedPartners?: string[] | null
@@ -76,6 +77,7 @@ export type PlayerCreateInput = {
   levelMix?: number
   gender?: PlayerGender
   primaryCategory?: PlayerCategory
+  trainingGroup?: string
   active?: boolean
   preferredDoublesPartners?: string[]
   preferredMixedPartners?: string[]
@@ -83,7 +85,7 @@ export type PlayerCreateInput = {
 
 export type PlayerUpdateInput = {
   id: string
-  patch: Partial<Pick<Player, 'name' | 'alias' | 'level' | 'levelSingle' | 'levelDouble' | 'levelMix' | 'gender' | 'primaryCategory' | 'active' | 'preferredDoublesPartners' | 'preferredMixedPartners'>>
+  patch: Partial<Pick<Player, 'name' | 'alias' | 'level' | 'levelSingle' | 'levelDouble' | 'levelMix' | 'gender' | 'primaryCategory' | 'trainingGroup' | 'active' | 'preferredDoublesPartners' | 'preferredMixedPartners'>>
 }
 
 export type MatchMovePayload = {

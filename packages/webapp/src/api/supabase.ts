@@ -52,6 +52,7 @@ const rowToPlayer = (row: any): Player => ({
   levelMix: row.level_mix ?? null,
   gender: row.gender ?? null,
   primaryCategory: row.primary_category ?? null,
+  trainingGroup: row.training_group ?? null,
   active: row.active ?? true,
   preferredDoublesPartners: row.preferred_doubles_partners ?? null,
   preferredMixedPartners: row.preferred_mixed_partners ?? null,
@@ -283,6 +284,7 @@ export const createPlayer = async (player: Omit<Player, 'id' | 'createdAt'>): Pr
       level_mix: playerAny.levelMix ?? null,
       gender: player.gender,
       primary_category: player.primaryCategory,
+      training_group: playerAny.trainingGroup ?? null,
       active: player.active,
       preferred_doubles_partners: playerAny.preferredDoublesPartners ?? [],
       preferred_mixed_partners: playerAny.preferredMixedPartners ?? []
@@ -309,6 +311,7 @@ export const updatePlayer = async (id: string, updates: PlayerUpdateInput['patch
   if (updates.level !== undefined) updateData.level_single = updates.level
   if (updates.gender !== undefined) updateData.gender = updates.gender
   if (updates.primaryCategory !== undefined) updateData.primary_category = updates.primaryCategory
+  if (updatesAny.trainingGroup !== undefined) updateData.training_group = updatesAny.trainingGroup
   if (updates.active !== undefined) updateData.active = updates.active
   if (updatesAny.preferredDoublesPartners !== undefined) updateData.preferred_doubles_partners = updatesAny.preferredDoublesPartners ?? []
   if (updatesAny.preferredMixedPartners !== undefined) updateData.preferred_mixed_partners = updatesAny.preferredMixedPartners ?? []
