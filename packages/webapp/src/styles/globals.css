@@ -248,6 +248,22 @@
     position: relative;
   }
 
+  /* Avatar rail — left vertical accent bar using CSS var --railColor */
+  .avatar-rail {
+    position: relative;
+  }
+  .avatar-rail::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--railColor, transparent);
+    transition: opacity 0.2s ease;
+  }
+
   .cat-rail::before {
     content: '';
     position: absolute;

@@ -6,6 +6,7 @@
 
 import React from 'react'
 import type { TrainingSession } from '@herlev-hjorten/common'
+import { getPlayerUiVariant, setPlayerUiVariant } from '../../lib/uiVariants'
 
 interface MatchProgramHeaderProps {
   /** Current training session */
@@ -175,6 +176,7 @@ export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
           ) : (
             <></>
           )}
+          {/* Variant selector removed — only option A is kept */}
         </div>
       </div>
     </header>

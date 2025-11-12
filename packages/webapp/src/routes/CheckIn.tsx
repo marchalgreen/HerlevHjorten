@@ -17,6 +17,7 @@ import { LETTER_FILTERS, UI_CONSTANTS } from '../constants'
 import coachLandingApi from '../services/coachLandingApi'
 import CrossGroupSearchModal from '../components/checkin/CrossGroupSearchModal'
 import api from '../api'
+import { getPlayerUiVariant, setPlayerUiVariant } from '../lib/uiVariants'
 
 /**
  * Check-in page component.
@@ -288,6 +289,7 @@ const CheckInPage = () => {
             )}
           </p>
         </div>
+        {/* Variant selector removed — only option A is kept */}
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[35%_65%] lg:items-start">

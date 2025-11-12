@@ -82,6 +82,24 @@ export const formatPlayerName = (name: string, alias?: string | null): string =>
 }
 
 /**
+ * Formats a player name for card display: Firstname MIDDLENAME LASTNAME
+ * - Keeps the first token as-is (assumed proper-cased)
+ * - Uppercases all remaining tokens
+ * - Preserves alias in parentheses if provided
+ */
+export const formatPlayerCardName = (name: string, alias?: string | null): string => {
+  // If a nickname/alias exists, prefer showing it in ALL CAPS
+  if (alias && alias.trim().length > 0) {
+    return alias.trim().toUpperCase()
+  }
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return name
+  const [first, ...rest] = parts
+  const upperRest = rest.map((p) => p.toUpperCase())
+  return [first, ...upperRest].join(' ')
+}
+
+/**
  * Formats a number with optional decimal places.
  * 
  * @param value - Number to format

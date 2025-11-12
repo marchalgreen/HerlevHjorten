@@ -4,12 +4,14 @@
  * Displays a checked-in player with check-out functionality.
  */
 
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import type { CheckedInPlayer } from '@herlev-hjorten/common'
 import { clsx } from 'clsx'
 import { Button } from '../ui'
-import { formatCategoryLetter, formatPlayerName } from '../../lib/formatting'
+import { formatCategoryLetter, formatPlayerCardName } from '../../lib/formatting'
 import { PLAYER_CATEGORIES } from '../../constants'
+import { InitialsAvatar, MiniIdenticon, getSeedHue } from '../ui/PlayerAvatar'
+import { getPlayerUiVariant, VARIANT_CHANGED_EVENT, type PlayerUiVariant } from '../../lib/uiVariants'
 
 /**
  * Props for CheckedInPlayerCard component.
@@ -76,6 +78,26 @@ export const CheckedInPlayerCard: React.FC<CheckedInPlayerCardProps> = ({
 }) => {
   const isOneRoundOnly = player.maxRounds === 1
   const catLetter = formatCategoryLetter(player.primaryCategory)
+  const [variant, setVariant] = useState<PlayerUiVariant>(() => getPlayerUiVariant())
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const ev = e as CustomEvent
+      setVariant(ev.detail?.variant ?? getPlayerUiVariant())
+    }
+    window.addEventListener(VARIANT_CHANGED_EVENT, onChange as EventListener)
+    return () => window.removeEventListener(VARIANT_CHANGED_EVENT, onChange as EventListener)
+  }, [])
+  const trainingGroups = useMemo(() => ((player as any).trainingGroups as string[] | undefined) ?? [], [player])
+  const avatarRailColor = useMemo(() => {
+    if (variant !== 'A') return undefined
+    const hue = getSeedHue(player.id || player.name, player.gender ?? null)
+    return `hsl(${hue} 70% 75% / .26)`
+  }, [variant, player])
+  const variantCardBg = useMemo(() => {
+    if (variant !== 'C') return undefined
+    const hue = getSeedHue(player.id || player.name, player.gender ?? null)
+    return `hsl(${hue} 55% 96%)`
+  }, [variant, player])
   
   return (
     <div
@@ -83,21 +105,27 @@ export const CheckedInPlayerCard: React.FC<CheckedInPlayerCardProps> = ({
         'flex items-center justify-between gap-3 rounded-md border-hair px-2 py-2 sm:px-3 sm:py-3 min-h-[64px]',
         'hover:shadow-sm transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)]',
         'motion-reduce:transition-none bg-[hsl(var(--success)/.06)]',
-        catLetter && 'cat-rail',
+        variant === 'A' ? 'avatar-rail' : variant === 'D' ? (catLetter ? 'cat-rail' : '') : '',
         isAnimatingOut && 'opacity-0 scale-95 translate-x-4 pointer-events-none',
         isAnimatingIn && 'opacity-0 scale-95 -translate-x-4'
       )}
-      data-cat={catLetter || undefined}
+      data-cat={variant === 'A' ? undefined : catLetter || undefined}
       style={{
-        animation: isAnimatingIn ? 'slideInFromLeft 0.3s ease-out forwards' : undefined
+        animation: isAnimatingIn ? 'slideInFromLeft 0.3s ease-out forwards' : undefined,
+        ...(variant === 'A' && avatarRailColor ? ({ ['--railColor' as any]: avatarRailColor } as React.CSSProperties) : {}),
+        ...(variantCardBg ? ({ backgroundColor: variantCardBg } as React.CSSProperties) : {})
       }}
     >
       <div className="flex items-center gap-2 min-w-0 flex-1">
-        <CategoryBadge category={player.primaryCategory} />
+        {variant === 'D' && <CategoryBadge category={player.primaryCategory} />}
+        {(variant === 'A' || variant === 'C') && (
+          <InitialsAvatar seed={player.id} name={player.name} gender={player.gender ?? null} />
+        )}
+        {variant === 'B' && <MiniIdenticon seed={player.id} gender={player.gender ?? null} />}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate">
-              {formatPlayerName(player.name, player.alias)}
+            <p className={`font-semibold text-[hsl(var(--foreground))] truncate ${variant === 'B' ? 'text-base sm:text-lg' : 'text-sm sm:text-base'}`}>
+              {formatPlayerCardName(player.name, player.alias)}
             </p>
             {isOneRoundOnly && (
               <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-2 py-1 text-xs whitespace-nowrap">

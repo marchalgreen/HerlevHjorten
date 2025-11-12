@@ -9,7 +9,10 @@ import React from 'react'
 import type { Player } from '@herlev-hjorten/common'
 import { clsx } from 'clsx'
 import { Button } from '../ui'
-import { formatCategoryLetter, formatPlayerName } from '../../lib/formatting'
+import { InitialsAvatar, MiniIdenticon, getSeedHue } from '../ui/PlayerAvatar'
+import { getPlayerUiVariant, VARIANT_CHANGED_EVENT, type PlayerUiVariant } from '../../lib/uiVariants'
+import { useEffect, useState, useMemo } from 'react'
+import { formatCategoryLetter, formatPlayerCardName } from '../../lib/formatting'
 import { PLAYER_CATEGORIES } from '../../constants'
 
 /**
@@ -90,6 +93,26 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   onOneRoundOnlyChange
 }) => {
   const catLetter = formatCategoryLetter(player.primaryCategory)
+  const [variant, setVariant] = useState<PlayerUiVariant>(() => getPlayerUiVariant())
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const ev = e as CustomEvent
+      setVariant(ev.detail?.variant ?? getPlayerUiVariant())
+    }
+    window.addEventListener(VARIANT_CHANGED_EVENT, onChange as EventListener)
+    return () => window.removeEventListener(VARIANT_CHANGED_EVENT, onChange as EventListener)
+  }, [])
+  const trainingGroups = useMemo(() => ((player as any).trainingGroups as string[] | undefined) ?? [], [player])
+  const avatarRailColor = useMemo(() => {
+    if (variant !== 'A') return undefined
+    const hue = getSeedHue(player.id || player.name, player.gender ?? null)
+    return `hsl(${hue} 70% 75% / .26)`
+  }, [variant, player])
+  const variantCardBg = useMemo(() => {
+    if (variant !== 'C') return undefined
+    const hue = getSeedHue(player.id || player.name, player.gender ?? null)
+    return `hsl(${hue} 55% 96%)`
+  }, [variant, player])
   
   return (
     <div
@@ -103,21 +126,27 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         'transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
         'cursor-pointer hover:shadow-sm ring-0 hover:ring-2 hover:ring-[hsl(var(--accent)/.15)]',
         'bg-[hsl(var(--surface-2))]',
-        catLetter && 'cat-rail',
+        variant === 'A' ? 'avatar-rail' : variant === 'D' ? (catLetter ? 'cat-rail' : '') : '',
         isJustCheckedIn && 'ring-2 ring-[hsl(206_88%_60%)] scale-[1.02] shadow-lg',
         isAnimatingOut && 'opacity-0 scale-95 -translate-x-4 pointer-events-none',
         isAnimatingIn && 'opacity-0 scale-95 translate-x-4'
       )}
-      data-cat={catLetter || undefined}
+      data-cat={variant === 'A' ? undefined : catLetter || undefined}
       style={{
-        animation: isAnimatingIn ? 'slideInFromRight 0.3s ease-out forwards' : undefined
+        animation: isAnimatingIn ? 'slideInFromRight 0.3s ease-out forwards' : undefined,
+        ...(variant === 'A' && avatarRailColor ? ({ ['--railColor' as any]: avatarRailColor } as React.CSSProperties) : {}),
+        ...(variantCardBg ? ({ backgroundColor: variantCardBg } as React.CSSProperties) : {})
       }}
     >
       <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-        <CategoryBadge category={player.primaryCategory} />
+        {variant === 'D' && <CategoryBadge category={player.primaryCategory} />}
+        {(variant === 'A' || variant === 'C') && (
+          <InitialsAvatar seed={player.id} name={player.name} gender={player.gender ?? null} />
+        )}
+        {variant === 'B' && <MiniIdenticon seed={player.id} gender={player.gender ?? null} />}
         <div className="min-w-0 flex-1">
-          <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate">
-            {formatPlayerName(player.name, player.alias)}
+          <p className={`font-semibold text-[hsl(var(--foreground))] truncate ${variant === 'B' ? 'text-base sm:text-lg' : 'text-sm sm:text-base'}`}>
+            {formatPlayerCardName(player.name, player.alias)}
           </p>
         </div>
       </div>
