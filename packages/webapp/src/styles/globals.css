@@ -65,6 +65,8 @@
         background: transparent;
         box-sizing: border-box;
         white-space: nowrap;
+        min-width: fit-content;
+        flex-shrink: 0;
         transition:
           background-color 200ms cubic-bezier(.2,.8,.2,1),
           color 200ms cubic-bezier(.2,.8,.2,1),

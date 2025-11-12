@@ -92,8 +92,6 @@ const MatchProgramPage = () => {
     previousRoundsVisible,
     setPreviousRoundsVisible,
     loadPreviousRound,
-    benchCollapsed,
-    benchCollapsing,
     isFullScreen,
     setIsFullScreen,
     viewportSize,
@@ -180,7 +178,6 @@ const MatchProgramPage = () => {
         onAutoMatch={handleAutoMatch}
         onResetMatches={handleResetMatches}
         onEnterFullScreen={() => setIsFullScreen(true)}
-        onEndTraining={handleEndTraining}
       />
 
       {!session && (
@@ -189,20 +186,13 @@ const MatchProgramPage = () => {
         </PageCard>
       )}
 
-      <div className={`grid gap-3 md:grid-cols-[minmax(180px,220px)_1fr] lg:items-start transition-all duration-300 ease-in-out ${
-        benchCollapsed 
-          ? 'md:grid-cols-[48px_1fr]' 
-          : ''
-      }`}>
+      <div className="grid gap-3 md:grid-cols-[minmax(280px,320px)_1fr] lg:items-start transition-all duration-300 ease-in-out">
         {/* Bench - matches height of courts section */}
         <BenchSection
           bench={bench}
           inactivePlayers={inactivePlayers}
           selectedRound={selectedRound}
           unavailablePlayers={unavailablePlayers}
-          benchCollapsed={benchCollapsed}
-          benchCollapsing={benchCollapsing}
-          onToggleCollapse={handleToggleBenchCollapse}
           dragOverBench={dragOverBench}
           dragOverInactive={dragOverInactive}
           dragSource={dragSource}

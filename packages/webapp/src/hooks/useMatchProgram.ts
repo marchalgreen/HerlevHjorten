@@ -100,10 +100,6 @@ interface UseMatchProgramReturn {
   // UI state
   moveMenuPlayer: string | null
   setMoveMenuPlayer: (playerId: string | null) => void
-  benchCollapsed: boolean
-  setBenchCollapsed: (collapsed: boolean) => void
-  benchCollapsing: boolean
-  setBenchCollapsing: (collapsing: boolean) => void
   isFullScreen: boolean
   setIsFullScreen: (fullScreen: boolean) => void
   viewportSize: { width: number; height: number }
@@ -141,7 +137,6 @@ interface UseMatchProgramReturn {
   // UI handlers
   handleMouseDown: (e: React.MouseEvent<HTMLDivElement>) => void
   handleResizeStart: (e: React.MouseEvent<HTMLDivElement>) => void
-  handleToggleBenchCollapse: () => void
   handleExtendedCapacityChange: (courtIdx: number, capacity: number | null) => void
   handleTogglePreviousRounds: () => Promise<void>
   
@@ -221,8 +216,6 @@ export const useMatchProgram = ({
   
   // UI state
   const [moveMenuPlayer, setMoveMenuPlayer] = useState<string | null>(null)
-  const [benchCollapsed, setBenchCollapsed] = useState(false)
-  const [benchCollapsing, setBenchCollapsing] = useState(false)
   const [isFullScreen, setIsFullScreen] = useState(false)
   const [viewportSize, setViewportSize] = useState({ 
     width: typeof window !== 'undefined' ? window.innerWidth : 1920, 
@@ -876,6 +869,9 @@ export const useMatchProgram = ({
     const playerId = event.dataTransfer.getData('application/x-player-id')
     if (!playerId) return
     event.preventDefault()
+    
+    // Player will be automatically placed in the correct gender section based on their gender
+    // No need to validate target gender - just move the player to bench
     await handleMove(playerId)
     if (unavailablePlayers.has(playerId)) {
       handleMarkAvailable(playerId)
@@ -969,7 +965,7 @@ export const useMatchProgram = ({
       
       updateInMemoryMatches(selectedRound, completeMatches)
       
-      setRecentlySwappedPlayers(new Set([occupyingPlayer.id]))
+      setRecentlySwappedPlayers(new Set([playerId, occupyingPlayer.id]))
       setTimeout(() => {
         setRecentlySwappedPlayers(new Set())
       }, 1000)
@@ -1062,13 +1058,6 @@ export const useMatchProgram = ({
     })
   }, [])
   
-  const handleToggleBenchCollapse = useCallback(() => {
-    setBenchCollapsing(true)
-    setTimeout(() => {
-      setBenchCollapsed(true)
-      setBenchCollapsing(false)
-    }, 300)
-  }, [])
   
   const handleExtendedCapacityChange = useCallback((courtIdx: number, capacity: number | null) => {
     setExtendedCapacityCourts((prev) => {
@@ -1177,11 +1166,8 @@ export const useMatchProgram = ({
   
   const handleBenchDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
-    if (benchCollapsed) {
-      setBenchCollapsed(false)
-    }
     setDragOverBench(true)
-  }, [benchCollapsed])
+  }, [])
   
   const handleBenchDragLeave = useCallback(() => {
     setDragOverBench(false)
@@ -1346,10 +1332,6 @@ export const useMatchProgram = ({
     // UI state
     moveMenuPlayer,
     setMoveMenuPlayer,
-    benchCollapsed,
-    setBenchCollapsed,
-    benchCollapsing,
-    setBenchCollapsing,
     isFullScreen,
     setIsFullScreen,
     viewportSize,
@@ -1387,7 +1369,6 @@ export const useMatchProgram = ({
     // UI handlers
     handleMouseDown,
     handleResizeStart,
-    handleToggleBenchCollapse,
     handleExtendedCapacityChange,
     handleTogglePreviousRounds,
     

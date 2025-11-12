@@ -8,6 +8,7 @@ import React from 'react'
 import type { CheckedInPlayer } from '@herlev-hjorten/common'
 import { PageCard } from '../ui'
 import { getCategoryLetter, getCategoryBadge, getPlayerSlotBgColor } from '../../lib/matchProgramUtils'
+import { formatPlayerCardName } from '../../lib/formatting'
 
 interface BenchSectionProps {
   /** Bench players (available players) */
@@ -18,12 +19,6 @@ interface BenchSectionProps {
   selectedRound: number
   /** Set of unavailable player IDs */
   unavailablePlayers: Set<string>
-  /** Whether bench is collapsed */
-  benchCollapsed: boolean
-  /** Whether bench is currently collapsing */
-  benchCollapsing: boolean
-  /** Handler to toggle bench collapse */
-  onToggleCollapse: () => void
   /** Drag over state for bench */
   dragOverBench: boolean
   /** Drag over state for inactive section */
@@ -92,9 +87,6 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
   inactivePlayers,
   selectedRound,
   unavailablePlayers,
-  benchCollapsed,
-  benchCollapsing,
-  onToggleCollapse,
   dragOverBench,
   dragOverInactive,
   dragSource,
@@ -111,90 +103,152 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
   onMarkAvailable,
   onActivateOneRoundPlayer
 }) => {
+  // Split bench players by gender
+  const malePlayers = bench.filter((p) => p.gender === 'Herre')
+  const femalePlayers = bench.filter((p) => p.gender === 'Dame')
+  const playersWithoutGender = bench.filter((p) => !p.gender || (p.gender !== 'Herre' && p.gender !== 'Dame'))
+
   return (
     <PageCard 
       className={`space-y-3 transition-all duration-300 ease-in-out p-3 sm:p-4 md:self-stretch flex flex-col ${
         dragOverBench 
-          ? 'ring-2 ring-[hsl(var(--primary)/.4)] bg-[hsl(var(--primary)/.05)]' 
+          ? 'bg-[hsl(var(--primary)/.05)]' 
           : ''
-      } ${benchCollapsed ? 'overflow-visible' : ''}`}
-      onDragOver={onBenchDragOver}
-      onDragLeave={onBenchDragLeave}
-      onDrop={onBenchDrop}
+      }`}
+      style={dragOverBench ? { 
+        outline: '2px solid hsl(var(--primary) / 0.4)',
+        outlineOffset: '-2px'
+      } : undefined}
     >
-      {benchCollapsed ? (
-        <div className="flex flex-col items-center gap-2">
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            className="flex items-center justify-center w-8 h-8 rounded hover:bg-[hsl(var(--surface-2))] transition-colors"
-            title="Udvid bænk"
-          >
-            <svg className="w-5 h-5 text-[hsl(var(--muted))]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          {bench.length > 0 && (
-            <span className="rounded-full bg-[hsl(var(--primary)/.1)] text-[hsl(var(--primary))] px-2 py-1 text-xs sm:text-sm font-semibold border border-[hsl(var(--primary)/.2)]">
-              {bench.length}
-            </span>
-          )}
-        </div>
-      ) : (
-        <div 
-          style={{
-            animation: benchCollapsing 
-              ? 'slideOutToLeft 0.3s ease-in forwards'
-              : 'slideInFromLeft 0.3s ease-out forwards'
-          }}
-        >
-          <header className="flex items-center justify-between">
-            <h3 className="text-xs sm:text-sm font-semibold">BÆNK</h3>
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] sm:text-xs font-medium">
-                {bench.length}
+      <header className="flex items-center justify-between">
+        <h3 className="text-sm sm:text-base font-semibold">BÆNK</h3>
+        <span className="rounded-full bg-[hsl(var(--surface-2))] px-2.5 py-1 text-xs sm:text-sm font-medium">
+          {bench.length}
+        </span>
+      </header>
+      <div 
+        className="flex flex-col space-y-4 max-h-[calc(100vh-440px)] sm:max-h-[calc(100vh-400px)] xl:max-h-[calc(100vh-360px)] overflow-y-auto scrollbar-thin min-w-0"
+        onDragOver={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onBenchDragOver(e)
+        }}
+        onDragLeave={(e) => {
+          e.stopPropagation()
+          onBenchDragLeave()
+        }}
+        onDrop={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onBenchDrop(e)
+        }}
+      >
+        {bench.length === 0 && (
+          <p className="rounded-md bg-[hsl(var(--surface-2))] px-3 py-4 text-center text-sm text-[hsl(var(--muted))] border-hair">
+            Træk spillere her for at aktivere dem
+          </p>
+        )}
+        
+        {/* Female players section */}
+        {femalePlayers.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 py-1">
+              <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+              <span className="text-xs sm:text-sm font-semibold text-[hsl(var(--muted))] uppercase tracking-wide px-2">
+                Damer ({femalePlayers.length})
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  // Trigger collapse animation - handled by parent
-                  onToggleCollapse()
-                }}
-                className="flex items-center justify-center w-6 h-6 rounded hover:bg-[hsl(var(--surface-2))] transition-colors"
-                title="Skjul bænk"
-              >
-                <svg className="w-4 h-4 text-[hsl(var(--muted))]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
+              <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
             </div>
-          </header>
-          <div className="flex flex-col space-y-3 max-h-[calc(100vh-440px)] sm:max-h-[calc(100vh-400px)] xl:max-h-[calc(100vh-360px)] overflow-y-auto scrollbar-thin min-w-0">
-            {bench.length === 0 && (
-              <p className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-3 sm:py-4 text-center text-xs sm:text-sm text-[hsl(var(--muted))] border-hair">
-                Træk spillere her for at aktivere dem
-              </p>
-            )}
-            {bench.map((player) => {
+            {femalePlayers.map((player) => {
               const catLetter = getCategoryLetter(player.primaryCategory)
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center gap-2 rounded-md px-2.5 py-2.5 sm:px-3 sm:py-3 xl:px-2.5 xl:py-2 h-[64px] sm:h-[72px] xl:h-[68px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                  className={`flex items-center gap-2 rounded-md px-3 py-3 sm:px-4 sm:py-3.5 h-[72px] sm:h-[76px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
                   data-cat={catLetter || undefined}
                   draggable
                   onDragStart={(event) => onBenchDragStart(event, player.id)}
                   onDragEnd={onBenchDragEnd}
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       {getCategoryBadge(player.primaryCategory)}
-                      <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate">{player.alias ?? player.name}</p>
+                      <p className="text-base sm:text-lg font-semibold text-[hsl(var(--foreground))] truncate">{formatPlayerCardName(player.name, player.alias)}</p>
                     </div>
                   </div>
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* Male players section */}
+        {malePlayers.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 py-1">
+              <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+              <span className="text-xs sm:text-sm font-semibold text-[hsl(var(--muted))] uppercase tracking-wide px-2">
+                Herrer ({malePlayers.length})
+              </span>
+              <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+            </div>
+            {malePlayers.map((player) => {
+              const catLetter = getCategoryLetter(player.primaryCategory)
+              return (
+                <div
+                  key={player.id}
+                  className={`flex items-center gap-2 rounded-md px-3 py-3 sm:px-4 sm:py-3.5 h-[72px] sm:h-[76px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                  data-cat={catLetter || undefined}
+                  draggable
+                  onDragStart={(event) => onBenchDragStart(event, player.id)}
+                  onDragEnd={onBenchDragEnd}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2.5">
+                      {getCategoryBadge(player.primaryCategory)}
+                      <p className="text-base sm:text-lg font-semibold text-[hsl(var(--foreground))] truncate">{formatPlayerCardName(player.name, player.alias)}</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Players without gender (fallback) */}
+        {playersWithoutGender.length > 0 && (
+          <div className="space-y-2">
+            {malePlayers.length > 0 || femalePlayers.length > 0 ? (
+              <div className="flex items-center gap-2 py-1">
+                <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+                <span className="text-xs sm:text-sm font-semibold text-[hsl(var(--muted))] uppercase tracking-wide px-2">
+                  Uden køn ({playersWithoutGender.length})
+                </span>
+                <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+              </div>
+            ) : null}
+            {playersWithoutGender.map((player) => {
+              const catLetter = getCategoryLetter(player.primaryCategory)
+              return (
+                <div
+                  key={player.id}
+                  className={`flex items-center gap-2 rounded-md px-3 py-3 sm:px-4 sm:py-3.5 h-[72px] sm:h-[76px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                  data-cat={catLetter || undefined}
+                  draggable
+                  onDragStart={(event) => onBenchDragStart(event, player.id)}
+                  onDragEnd={onBenchDragEnd}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2.5">
+                      {getCategoryBadge(player.primaryCategory)}
+                      <p className="text-base sm:text-lg font-semibold text-[hsl(var(--foreground))] truncate">{formatPlayerCardName(player.name, player.alias)}</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
             
             {/* Inactive Players Section */}
             <div 
@@ -250,7 +304,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                           onDragEnd={onInactiveDragEnd}
                         >
                           <div className="min-w-0 flex-1 overflow-hidden">
-                            <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate w-full">{player.alias ?? player.name}</p>
+                            <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate w-full">{formatPlayerCardName(player.name, player.alias)}</p>
                             <div className="flex items-center gap-1.5 mt-1 min-w-0">
                               {getCategoryBadge(player.primaryCategory)}
                               {isOneRoundOnly && !isUnavailable && (
@@ -301,8 +355,6 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               )}
             </div>
           </div>
-        </div>
-      )}
     </PageCard>
   )
 }

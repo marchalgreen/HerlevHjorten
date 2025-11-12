@@ -37,8 +37,6 @@ interface MatchProgramHeaderProps {
   onResetMatches: () => void
   /** Handler to enter full-screen */
   onEnterFullScreen: () => void
-  /** Handler to end training */
-  onEndTraining: () => void
 }
 
 /**
@@ -80,8 +78,7 @@ export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
   benchCount,
   onAutoMatch,
   onResetMatches,
-  onEnterFullScreen,
-  onEndTraining
+  onEnterFullScreen
 }) => {
   return (
     <header className="flex flex-col gap-3 sm:gap-4 lg:gap-3 mb-2 lg:mb-1.5">
@@ -164,17 +161,6 @@ export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
             >
               Vis kampprogram
             </button>
-          )}
-          {session ? (
-            <button
-              type="button"
-              onClick={onEndTraining}
-              className="rounded-md px-3 py-2 sm:px-4 text-xs sm:text-sm font-medium text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] ring-1 ring-[hsl(var(--line)/.12)] transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none hover:shadow-sm whitespace-nowrap"
-            >
-              Afslut træning
-            </button>
-          ) : (
-            <></>
           )}
           {/* Variant selector removed — only option A is kept */}
         </div>

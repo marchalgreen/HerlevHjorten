@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 import PlayersPage from './routes/PlayersDB'
 import CheckInPage from './routes/CheckIn'
@@ -77,7 +77,11 @@ const Header = () => {
     <>
       <header className="relative flex items-center justify-between ring-1 ring-[hsl(var(--line)/.12)] bg-[hsl(var(--surface)/.7)] px-3 sm:px-6 py-3 sm:py-4 backdrop-blur shadow-[inset_0_-1px_0_hsl(var(--line)/.08)]">
         {/* Left section: Logo and title */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0">
+        <Link 
+          to={buildPath('/coach')}
+          className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0 hover:opacity-80 transition-opacity cursor-pointer"
+          aria-label={`Gå til ${config.name} startside`}
+        >
           <img 
             src={logoPath} 
             alt={config.name} 
@@ -86,12 +90,16 @@ const Header = () => {
           <p className="text-xs sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] whitespace-nowrap truncate">
             {config.name}
           </p>
-        </div>
+        </Link>
 
         {/* Desktop: Horizontal navigation - absolutely positioned and centered */}
         <nav 
           aria-label="Primær navigation" 
           className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 xl:gap-2"
+          style={{ 
+            width: 'max-content',
+            minWidth: 'max-content'
+          }}
         >
           {navItems.map((item) => (
             <SidebarItem key={item.to} to={item.to} icon={item.icon} label={item.label} />
