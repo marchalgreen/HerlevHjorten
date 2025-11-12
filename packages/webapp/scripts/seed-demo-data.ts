@@ -1,12 +1,14 @@
 #!/usr/bin/env tsx
 /**
- * Demo data seeding script for demo tenant.
+ * Demo data seeding script for any tenant.
  * 
- * This script seeds the demo Supabase database with dummy data for sales demonstrations.
- * Run this script after setting up the demo tenant configuration.
+ * This script seeds a Supabase database with dummy data for sales demonstrations.
+ * Run this script after setting up the tenant configuration.
  * 
  * Usage:
- *   pnpm tsx packages/webapp/scripts/seed-demo-data.ts
+ *   pnpm --filter webapp exec tsx scripts/seed-demo-data.ts [tenant-id]
+ * 
+ * If tenant-id is not provided, it will use "demo"
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -59,16 +61,18 @@ const DEMO_CATEGORIES = ['Single', 'Double', 'Begge'] as const
 /**
  * Main seeding function.
  */
-async function seedDemoData() {
+async function seedDemoData(tenantId: string = 'demo') {
   console.log('🌱 Starting demo data seeding...')
+  console.log(`📋 Using tenant: ${tenantId}`)
+  console.log('')
 
   try {
-    // Load demo tenant config
-    const config = await loadTenantConfig('demo')
+    // Load tenant config
+    const config = await loadTenantConfig(tenantId)
     
     if (!config.supabaseUrl || !config.supabaseKey) {
-      console.error('❌ Demo tenant config is missing Supabase credentials.')
-      console.error('Please update packages/webapp/src/config/tenants/demo.json with your Supabase credentials.')
+      console.error(`❌ Tenant config for "${tenantId}" is missing Supabase credentials.`)
+      console.error(`Please update packages/webapp/src/config/tenants/${tenantId}.json with your Supabase credentials.`)
       process.exit(1)
     }
 
@@ -107,14 +111,20 @@ async function seedDemoData() {
 
     // Seed players
     console.log(`👥 Seeding ${DEMO_PLAYER_NAMES.length} players...`)
-    const playerData = DEMO_PLAYER_NAMES.map((name, index) => ({
-      name,
-      alias: index % 3 === 0 ? name.split(' ')[0] : null,
-      level: DEMO_LEVELS[Math.floor(Math.random() * DEMO_LEVELS.length)],
-      gender: DEMO_GENDERS[Math.floor(Math.random() * DEMO_GENDERS.length)],
-      primary_category: DEMO_CATEGORIES[Math.floor(Math.random() * DEMO_CATEGORIES.length)],
-      active: Math.random() > 0.1 // 90% active
-    }))
+    const playerData = DEMO_PLAYER_NAMES.map((name, index) => {
+      const level = DEMO_LEVELS[Math.floor(Math.random() * DEMO_LEVELS.length)]
+      return {
+        name,
+        alias: index % 3 === 0 ? name.split(' ')[0] : null,
+        level_single: level,
+        level_double: level,
+        level_mix: level,
+        gender: DEMO_GENDERS[Math.floor(Math.random() * DEMO_GENDERS.length)],
+        primary_category: DEMO_CATEGORIES[Math.floor(Math.random() * DEMO_CATEGORIES.length)],
+        active: Math.random() > 0.1, // 90% active
+        training_group: [] // Empty array for training groups
+      }
+    })
     const { data: players, error: playersError } = await supabase
       .from('players')
       .insert(playerData)
@@ -173,7 +183,7 @@ async function seedDemoData() {
     console.log(`   - Training Sessions: ${sessions?.length || 0}`)
     console.log(`   - Check-ins: ${sessions && sessions.length > 0 ? (players?.slice(0, 15).length || 0) : 0}`)
     console.log('')
-    console.log('💡 You can now access the demo tenant at: /#/demo/check-in')
+    console.log(`💡 You can now access the ${tenantId} tenant at: /#/${tenantId}/check-in`)
     
   } catch (error) {
     console.error('❌ Error seeding demo data:', error)
@@ -181,7 +191,10 @@ async function seedDemoData() {
   }
 }
 
+// Get tenant ID from command line args
+const tenantId = process.argv[2] || 'demo'
+
 // Run the seeding
-seedDemoData()
+seedDemoData(tenantId)
 
 

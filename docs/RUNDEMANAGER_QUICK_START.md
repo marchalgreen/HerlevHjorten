@@ -34,13 +34,13 @@ Edit `packages/webapp/src/config/tenants/rundemanager.json`:
 ### 4. Seed Courts (Required)
 
 ```bash
-pnpm exec tsx packages/webapp/scripts/seed-courts.ts rundemanager
+pnpm --filter webapp exec tsx scripts/seed-courts.ts rundemanager
 ```
 
 ### 5. Seed Demo Data (Optional)
 
 ```bash
-pnpm exec tsx packages/webapp/scripts/seed-demo-data.ts rundemanager
+pnpm --filter webapp exec tsx scripts/seed-demo-data.ts rundemanager
 ```
 
 ### 6. Test Locally
@@ -79,7 +79,7 @@ Once deployed, access via:
 - Ensure RLS policies are set (they should allow public access)
 
 **"Courts not showing"**
-- Run: `pnpm exec tsx packages/webapp/scripts/seed-courts.ts rundemanager`
+- Run: `pnpm --filter webapp exec tsx scripts/seed-courts.ts rundemanager`
 
 ## 📚 Full Documentation
 

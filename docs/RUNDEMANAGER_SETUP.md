@@ -71,12 +71,12 @@ You can seed the database with demo data using the existing seed scripts:
 
 1. **Seed courts** (required for the app to work):
    ```bash
-   pnpm exec tsx packages/webapp/scripts/seed-courts.ts rundemanager
+   pnpm --filter webapp exec tsx scripts/seed-courts.ts rundemanager
    ```
 
 2. **Seed demo players and data** (optional):
    ```bash
-   pnpm exec tsx packages/webapp/scripts/seed-demo-data.ts rundemanager
+   pnpm --filter webapp exec tsx scripts/seed-demo-data.ts rundemanager
    ```
 
 ## Step 5: Test Locally
@@ -135,7 +135,7 @@ Once deployed, access the demo tenant via:
 - Verify the tenant ID matches the URL path (`/rundemanager/...`)
 
 ### Courts not showing
-- Run the seed-courts script: `pnpm exec tsx packages/webapp/scripts/seed-courts.ts rundemanager`
+- Run the seed-courts script: `pnpm --filter webapp exec tsx scripts/seed-courts.ts rundemanager`
 - Check that courts were created in the Supabase table editor
 
 ## Next Steps
