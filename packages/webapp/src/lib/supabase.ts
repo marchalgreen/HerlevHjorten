@@ -13,15 +13,9 @@ const clientCache = new Map<string, SupabaseClient>()
  * @returns Supabase client instance
  */
 export const createTenantSupabaseClient = (config: TenantConfig): SupabaseClient => {
-  // Skip creating client for placeholder/loading state
+  // Reject placeholder/loading state - should not create clients for these
   if (config.id === 'loading' || config.supabaseUrl === 'https://placeholder.supabase.co') {
-    // Return a cached placeholder or create one if needed
-    if (!clientCache.has('loading')) {
-      // Create a minimal client that won't actually be used
-      const placeholderClient = createClient('https://placeholder.supabase.co', 'placeholder-key')
-      clientCache.set('loading', placeholderClient)
-    }
-    return clientCache.get('loading')!
+    throw new Error('Cannot create Supabase client for loading/placeholder state')
   }
 
   // Check cache first
@@ -108,28 +102,11 @@ export const getCurrentTenantConfig = (): TenantConfig => {
 }
 
 /**
- * Legacy Supabase client for backward compatibility.
- * @deprecated Use createTenantSupabaseClient with tenant config instead.
- * This will be removed in a future version.
+ * Legacy Supabase client export (removed).
+ * @deprecated This export has been removed. Use TenantContext to get tenant-aware Supabase client instead.
+ * 
+ * If you need a Supabase client, use:
+ * - `getCurrentTenantSupabaseClient()` from this module (for API code)
+ * - `useTenant().supabase` hook (for React components)
  */
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-let legacySupabase: SupabaseClient | null = null
-
-if (supabaseUrl && supabaseAnonKey) {
-  legacySupabase = createClient(supabaseUrl, supabaseAnonKey)
-  
-  if (import.meta.env.DEV) {
-    console.log('Legacy Supabase client initialized (from env vars):', {
-    url: supabaseUrl,
-    keyPrefix: supabaseAnonKey?.substring(0, 20) + '...'
-  })
-}
-}
-
-/**
- * Legacy Supabase client export.
- * @deprecated Use TenantContext to get tenant-aware Supabase client instead.
- */
-export const supabase = legacySupabase
+export const supabase = null
