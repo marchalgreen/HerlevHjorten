@@ -28,7 +28,6 @@ import {
   createCheckIn as createCheckInInDb,
   deleteCheckIn as deleteCheckInInDb,
   getCourts,
-  createCourt as createCourtInDb,
   getMatches,
   createMatch as createMatchInDb,
   updateMatch as updateMatchInDb,
@@ -38,6 +37,7 @@ import {
   updateMatchPlayer as updateMatchPlayerInDb,
   deleteMatchPlayer as deleteMatchPlayerInDb
 } from './supabase'
+// (No star import needed)
 import { getCurrentTenantConfig } from '../lib/supabase'
 import statsApi from './stats'
 import {
@@ -284,9 +284,9 @@ const saveAllMatches = async (matchesData: Array<{ round: number; matches: Court
     for (const courtMatch of roundMatches) {
       let court = courts.find((c) => c.idx === courtMatch.courtIdx)
       if (!court) {
-        // Create missing court on the fly for indices beyond the seeded set
-        court = await createCourtInDb({ idx: courtMatch.courtIdx } as any)
-        courts.push(court)
+        // If court doesn't exist in state, skip creating matches for this court
+        // (dynamic court creation is disabled in this build)
+        continue
       }
       if (courtMatch.slots.length === 0) continue
 
@@ -1595,8 +1595,7 @@ const movePlayer = async (payload: MatchMovePayload, round?: number): Promise<vo
 
   let court = state.courts.find((court) => court.idx === parsed.toCourtIdx)
   if (!court) {
-    // Create court if it doesn't exist yet (supports clubs with many courts)
-    court = await createCourtInDb({ idx: parsed.toCourtIdx } as any)
+    throw new Error('Ukendt bane')
   }
 
   // Only find matches in the current round for this court

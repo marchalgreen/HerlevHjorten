@@ -256,6 +256,7 @@ const StartSessionControls: React.FC<{
 const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin }) => {
   const { tenantId, config } = useTenant()
   const state = useLandingState({ coach, onRedirectToCheckin })
+  const landing = state as any
   const pickedIds = useMemo(() => new Set(state.crossGroupPlayers.map((p) => p.id)), [state.crossGroupPlayers])
   const searchOpenerRef = useRef<HTMLElement | null>(null)
   const [courtsInUse, setCourtsInUse] = useState<number>(() => courtsSettings.getEffectiveCourtsInUse(tenantId, config.maxCourts))
@@ -285,12 +286,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin })
     <div className="p-4 sm:p-6">
       <WelcomeHeader coachName={coach?.displayName} />
 
-      {state.activeSession ? (
+      {landing.activeSession ? (
         <PageCard className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
             <div>
               <div className="text-base sm:text-lg font-medium text-[hsl(var(--foreground))]">Aktiv træning</div>
-              <div className="text-sm text-[hsl(var(--muted))] mt-1">Startet: {formatDate(state.activeSession.startedAt)}</div>
+              <div className="text-sm text-[hsl(var(--muted))] mt-1">Startet: {formatDate(landing.activeSession.startedAt)}</div>
               {activeGroupName && (
                 <div className="inline-flex items-center gap-2 mt-1">
                   <span className="text-xs text-[hsl(var(--muted))]">Gruppe:</span>
@@ -301,11 +302,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin })
               )}
             </div>
             <div className="flex gap-2">
-              <Button onClick={state.goToCheckIn}>
+              <Button onClick={landing.goToCheckIn}>
                 <UserCheck className="w-4 h-4" aria-hidden />
                 Åbn indtjekning
               </Button>
-              <Button variant="secondary" loading={state.ending} onClick={state.endSession}>
+              <Button variant="secondary" loading={landing.ending} onClick={landing.endSession}>
                 <Square className="w-4 h-4" aria-hidden />
                 Afslut træning
               </Button>
