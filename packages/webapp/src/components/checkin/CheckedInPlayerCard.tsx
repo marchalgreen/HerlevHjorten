@@ -10,7 +10,7 @@ import { clsx } from 'clsx'
 import { Button } from '../ui'
 import { formatCategoryLetter, formatPlayerCardName } from '../../lib/formatting'
 import { PLAYER_CATEGORIES } from '../../constants'
-import { InitialsAvatar, MiniIdenticon, getSeedHue } from '../ui/PlayerAvatar'
+import { InitialsAvatar, getSeedHue } from '../ui/PlayerAvatar'
 import { getPlayerUiVariant, VARIANT_CHANGED_EVENT, type PlayerUiVariant } from '../../lib/uiVariants'
 
 /**
@@ -31,9 +31,9 @@ interface CheckedInPlayerCardProps {
 }
 
 /**
- * Category badge component.
+ * Category badge component (unused - kept for potential future use).
  */
-const CategoryBadge = ({ category }: { category: CheckedInPlayer['primaryCategory'] }) => {
+const _CategoryBadge = ({ category }: { category: CheckedInPlayer['primaryCategory'] }) => {
   if (!category) return null
   
   const labels: Record<typeof category, string> = {
@@ -42,16 +42,16 @@ const CategoryBadge = ({ category }: { category: CheckedInPlayer['primaryCategor
     [PLAYER_CATEGORIES.BOTH]: 'B'
   }
   
-  const catLetter = formatCategoryLetter(category)
+  const _catLetter = formatCategoryLetter(category)
   
   return (
     <span
       className={clsx(
         'inline-flex items-center justify-center rounded-full text-xs font-bold w-6 h-6',
         'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair',
-        catLetter && 'cat-ring'
+        _catLetter && 'cat-ring'
       )}
-      data-cat={catLetter || undefined}
+      data-cat={_catLetter || undefined}
       title={category}
     >
       {labels[category]}
@@ -77,7 +77,6 @@ export const CheckedInPlayerCard: React.FC<CheckedInPlayerCardProps> = ({
   onCheckOut
 }) => {
   const isOneRoundOnly = player.maxRounds === 1
-  const catLetter = formatCategoryLetter(player.primaryCategory)
   const [variant, setVariant] = useState<PlayerUiVariant>(() => getPlayerUiVariant())
   useEffect(() => {
     const onChange = (e: Event) => {
@@ -87,7 +86,6 @@ export const CheckedInPlayerCard: React.FC<CheckedInPlayerCardProps> = ({
     window.addEventListener(VARIANT_CHANGED_EVENT, onChange as EventListener)
     return () => window.removeEventListener(VARIANT_CHANGED_EVENT, onChange as EventListener)
   }, [])
-  const trainingGroups = useMemo(() => ((player as any).trainingGroups as string[] | undefined) ?? [], [player])
   const avatarRailColor = useMemo(() => {
     if (variant !== 'A') return undefined
     const hue = getSeedHue(player.id || player.name, player.gender ?? null)

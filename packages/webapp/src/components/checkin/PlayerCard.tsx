@@ -9,7 +9,7 @@ import React from 'react'
 import type { Player } from '@herlev-hjorten/common'
 import { clsx } from 'clsx'
 import { Button } from '../ui'
-import { InitialsAvatar, MiniIdenticon, getSeedHue } from '../ui/PlayerAvatar'
+import { InitialsAvatar, getSeedHue } from '../ui/PlayerAvatar'
 import { getPlayerUiVariant, VARIANT_CHANGED_EVENT, type PlayerUiVariant } from '../../lib/uiVariants'
 import { useEffect, useState, useMemo } from 'react'
 import { formatCategoryLetter, formatPlayerCardName } from '../../lib/formatting'
@@ -42,9 +42,9 @@ interface PlayerCardProps {
 }
 
 /**
- * Category badge component.
+ * Category badge component (unused - kept for potential future use).
  */
-const CategoryBadge = ({ category }: { category: Player['primaryCategory'] }) => {
+const _CategoryBadge = ({ category }: { category: Player['primaryCategory'] }) => {
   if (!category) return null
   
   const labels: Record<typeof category, string> = {
@@ -53,16 +53,16 @@ const CategoryBadge = ({ category }: { category: Player['primaryCategory'] }) =>
     [PLAYER_CATEGORIES.BOTH]: 'B'
   }
   
-  const catLetter = formatCategoryLetter(category)
+  const _catLetter = formatCategoryLetter(category)
   
   return (
     <span
       className={clsx(
         'inline-flex items-center justify-center rounded-full text-xs font-bold w-6 h-6',
         'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair',
-        catLetter && 'cat-ring'
+        _catLetter && 'cat-ring'
       )}
-      data-cat={catLetter || undefined}
+      data-cat={_catLetter || undefined}
       title={category}
     >
       {labels[category]}
@@ -92,7 +92,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   onCheckIn,
   onOneRoundOnlyChange
 }) => {
-  const catLetter = formatCategoryLetter(player.primaryCategory)
   const [variant, setVariant] = useState<PlayerUiVariant>(() => getPlayerUiVariant())
   useEffect(() => {
     const onChange = (e: Event) => {
