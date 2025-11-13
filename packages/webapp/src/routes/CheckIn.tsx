@@ -10,7 +10,7 @@ import type { Player } from '@herlev-hjorten/common'
 import { UsersRound } from 'lucide-react'
 import { PageCard, EmptyState, Button } from '../components/ui'
 import { TableSearch } from '../components/ui/Table'
-import { PlayerCard, CheckedInPlayerCard, LetterFilters } from '../components/checkin'
+import { PlayerCard, CheckedInPlayerCard, LetterFilters, AnimatedList } from '../components/checkin'
 import { useSession, useCheckIns, usePlayers } from '../hooks'
 import { formatDate } from '../lib/formatting'
 import { LETTER_FILTERS, UI_CONSTANTS } from '../constants'
@@ -339,7 +339,7 @@ const CheckInPage = () => {
             <LetterFilters selectedLetter={filterLetter} onLetterSelect={setFilterLetter} />
           </div>
 
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col">
             {filteredPlayers.length === 0 ? (
               <EmptyState
                 icon={<UsersRound />}
@@ -347,18 +347,29 @@ const CheckInPage = () => {
                 helper="Prøv en anden søgning eller vælg et andet bogstav."
               />
             ) : (
-              filteredPlayers.map((player) => (
-                <PlayerCard
-                  key={player.id}
-                  player={player}
-                  oneRoundOnly={oneRoundOnlyPlayers.has(player.id)}
-                  isJustCheckedIn={justCheckedIn.has(player.id)}
-                  isAnimatingOut={animatingOut.has(player.id)}
-                  isAnimatingIn={animatingIn.has(player.id)}
-                  onCheckIn={handleCheckIn}
-                  onOneRoundOnlyChange={handleOneRoundOnlyChange}
-                />
-              ))
+              <AnimatedList
+                items={filteredPlayers}
+                onItemSelect={(player) => {
+                  handleCheckIn(player, oneRoundOnlyPlayers.has(player.id) ? 1 : undefined)
+                  handleOneRoundOnlyChange(player.id, false)
+                }}
+                showGradients={true}
+                enableArrowNavigation={true}
+                displayScrollbar={true}
+                maxHeight="600px"
+                renderItem={(player, index, isSelected) => (
+                  <PlayerCard
+                    key={player.id}
+                    player={player}
+                    oneRoundOnly={oneRoundOnlyPlayers.has(player.id)}
+                    isJustCheckedIn={justCheckedIn.has(player.id)}
+                    isAnimatingOut={animatingOut.has(player.id)}
+                    isAnimatingIn={animatingIn.has(player.id)}
+                    onCheckIn={handleCheckIn}
+                    onOneRoundOnlyChange={handleOneRoundOnlyChange}
+                  />
+                )}
+              />
             )}
           </div>
         </PageCard>

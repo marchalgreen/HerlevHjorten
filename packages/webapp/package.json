@@ -25,6 +25,7 @@
     "clsx": "^2.1.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "framer-motion": "^12.23.24",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.429.0",
     "postgres": "^3.4.7",
