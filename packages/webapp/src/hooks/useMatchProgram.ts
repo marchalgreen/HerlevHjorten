@@ -26,6 +26,7 @@ import {
   getOccupiedCourts,
   ensureAllCourts
 } from '../services/matchProgramService'
+import { localAutoMatch } from '../services/localAutoMatch'
 
 interface UseMatchProgramProps {
   session: TrainingSession | null
@@ -825,22 +826,27 @@ export const useMatchProgram = ({
       
       setHasRunAutoMatch((prev) => new Set(prev).add(selectedRound))
       
-      const currentMatchesForApi = inMemoryMatches[selectedRound] || []
-      const { matches: newMatches, result } = await api.matches.autoArrange(
+      const currentMatchesForLocal = inMemoryMatches[selectedRound] || []
+      
+      // OPTIMISTIC UPDATE: Calculate matches locally for instant UI update
+      const { matches: newMatches, result } = localAutoMatch({
+        checkedIn,
+        currentMatches: currentMatchesForLocal,
+        maxCourts,
         selectedRound,
         unavailablePlayers,
         activatedOneRoundPlayers,
-        courtsToExclude,
+        lockedCourtIdxs: courtsToExclude,
         isReshuffle,
-        currentMatchesForApi,
         extendedCapacityCourts
-      )
+      })
       
-      const currentMatchesForMerge = inMemoryMatches[selectedRound] || []
-      const keptCourtsMatches = currentMatchesForMerge.filter((court) => courtsToExclude.has(court.courtIdx))
+      // Merge with locked courts
+      const keptCourtsMatches = currentMatchesForLocal.filter((court) => courtsToExclude.has(court.courtIdx))
       const newMatchesWithoutKept = newMatches.filter((court) => !courtsToExclude.has(court.courtIdx))
       const finalMatches = [...keptCourtsMatches, ...newMatchesWithoutKept]
       
+      // Update UI immediately (optimistic)
       updateInMemoryMatches(selectedRound, finalMatches)
       
       notify({
@@ -849,10 +855,25 @@ export const useMatchProgram = ({
           ? `Omfordelt spillere på ${result.filledCourts} baner (Runde ${selectedRound})`
           : `Fordelte spillere på ${result.filledCourts} baner (Runde ${selectedRound})`
       })
+      
+      // Sync with database in background (non-blocking, matches saved on session end anyway)
+      // This is optional - matches are already saved when ending session
+      api.matches.autoArrange(
+        selectedRound,
+        unavailablePlayers,
+        activatedOneRoundPlayers,
+        courtsToExclude,
+        isReshuffle,
+        currentMatchesForLocal,
+        extendedCapacityCourts
+      ).catch((err) => {
+        // Log error but don't block UI - matches will be saved on session end
+        console.warn('[handleAutoMatch] Background sync failed (non-critical):', err)
+      })
     } catch (err: any) {
       setError(err.message ?? 'Kunne ikke matche spillere')
     }
-  }, [session, selectedRound, unavailablePlayers, activatedOneRoundPlayers, inMemoryMatches, currentRoundLockedCourts, extendedCapacityCourts, hasRunAutoMatch, updateInMemoryMatches, notify])
+  }, [session, selectedRound, checkedIn, unavailablePlayers, activatedOneRoundPlayers, inMemoryMatches, currentRoundLockedCourts, extendedCapacityCourts, hasRunAutoMatch, maxCourts, updateInMemoryMatches, notify])
   
   const handleResetMatches = useCallback(async () => {
     if (!session) return
