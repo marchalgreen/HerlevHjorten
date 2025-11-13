@@ -460,7 +460,12 @@ export const useMatchProgram = ({
       if (inMemoryMatches[round]) {
         data = inMemoryMatches[round]
       } else {
-        data = await api.matches.list(round)
+        const result = await api.matches.list(round)
+        // Ensure result is always an array
+        if (!Array.isArray(result)) {
+          throw new Error('API returned invalid data format')
+        }
+        data = result
         const allCourts = Array.from({ length: maxCourts }, (_, i) => i + 1)
         const matchesByCourt = new Map(data.map((court) => [court.courtIdx, court]))
         data = allCourts.map((courtIdx) => {
@@ -614,7 +619,12 @@ export const useMatchProgram = ({
             if (inMemoryMatches[round]) {
               data = inMemoryMatches[round]
             } else {
-              data = await api.matches.list(round)
+              const result = await api.matches.list(round)
+              // Ensure result is always an array
+              if (!Array.isArray(result)) {
+                throw new Error('API returned invalid data format')
+              }
+              data = result
               const allCourts = Array.from({ length: maxCourts }, (_, i) => i + 1)
               const matchesByCourt = new Map(data.map((court) => [court.courtIdx, court]))
               data = allCourts.map((courtIdx) => {

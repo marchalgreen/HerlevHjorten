@@ -115,8 +115,10 @@ export const ensureAllCourtsPresent = (
   matches: CourtWithPlayers[],
   maxCourts: number
 ): CourtWithPlayers[] => {
+  // Safety check: ensure matches is always an array
+  const safeMatches = Array.isArray(matches) ? matches : []
   const allCourts = Array.from({ length: maxCourts }, (_, i) => i + 1)
-  const matchesByCourt = new Map(matches.map((court) => [court.courtIdx, court]))
+  const matchesByCourt = new Map(safeMatches.map((court) => [court.courtIdx, court]))
   return allCourts.map((courtIdx) => {
     const existing = matchesByCourt.get(courtIdx)
     return existing || { courtIdx, slots: [] }
