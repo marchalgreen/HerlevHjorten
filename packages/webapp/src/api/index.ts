@@ -334,8 +334,10 @@ const endActiveSession = async (matchesData?: Array<{ round: number; matches: Co
   await Promise.all(sessionMatches.map((match) => updateMatchInDb(match.id, { endedAt })))
 
   // Invalidate cache before creating snapshot to ensure fresh data
-  const { invalidateCache } = await import('./supabase')
-  invalidateCache()
+  const { invalidateCache } = await import('./postgres')
+  // Only invalidate matches and sessions since we updated those
+  invalidateCache('matches')
+  invalidateCache('sessions')
 
   // Create statistics snapshot after session is marked as ended
   // Add a small delay to ensure all database writes are committed

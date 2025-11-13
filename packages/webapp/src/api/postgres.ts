@@ -121,6 +121,17 @@ export type DatabaseState = {
 /** Cached database state (singleton pattern). */
 let cachedState: DatabaseState | null = null
 
+/** Individual table caches for better performance */
+const tableCaches = {
+  players: null as Player[] | null,
+  sessions: null as TrainingSession[] | null,
+  checkIns: null as CheckIn[] | null,
+  courts: null as Court[] | null,
+  matches: null as Match[] | null,
+  matchPlayers: null as MatchPlayer[] | null,
+  statistics: null as StatisticsSnapshot[] | null
+}
+
 /**
  * Generates a unique ID (UUID).
  * @returns Unique ID string
@@ -138,19 +149,19 @@ export const createId = () => {
 const rowToPlayer = (row: any): Player => ({
   id: row.id,
   name: row.name,
-  alias: row.alias ?? null,
-  level: row.level ?? row.level_single ?? null, // Backward compatibility: use level_single if level doesn't exist
-  levelSingle: row.level_single ?? null,
-  levelDouble: row.level_double ?? null,
-  levelMix: row.level_mix ?? null,
-  gender: row.gender ?? null,
-  primaryCategory: row.primary_category ?? null,
-  trainingGroups: row.training_group ?? [],
-  active: row.active ?? true,
-  preferredDoublesPartners: row.preferred_doubles_partners ?? null,
-  preferredMixedPartners: row.preferred_mixed_partners ?? null,
+  alias: row.alias,
+  level: row.level_single, // Default to single level for backward compatibility
+  levelSingle: row.level_single,
+  levelDouble: row.level_double,
+  levelMix: row.level_mix,
+  gender: row.gender,
+  primaryCategory: row.primary_category,
+  trainingGroups: row.training_group || [],
+  active: row.active,
+  preferredDoublesPartners: row.preferred_doubles_partners || [],
+  preferredMixedPartners: row.preferred_mixed_partners || [],
   createdAt: row.created_at
-} as Player)
+})
 
 /**
  * Converts a Postgres row to a TrainingSession.
@@ -158,7 +169,7 @@ const rowToPlayer = (row: any): Player => ({
 const rowToSession = (row: any): TrainingSession => ({
   id: row.id,
   date: row.date,
-  status: row.status as TrainingSessionStatus,
+  status: row.status,
   createdAt: row.created_at
 })
 
@@ -169,8 +180,8 @@ const rowToCheckIn = (row: any): CheckIn => ({
   id: row.id,
   sessionId: row.session_id,
   playerId: row.player_id,
-  createdAt: row.created_at,
-  maxRounds: row.max_rounds ?? null
+  maxRounds: row.max_rounds,
+  createdAt: row.created_at
 })
 
 /**
@@ -189,8 +200,8 @@ const rowToMatch = (row: any): Match => ({
   sessionId: row.session_id,
   courtId: row.court_id,
   startedAt: row.started_at,
-  endedAt: row.ended_at ?? null,
-  round: row.round ?? null
+  endedAt: row.ended_at,
+  round: row.round
 })
 
 /**
@@ -273,15 +284,33 @@ export const loadState = async (): Promise<DatabaseState> => {
     const safeMatchPlayers = Array.isArray(matchPlayers) ? matchPlayers : []
     const safeStatistics = Array.isArray(statistics) ? statistics : []
 
+    // Convert rows to types and update individual caches
+    const convertedPlayers = safePlayers.map(rowToPlayer)
+    const convertedSessions = safeSessions.map(rowToSession)
+    const convertedCheckIns = safeCheckIns.map(rowToCheckIn)
+    const convertedCourts = safeCourts.map(rowToCourt)
+    const convertedMatches = safeMatches.map(rowToMatch)
+    const convertedMatchPlayers = safeMatchPlayers.map(rowToMatchPlayer)
+    const convertedStatistics = safeStatistics.map(rowToStatisticsSnapshot)
+
+    // Update individual table caches
+    tableCaches.players = convertedPlayers
+    tableCaches.sessions = convertedSessions
+    tableCaches.checkIns = convertedCheckIns
+    tableCaches.courts = convertedCourts
+    tableCaches.matches = convertedMatches
+    tableCaches.matchPlayers = convertedMatchPlayers
+    tableCaches.statistics = convertedStatistics
+
     // Convert rows to types
     cachedState = {
-      players: safePlayers.map(rowToPlayer),
-      sessions: safeSessions.map(rowToSession),
-      checkIns: safeCheckIns.map(rowToCheckIn),
-      courts: safeCourts.map(rowToCourt),
-      matches: safeMatches.map(rowToMatch),
-      matchPlayers: safeMatchPlayers.map(rowToMatchPlayer),
-      statistics: safeStatistics.map(rowToStatisticsSnapshot)
+      players: convertedPlayers,
+      sessions: convertedSessions,
+      checkIns: convertedCheckIns,
+      courts: convertedCourts,
+      matches: convertedMatches,
+      matchPlayers: convertedMatchPlayers,
+      statistics: convertedStatistics
     }
 
     return cachedState
@@ -304,51 +333,13 @@ export const loadState = async (): Promise<DatabaseState> => {
  * Persists current database state to Postgres (no-op, data is already persisted).
  * @remarks Kept for backward compatibility.
  */
-export const persistState = () => {
-  // No-op: Postgres persists data automatically
-  // This function is kept for backward compatibility
+export const persistState = async (): Promise<void> => {
+  // No-op, data is persisted directly via CRUD operations
 }
 
 /**
- * Forces a save of the current database state (no-op).
- * @remarks Kept for backward compatibility.
- */
-export const forceSave = () => {
-  // No-op: Postgres persists data automatically
-  // This function is kept for backward compatibility
-}
-
-/**
- * Updates database state and persists to Postgres.
- * @param updater - Function that mutates state
- * @remarks Loads state, applies updater, then persists atomically.
- * Note: This function is kept for backward compatibility but doesn't work the same way.
- * For Postgres, you should use direct database operations instead.
- */
-export const updateState = async (updater: (state: DatabaseState) => void) => {
-  const state = await loadState()
-  updater(state)
-  // Note: This doesn't actually persist changes to Postgres
-  // The API layer should use direct Postgres operations instead
-  cachedState = state
-}
-
-/**
- * Resets database to seed state (not implemented for Postgres).
- * 
- * @remarks This function is kept for backward compatibility but doesn't work with Postgres.
- * Use direct database operations instead.
- * 
- * @deprecated Use direct database operations instead of this function.
- */
-export const resetState = () => {
-  // Not implemented for Postgres - use direct database operations instead
-  // This function is kept for backward compatibility only
-}
-
-/**
- * Returns a deep copy of current database state (for safe reading).
- * @returns Copy of database state
+ * Gets a copy of the current database state.
+ * @returns Deep copy of the database state
  */
 export const getStateCopy = async (): Promise<DatabaseState> => {
   const state = await loadState()
@@ -379,21 +370,50 @@ export const getStateCopy = async (): Promise<DatabaseState> => {
 
 /**
  * Invalidates the cached state, forcing a reload on next access.
+ * @param table - Optional table name to invalidate only that table's cache
  */
-export const invalidateCache = () => {
-  cachedState = null
+export const invalidateCache = (table?: 'players' | 'sessions' | 'checkIns' | 'courts' | 'matches' | 'matchPlayers' | 'statistics') => {
+  if (table) {
+    // Selective invalidation - only clear the specified table cache
+    tableCaches[table] = null
+    // Also clear the full cache so it reloads
+    cachedState = null
+  } else {
+    // Full invalidation - clear everything
+    cachedState = null
+    tableCaches.players = null
+    tableCaches.sessions = null
+    tableCaches.checkIns = null
+    tableCaches.courts = null
+    tableCaches.matches = null
+    tableCaches.matchPlayers = null
+    tableCaches.statistics = null
+  }
 }
 
 // Direct CRUD operations for better performance
 
 /**
- * Gets all players from Postgres.
+ * Gets all players from Postgres (uses cache if available).
  */
 export const getPlayers = async (): Promise<Player[]> => {
+  // Check cache first
+  if (tableCaches.players) {
+    return tableCaches.players
+  }
+
   const sql = getPostgres()
   const tenantId = getTenantId()
   const players = await sql`SELECT * FROM players WHERE tenant_id = ${tenantId} ORDER BY name`
-  return players.map(rowToPlayer)
+  const converted = players.map(rowToPlayer)
+  
+  // Update cache
+  tableCaches.players = converted
+  if (cachedState) {
+    cachedState.players = converted
+  }
+  
+  return converted
 }
 
 /**
@@ -425,8 +445,17 @@ export const createPlayer = async (player: Omit<Player, 'id' | 'createdAt'>): Pr
     )
     RETURNING *
   `
-  invalidateCache()
-  return rowToPlayer(created)
+  const converted = rowToPlayer(created)
+  
+  // Optimistic cache update - no need to invalidate, just update cache
+  if (tableCaches.players) {
+    tableCaches.players = [...tableCaches.players, converted]
+  }
+  if (cachedState) {
+    cachedState.players = [...cachedState.players, converted]
+  }
+  
+  return converted
 }
 
 /**
@@ -485,18 +514,57 @@ export const updatePlayer = async (id: string, updates: PlayerUpdateInput['patch
     values
   )
 
-  invalidateCache()
-  return rowToPlayer(updated)
+  const converted = rowToPlayer(updated)
+  
+  // Optimistic cache update
+  if (tableCaches.players) {
+    tableCaches.players = tableCaches.players.map(p => p.id === id ? converted : p)
+  }
+  if (cachedState) {
+    cachedState.players = cachedState.players.map(p => p.id === id ? converted : p)
+  }
+
+  return converted
 }
 
 /**
- * Gets all training sessions from Postgres.
+ * Deletes a player from Postgres.
+ */
+export const deletePlayer = async (id: string): Promise<void> => {
+  const sql = getPostgres()
+  const tenantId = getTenantId()
+  await sql`DELETE FROM players WHERE id = ${id} AND tenant_id = ${tenantId}`
+  
+  // Optimistic cache update
+  if (tableCaches.players) {
+    tableCaches.players = tableCaches.players.filter(p => p.id !== id)
+  }
+  if (cachedState) {
+    cachedState.players = cachedState.players.filter(p => p.id !== id)
+  }
+}
+
+/**
+ * Gets all training sessions from Postgres (uses cache if available).
  */
 export const getSessions = async (): Promise<TrainingSession[]> => {
+  // Check cache first
+  if (tableCaches.sessions) {
+    return tableCaches.sessions
+  }
+
   const sql = getPostgres()
   const tenantId = getTenantId()
   const sessions = await sql`SELECT * FROM training_sessions WHERE tenant_id = ${tenantId} ORDER BY created_at DESC`
-  return sessions.map(rowToSession)
+  const converted = sessions.map(rowToSession)
+  
+  // Update cache
+  tableCaches.sessions = converted
+  if (cachedState) {
+    cachedState.sessions = converted
+  }
+  
+  return converted
 }
 
 /**
@@ -510,8 +578,17 @@ export const createSession = async (session: Omit<TrainingSession, 'id' | 'creat
     VALUES (${session.date}, ${session.status}, ${tenantId})
     RETURNING *
   `
-  invalidateCache()
-  return rowToSession(created)
+  const converted = rowToSession(created)
+  
+  // Optimistic cache update
+  if (tableCaches.sessions) {
+    tableCaches.sessions = [converted, ...tableCaches.sessions]
+  }
+  if (cachedState) {
+    cachedState.sessions = [converted, ...cachedState.sessions]
+  }
+  
+  return converted
 }
 
 /**
@@ -548,18 +625,57 @@ export const updateSession = async (id: string, updates: Partial<Omit<TrainingSe
     values
   )
 
-  invalidateCache()
-  return rowToSession(updated)
+  const converted = rowToSession(updated)
+  
+  // Optimistic cache update
+  if (tableCaches.sessions) {
+    tableCaches.sessions = tableCaches.sessions.map(s => s.id === id ? converted : s)
+  }
+  if (cachedState) {
+    cachedState.sessions = cachedState.sessions.map(s => s.id === id ? converted : s)
+  }
+
+  return converted
 }
 
 /**
- * Gets all check-ins from Postgres.
+ * Deletes a training session from Postgres.
+ */
+export const deleteSession = async (id: string): Promise<void> => {
+  const sql = getPostgres()
+  const tenantId = getTenantId()
+  await sql`DELETE FROM training_sessions WHERE id = ${id} AND tenant_id = ${tenantId}`
+  
+  // Optimistic cache update
+  if (tableCaches.sessions) {
+    tableCaches.sessions = tableCaches.sessions.filter(s => s.id !== id)
+  }
+  if (cachedState) {
+    cachedState.sessions = cachedState.sessions.filter(s => s.id !== id)
+  }
+}
+
+/**
+ * Gets all check-ins from Postgres (uses cache if available).
  */
 export const getCheckIns = async (): Promise<CheckIn[]> => {
+  // Check cache first
+  if (tableCaches.checkIns) {
+    return tableCaches.checkIns
+  }
+
   const sql = getPostgres()
   const tenantId = getTenantId()
   const checkIns = await sql`SELECT * FROM check_ins WHERE tenant_id = ${tenantId} ORDER BY created_at`
-  return checkIns.map(rowToCheckIn)
+  const converted = checkIns.map(rowToCheckIn)
+  
+  // Update cache
+  tableCaches.checkIns = converted
+  if (cachedState) {
+    cachedState.checkIns = converted
+  }
+  
+  return converted
 }
 
 /**
@@ -573,8 +689,17 @@ export const createCheckIn = async (checkIn: Omit<CheckIn, 'id' | 'createdAt'>):
     VALUES (${checkIn.sessionId}, ${checkIn.playerId}, ${checkIn.maxRounds ?? null}, ${tenantId})
     RETURNING *
   `
-  invalidateCache()
-  return rowToCheckIn(created)
+  const converted = rowToCheckIn(created)
+  
+  // Optimistic cache update
+  if (tableCaches.checkIns) {
+    tableCaches.checkIns = [...tableCaches.checkIns, converted]
+  }
+  if (cachedState) {
+    cachedState.checkIns = [...cachedState.checkIns, converted]
+  }
+  
+  return converted
 }
 
 /**
@@ -584,17 +709,37 @@ export const deleteCheckIn = async (id: string): Promise<void> => {
   const sql = getPostgres()
   const tenantId = getTenantId()
   await sql`DELETE FROM check_ins WHERE id = ${id} AND tenant_id = ${tenantId}`
-  invalidateCache()
+  
+  // Optimistic cache update
+  if (tableCaches.checkIns) {
+    tableCaches.checkIns = tableCaches.checkIns.filter(c => c.id !== id)
+  }
+  if (cachedState) {
+    cachedState.checkIns = cachedState.checkIns.filter(c => c.id !== id)
+  }
 }
 
 /**
- * Gets all courts from Postgres.
+ * Gets all courts from Postgres (uses cache if available).
  */
 export const getCourts = async (): Promise<Court[]> => {
+  // Check cache first
+  if (tableCaches.courts) {
+    return tableCaches.courts
+  }
+
   const sql = getPostgres()
   const tenantId = getTenantId()
   const courts = await sql`SELECT * FROM courts WHERE tenant_id = ${tenantId} ORDER BY idx`
-  return courts.map(rowToCourt)
+  const converted = courts.map(rowToCourt)
+  
+  // Update cache
+  tableCaches.courts = converted
+  if (cachedState) {
+    cachedState.courts = converted
+  }
+  
+  return converted
 }
 
 /**
@@ -608,18 +753,57 @@ export const createCourt = async (court: Omit<Court, 'id'>): Promise<Court> => {
     VALUES (${court.idx}, ${tenantId})
     RETURNING *
   `
-  invalidateCache()
-  return rowToCourt(created)
+  const converted = rowToCourt(created)
+  
+  // Optimistic cache update
+  if (tableCaches.courts) {
+    tableCaches.courts = [...tableCaches.courts, converted]
+  }
+  if (cachedState) {
+    cachedState.courts = [...cachedState.courts, converted]
+  }
+  
+  return converted
 }
 
 /**
- * Gets all matches from Postgres.
+ * Deletes a court from Postgres.
+ */
+export const deleteCourt = async (id: string): Promise<void> => {
+  const sql = getPostgres()
+  const tenantId = getTenantId()
+  await sql`DELETE FROM courts WHERE id = ${id} AND tenant_id = ${tenantId}`
+  
+  // Optimistic cache update
+  if (tableCaches.courts) {
+    tableCaches.courts = tableCaches.courts.filter(c => c.id !== id)
+  }
+  if (cachedState) {
+    cachedState.courts = cachedState.courts.filter(c => c.id !== id)
+  }
+}
+
+/**
+ * Gets all matches from Postgres (uses cache if available).
  */
 export const getMatches = async (): Promise<Match[]> => {
+  // Check cache first
+  if (tableCaches.matches) {
+    return tableCaches.matches
+  }
+
   const sql = getPostgres()
   const tenantId = getTenantId()
   const matches = await sql`SELECT * FROM matches WHERE tenant_id = ${tenantId} ORDER BY started_at`
-  return matches.map(rowToMatch)
+  const converted = matches.map(rowToMatch)
+  
+  // Update cache
+  tableCaches.matches = converted
+  if (cachedState) {
+    cachedState.matches = converted
+  }
+  
+  return converted
 }
 
 /**
@@ -640,8 +824,17 @@ export const createMatch = async (match: Omit<Match, 'id'>): Promise<Match> => {
     )
     RETURNING *
   `
-  invalidateCache()
-  return rowToMatch(created)
+  const converted = rowToMatch(created)
+  
+  // Optimistic cache update
+  if (tableCaches.matches) {
+    tableCaches.matches = [...tableCaches.matches, converted]
+  }
+  if (cachedState) {
+    cachedState.matches = [...cachedState.matches, converted]
+  }
+  
+  return converted
 }
 
 /**
@@ -681,8 +874,17 @@ export const updateMatch = async (id: string, updates: Partial<Omit<Match, 'id'>
     values
   )
 
-  invalidateCache()
-  return rowToMatch(updated)
+  const converted = rowToMatch(updated)
+  
+  // Optimistic cache update
+  if (tableCaches.matches) {
+    tableCaches.matches = tableCaches.matches.map(m => m.id === id ? converted : m)
+  }
+  if (cachedState) {
+    cachedState.matches = cachedState.matches.map(m => m.id === id ? converted : m)
+  }
+
+  return converted
 }
 
 /**
@@ -692,17 +894,37 @@ export const deleteMatch = async (id: string): Promise<void> => {
   const sql = getPostgres()
   const tenantId = getTenantId()
   await sql`DELETE FROM matches WHERE id = ${id} AND tenant_id = ${tenantId}`
-  invalidateCache()
+  
+  // Optimistic cache update
+  if (tableCaches.matches) {
+    tableCaches.matches = tableCaches.matches.filter(m => m.id !== id)
+  }
+  if (cachedState) {
+    cachedState.matches = cachedState.matches.filter(m => m.id !== id)
+  }
 }
 
 /**
- * Gets all match players from Postgres.
+ * Gets all match players from Postgres (uses cache if available).
  */
 export const getMatchPlayers = async (): Promise<MatchPlayer[]> => {
+  // Check cache first
+  if (tableCaches.matchPlayers) {
+    return tableCaches.matchPlayers
+  }
+
   const sql = getPostgres()
   const tenantId = getTenantId()
   const matchPlayers = await sql`SELECT * FROM match_players WHERE tenant_id = ${tenantId}`
-  return matchPlayers.map(rowToMatchPlayer)
+  const converted = matchPlayers.map(rowToMatchPlayer)
+  
+  // Update cache
+  tableCaches.matchPlayers = converted
+  if (cachedState) {
+    cachedState.matchPlayers = converted
+  }
+  
+  return converted
 }
 
 /**
@@ -716,8 +938,17 @@ export const createMatchPlayer = async (matchPlayer: Omit<MatchPlayer, 'id'>): P
     VALUES (${matchPlayer.matchId}, ${matchPlayer.playerId}, ${matchPlayer.slot}, ${tenantId})
     RETURNING *
   `
-  invalidateCache()
-  return rowToMatchPlayer(created)
+  const converted = rowToMatchPlayer(created)
+  
+  // Optimistic cache update
+  if (tableCaches.matchPlayers) {
+    tableCaches.matchPlayers = [...tableCaches.matchPlayers, converted]
+  }
+  if (cachedState) {
+    cachedState.matchPlayers = [...cachedState.matchPlayers, converted]
+  }
+  
+  return converted
 }
 
 /**
@@ -755,8 +986,17 @@ export const updateMatchPlayer = async (id: string, updates: Partial<Omit<MatchP
     values
   )
 
-  invalidateCache()
-  return rowToMatchPlayer(updated)
+  const converted = rowToMatchPlayer(updated)
+  
+  // Optimistic cache update
+  if (tableCaches.matchPlayers) {
+    tableCaches.matchPlayers = tableCaches.matchPlayers.map(mp => mp.id === id ? converted : mp)
+  }
+  if (cachedState) {
+    cachedState.matchPlayers = cachedState.matchPlayers.map(mp => mp.id === id ? converted : mp)
+  }
+
+  return converted
 }
 
 /**
@@ -766,17 +1006,37 @@ export const deleteMatchPlayer = async (id: string): Promise<void> => {
   const sql = getPostgres()
   const tenantId = getTenantId()
   await sql`DELETE FROM match_players WHERE id = ${id} AND tenant_id = ${tenantId}`
-  invalidateCache()
+  
+  // Optimistic cache update
+  if (tableCaches.matchPlayers) {
+    tableCaches.matchPlayers = tableCaches.matchPlayers.filter(mp => mp.id !== id)
+  }
+  if (cachedState) {
+    cachedState.matchPlayers = cachedState.matchPlayers.filter(mp => mp.id !== id)
+  }
 }
 
 /**
- * Gets all statistics snapshots from Postgres.
+ * Gets all statistics snapshots from Postgres (uses cache if available).
  */
 export const getStatisticsSnapshots = async (): Promise<StatisticsSnapshot[]> => {
+  // Check cache first
+  if (tableCaches.statistics) {
+    return tableCaches.statistics
+  }
+
   const sql = getPostgres()
   const tenantId = getTenantId()
   const snapshots = await sql`SELECT * FROM statistics_snapshots WHERE tenant_id = ${tenantId} ORDER BY session_date DESC`
-  return snapshots.map(rowToStatisticsSnapshot)
+  const converted = snapshots.map(rowToStatisticsSnapshot)
+  
+  // Update cache
+  tableCaches.statistics = converted
+  if (cachedState) {
+    cachedState.statistics = converted
+  }
+  
+  return converted
 }
 
 /**
@@ -798,8 +1058,34 @@ export const createStatisticsSnapshot = async (snapshot: Omit<StatisticsSnapshot
     )
     RETURNING *
   `
-  invalidateCache()
-  return rowToStatisticsSnapshot(created)
+  const converted = rowToStatisticsSnapshot(created)
+  
+  // Optimistic cache update
+  if (tableCaches.statistics) {
+    tableCaches.statistics = [converted, ...tableCaches.statistics]
+  }
+  if (cachedState) {
+    cachedState.statistics = [converted, ...(cachedState.statistics || [])]
+  }
+  
+  return converted
+}
+
+/**
+ * Deletes a statistics snapshot from Postgres.
+ */
+export const deleteStatisticsSnapshot = async (id: string): Promise<void> => {
+  const sql = getPostgres()
+  const tenantId = getTenantId()
+  await sql`DELETE FROM statistics_snapshots WHERE id = ${id} AND tenant_id = ${tenantId}`
+  
+  // Optimistic cache update
+  if (tableCaches.statistics) {
+    tableCaches.statistics = tableCaches.statistics.filter(s => s.id !== id)
+  }
+  if (cachedState && cachedState.statistics) {
+    cachedState.statistics = cachedState.statistics.filter(s => s.id !== id)
+  }
 }
 
 /**
@@ -811,49 +1097,175 @@ export const createBackup = async (): Promise<void> => {
   const storage = typeof window !== 'undefined' ? window.localStorage : null
   if (storage) {
     try {
-      storage.setItem('herlev-hjorten-db-v2-backup', JSON.stringify(state))
-    } catch (_err) {
-      // Silently fail backup creation - not critical for app functionality
-      // Error is logged by caller if needed
+      storage.setItem('herlev-hjorten-db-backup', JSON.stringify(state))
+      console.log('✅ Database backup created successfully.')
+    } catch (error) {
+      console.error('❌ Failed to create database backup:', error)
     }
   }
 }
 
 /**
- * Restores database state from localStorage backup.
- * @remarks Restores the state saved by createBackup().
- * @returns true if backup was restored, false if no backup exists
+ * Restores database state from a localStorage backup.
+ * @returns Restored database state or null if no backup
  */
-export const restoreFromBackup = async (): Promise<boolean> => {
+export const restoreFromBackup = async (): Promise<DatabaseState | null> => {
   const storage = typeof window !== 'undefined' ? window.localStorage : null
   if (storage) {
-    const backup = storage.getItem('herlev-hjorten-db-v2-backup')
-    if (backup) {
-      try {
-        const parsed = JSON.parse(backup) as DatabaseState
-        cachedState = parsed
-        // Note: This doesn't actually restore to Postgres
-        // You would need to implement a migration script to restore from backup
-        return true
-      } catch (_err) {
-        // Silently fail backup restoration - not critical for app functionality
-        // Error is logged by caller if needed
-        return false
+    try {
+      const backup = storage.getItem('herlev-hjorten-db-backup')
+      if (backup) {
+        const state: DatabaseState = JSON.parse(backup)
+        console.log('✅ Database state restored from backup.')
+        // Clear current data and insert backup data
+        await clearAllData()
+        await insertBackupData(state)
+        invalidateCache()
+        return state
       }
+    } catch (error) {
+      console.error('❌ Failed to restore database backup:', error)
     }
   }
-  return false
+  return null
 }
 
 /**
- * Checks if a backup exists in localStorage.
- * @returns true if backup exists, false otherwise
+ * Checks if a database backup exists in localStorage.
+ * @returns True if backup exists, false otherwise
  */
 export const hasBackup = (): boolean => {
   const storage = typeof window !== 'undefined' ? window.localStorage : null
   if (storage) {
-    return storage.getItem('herlev-hjorten-db-v2-backup') !== null
+    return storage.getItem('herlev-hjorten-db-backup') !== null
   }
   return false
 }
 
+/**
+ * Clears all data from the database for the current tenant.
+ */
+export const clearAllData = async (): Promise<void> => {
+  const sql = getPostgres()
+  const tenantId = getTenantId()
+  console.log(`Clearing all data for tenant: ${tenantId}`)
+  await sql`DELETE FROM statistics_snapshots WHERE tenant_id = ${tenantId}`
+  await sql`DELETE FROM match_players WHERE tenant_id = ${tenantId}`
+  await sql`DELETE FROM matches WHERE tenant_id = ${tenantId}`
+  await sql`DELETE FROM check_ins WHERE tenant_id = ${tenantId}`
+  await sql`DELETE FROM training_sessions WHERE tenant_id = ${tenantId}`
+  await sql`DELETE FROM players WHERE tenant_id = ${tenantId}`
+  await sql`DELETE FROM courts WHERE tenant_id = ${tenantId}` // Courts are tenant-specific now
+  invalidateCache()
+  console.log(`✅ All data cleared for tenant: ${tenantId}`)
+}
+
+/**
+ * Inserts backup data into the database for the current tenant.
+ * @param state - Database state to insert
+ */
+export const insertBackupData = async (state: DatabaseState): Promise<void> => {
+  const sql = getPostgres()
+  const tenantId = getTenantId()
+  console.log(`Inserting backup data for tenant: ${tenantId}`)
+
+  // Insert courts first (they are referenced by matches)
+  for (const court of state.courts) {
+    await sql`
+      INSERT INTO courts (id, idx, tenant_id)
+      VALUES (${court.id}, ${court.idx}, ${tenantId})
+      ON CONFLICT (id) DO UPDATE SET idx = EXCLUDED.idx, tenant_id = EXCLUDED.tenant_id
+    `
+  }
+
+  // Insert players
+  for (const player of state.players) {
+    await sql`
+      INSERT INTO players (
+        id, name, alias, level_single, level_double, level_mix, gender, 
+        primary_category, training_group, active, 
+        preferred_doubles_partners, preferred_mixed_partners, created_at, tenant_id
+      )
+      VALUES (
+        ${player.id}, ${player.name}, ${player.alias ?? null}, 
+        ${player.levelSingle ?? player.level ?? null}, ${player.levelDouble ?? null}, ${player.levelMix ?? null}, 
+        ${player.gender ?? null}, ${player.primaryCategory ?? null}, ${player.active ?? true}, 
+        ${player.preferredDoublesPartners ?? []}, ${player.preferredMixedPartners ?? []}, 
+        ${player.createdAt}, ${tenantId}
+      )
+      ON CONFLICT (id) DO UPDATE SET 
+        name = EXCLUDED.name, alias = EXCLUDED.alias, 
+        level_single = EXCLUDED.level_single, level_double = EXCLUDED.level_double, level_mix = EXCLUDED.level_mix,
+        gender = EXCLUDED.gender, primary_category = EXCLUDED.primary_category, 
+        training_group = EXCLUDED.training_group, active = EXCLUDED.active,
+        preferred_doubles_partners = EXCLUDED.preferred_doubles_partners, 
+        preferred_mixed_partners = EXCLUDED.preferred_mixed_partners,
+        tenant_id = EXCLUDED.tenant_id
+    `
+  }
+
+  // Insert sessions
+  for (const session of state.sessions) {
+    await sql`
+      INSERT INTO training_sessions (id, date, status, created_at, tenant_id)
+      VALUES (${session.id}, ${session.date}, ${session.status}, ${session.createdAt}, ${tenantId})
+      ON CONFLICT (id) DO UPDATE SET 
+        date = EXCLUDED.date, status = EXCLUDED.status, tenant_id = EXCLUDED.tenant_id
+    `
+  }
+
+  // Insert check-ins
+  for (const checkIn of state.checkIns) {
+    await sql`
+      INSERT INTO check_ins (id, session_id, player_id, max_rounds, created_at, tenant_id)
+      VALUES (${checkIn.id}, ${checkIn.sessionId}, ${checkIn.playerId}, ${checkIn.maxRounds ?? null}, ${checkIn.createdAt}, ${tenantId})
+      ON CONFLICT (id) DO UPDATE SET 
+        session_id = EXCLUDED.session_id, player_id = EXCLUDED.player_id, 
+        max_rounds = EXCLUDED.max_rounds, tenant_id = EXCLUDED.tenant_id
+    `
+  }
+
+  // Insert matches
+  for (const match of state.matches) {
+    await sql`
+      INSERT INTO matches (id, session_id, court_id, started_at, ended_at, round, tenant_id)
+      VALUES (
+        ${match.id}, ${match.sessionId}, ${match.courtId}, 
+        ${match.startedAt}, ${match.endedAt ?? null}, ${match.round ?? null}, ${tenantId}
+      )
+      ON CONFLICT (id) DO UPDATE SET 
+        session_id = EXCLUDED.session_id, court_id = EXCLUDED.court_id, 
+        started_at = EXCLUDED.started_at, ended_at = EXCLUDED.ended_at, 
+        round = EXCLUDED.round, tenant_id = EXCLUDED.tenant_id
+    `
+  }
+
+  // Insert match players
+  for (const matchPlayer of state.matchPlayers) {
+    await sql`
+      INSERT INTO match_players (id, match_id, player_id, slot, tenant_id)
+      VALUES (${matchPlayer.id}, ${matchPlayer.matchId}, ${matchPlayer.playerId}, ${matchPlayer.slot}, ${tenantId})
+      ON CONFLICT (id) DO UPDATE SET 
+        match_id = EXCLUDED.match_id, player_id = EXCLUDED.player_id, 
+        slot = EXCLUDED.slot, tenant_id = EXCLUDED.tenant_id
+    `
+  }
+
+  // Insert statistics snapshots
+  for (const snapshot of state.statistics || []) {
+    await sql`
+      INSERT INTO statistics_snapshots (id, session_id, session_date, season, matches, match_players, check_ins, created_at, tenant_id)
+      VALUES (
+        ${snapshot.id}, ${snapshot.sessionId}, ${snapshot.sessionDate}, ${snapshot.season}, 
+        ${JSON.stringify(snapshot.matches)}, ${JSON.stringify(snapshot.matchPlayers)}, 
+        ${JSON.stringify(snapshot.checkIns)}, ${snapshot.createdAt}, ${tenantId}
+      )
+      ON CONFLICT (id) DO UPDATE SET 
+        session_id = EXCLUDED.session_id, session_date = EXCLUDED.session_date, 
+        season = EXCLUDED.season, matches = EXCLUDED.matches, 
+        match_players = EXCLUDED.match_players, check_ins = EXCLUDED.check_ins,
+        tenant_id = EXCLUDED.tenant_id
+    `
+  }
+  console.log(`✅ Backup data inserted for tenant: ${tenantId}`)
+}
