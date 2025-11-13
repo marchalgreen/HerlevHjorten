@@ -1,6 +1,6 @@
 {
-  "buildCommand": "pnpm --filter webapp build",
-  "outputDirectory": "packages/webapp/dist",
+  "buildCommand": "pnpm build",
+  "outputDirectory": "dist",
   "installCommand": "pnpm install",
   "framework": "vite",
   "rewrites": [
