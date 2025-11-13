@@ -81,35 +81,13 @@ export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
   onEnterFullScreen
 }) => {
   return (
-    <header className="flex flex-col gap-3 sm:gap-4 lg:gap-3 mb-2 lg:mb-1.5">
-      {/* Top section: Title and info */}
-      <div className="flex-1 min-w-0">
-        <h1 className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))]">Kampprogram</h1>
-        <p className="text-xs sm:text-sm md:text-base text-[hsl(var(--muted))] mt-1">
-          {session ? (
-            <>
-              <span className="whitespace-nowrap">Aktiv træning: {new Date(session.date).toLocaleDateString('da-DK')}</span>
-              {checkedInCount > 0 && (
-                <>
-                  <span className="hidden md:inline"> <span className="font-bold text-[hsl(var(--foreground))]">•</span> </span>
-                  <span className="block md:inline mt-1 md:mt-0">
-                    {' '}Indtjekkede spillere: {checkedInCount}
-                    <span className="hidden md:inline"> <span className="font-bold text-[hsl(var(--foreground))]">•</span> </span>
-                    <span className="block md:inline mt-1 md:mt-0"> {genderBreakdown.male} Herrer & {genderBreakdown.female} Damer</span>
-                  </span>
-                </>
-              )}
-            </>
-          ) : (
-            'Start en træning for at begynde at matche spillere'
-          )}
-        </p>
-        {error && <span className="mt-2 inline-block text-sm text-[hsl(var(--destructive))]">{error}</span>}
-      </div>
-
-      {/* Bottom section: Round selector and action buttons - responsive wrapping */}
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-start sm:justify-end w-full">
+    <header className="flex flex-col gap-2 sm:gap-3 mb-2 lg:mb-1.5">
+      {/* Top section: Title and buttons aligned */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))]">Kampprogram</h1>
+        </div>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           {/* Round selector - now with other buttons */}
           <select
             value={selectedRound}
@@ -164,6 +142,30 @@ export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
           )}
           {/* Variant selector removed — only option A is kept */}
         </div>
+      </div>
+      
+      {/* Bottom section: Info text */}
+      <div className="flex-1 min-w-0">
+        <p className="text-xs sm:text-sm md:text-base text-[hsl(var(--muted))]">
+          {session ? (
+            <>
+              <span className="whitespace-nowrap">Aktiv træning: {new Date(session.date).toLocaleDateString('da-DK')}</span>
+              {checkedInCount > 0 && (
+                <>
+                  <span className="hidden md:inline"> <span className="font-bold text-[hsl(var(--foreground))]">•</span> </span>
+                  <span className="block md:inline mt-1 md:mt-0">
+                    {' '}Indtjekkede spillere: {checkedInCount}
+                    <span className="hidden md:inline"> <span className="font-bold text-[hsl(var(--foreground))]">•</span> </span>
+                    <span className="block md:inline mt-1 md:mt-0"> {genderBreakdown.male} Herrer & {genderBreakdown.female} Damer</span>
+                  </span>
+                </>
+              )}
+            </>
+          ) : (
+            'Start en træning for at begynde at matche spillere'
+          )}
+        </p>
+        {error && <span className="mt-2 inline-block text-sm text-[hsl(var(--destructive))]">{error}</span>}
       </div>
     </header>
   )
