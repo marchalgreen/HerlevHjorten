@@ -138,8 +138,10 @@ export type TenantConfig = {
   name: string
   logo: string
   maxCourts: number
-  supabaseUrl: string
-  supabaseKey: string
+  postgresUrl: string // Postgres connection string (e.g., postgresql://user:password@host:port/database?sslmode=require)
+  // Legacy Supabase fields (deprecated, kept for backward compatibility during migration)
+  supabaseUrl?: string
+  supabaseKey?: string
   features?: {
     [key: string]: boolean | string | number
   }

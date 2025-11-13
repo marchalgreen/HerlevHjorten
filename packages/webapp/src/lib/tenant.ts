@@ -52,6 +52,7 @@ export const extractTenantId = (pathname: string): string => {
 
 /**
  * Loads tenant configuration from config file.
+ * Falls back to environment variables if postgresUrl is not set in config.
  * @param tenantId - Tenant ID to load config for
  * @returns Tenant configuration
  * @throws Error if tenant config not found
@@ -61,7 +62,27 @@ export const loadTenantConfig = async (tenantId: string): Promise<TenantConfig> 
     // In development, use dynamic import
     // In production, config files are copied to dist
     const config = await import(`../config/tenants/${tenantId}.json`)
-    return config.default as TenantConfig
+    const tenantConfig = config.default as TenantConfig
+    
+    // If postgresUrl is not set in config, try to get it from environment variables
+    if (!tenantConfig.postgresUrl) {
+      // Vite exposes env vars prefixed with VITE_ to client code
+      // Check for VITE_DATABASE_URL first, then DATABASE_URL (for server-side/build-time)
+      const dbUrl = import.meta.env.VITE_DATABASE_URL || 
+                    import.meta.env.DATABASE_URL ||
+                    import.meta.env.VITE_DATABASE_URL_UNPOOLED ||
+                    import.meta.env.DATABASE_URL_UNPOOLED
+      
+      if (dbUrl) {
+        console.log(`Using DATABASE_URL from environment variables for tenant "${tenantId}"`)
+        return {
+          ...tenantConfig,
+          postgresUrl: dbUrl
+        }
+      }
+    }
+    
+    return tenantConfig
   } catch (error) {
     // Fallback to default if tenant not found
     if (tenantId !== 'default') {

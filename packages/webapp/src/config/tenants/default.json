@@ -3,8 +3,6 @@
   "name": "HERLEV/HJORTEN",
   "logo": "logo.jpeg",
   "maxCourts": 8,
-  "supabaseUrl": "https://tlydjbuvbbbntkevzjuc.supabase.co",
-  "supabaseKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRseWRqYnV2YmJibnRrZXZ6anVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzODE2MDEsImV4cCI6MjA3Nzk1NzYwMX0.uOlwY4JUL3OBjOm9jtZ7tvcgbv8peh1B2svkDYHakqA",
   "features": {}
 }
 

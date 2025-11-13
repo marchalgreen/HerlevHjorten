@@ -36,7 +36,9 @@ jobs:
         run: pnpm run typecheck
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps
+        run: cd packages/webapp && pnpm exec playwright install --with-deps
 
-      - name: Run vendor sync E2E tests
-        run: pnpm exec playwright test tests/e2e/vendor-sync-observability.spec.ts
+      - name: Run E2E tests
+        run: cd packages/webapp && pnpm test:e2e
+        env:
+          CI: true

@@ -34,9 +34,9 @@ import {
   createMatchPlayer as createMatchPlayerInDb,
   updateMatchPlayer as updateMatchPlayerInDb,
   deleteMatchPlayer as deleteMatchPlayerInDb
-} from './supabase'
+} from './postgres'
 // (No star import needed)
-import { getCurrentTenantConfig } from '../lib/supabase'
+import { getCurrentTenantConfig } from '../lib/postgres'
 import statsApi from './stats'
 import {
   createPlayerNotFoundError,

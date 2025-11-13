@@ -3,8 +3,6 @@
   "name": "RundeManager",
   "logo": "rundemanagerlogo2.png",
   "maxCourts": 8,
-  "supabaseUrl": "https://gfvogzxxtdnujvyqwswx.supabase.co",
-  "supabaseKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmdm9nenh4dGRudWp2eXF3c3d4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzODE0NDUsImV4cCI6MjA3Nzk1NzQ0NX0.Row5k1nqpRLuWWI0dlX_7X_JnIK-KUiCU6tjaefQj44",
   "features": {}
 }
 

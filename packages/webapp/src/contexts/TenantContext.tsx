@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import type { TenantConfig } from '@herlev-hjorten/common'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { PostgresClient } from '../lib/postgres'
 import { loadTenantConfig, getCurrentTenantId, buildTenantPath } from '../lib/tenant'
-import { createTenantSupabaseClient, setCurrentTenantSupabaseClient, setCurrentTenantConfig } from '../lib/supabase'
+import { createTenantPostgresClient, setCurrentTenantPostgresClient, setCurrentTenantConfig } from '../lib/postgres'
 
 interface TenantContextValue {
   tenantId: string
   config: TenantConfig
-  supabase: SupabaseClient // Non-null when context is provided (guarded by null check)
+  postgres: PostgresClient // Non-null when context is provided (guarded by null check)
   buildPath: (path: string) => string
 }
 
@@ -19,8 +19,8 @@ interface TenantProviderProps {
 }
 
 /**
- * Tenant context provider that supplies tenant configuration and Supabase client.
- * @remarks Loads tenant config and creates tenant-specific Supabase client.
+ * Tenant context provider that supplies tenant configuration and Postgres client.
+ * @remarks Loads tenant config and creates tenant-specific Postgres client.
  */
 export const TenantProvider: React.FC<TenantProviderProps> = ({ tenantId, children }) => {
   const [config, setConfig] = useState<TenantConfig | null>(null)
@@ -58,15 +58,15 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ tenantId, childr
     }
   }, [tenantId])
 
-  const supabase = useMemo(() => {
+  const postgres = useMemo(() => {
     if (!config) {
       // Don't create a client during loading - return null and handle in render
       // The loading state will prevent children from rendering anyway
       return null
     }
-    const client = createTenantSupabaseClient(config)
+    const client = createTenantPostgresClient(config)
     // Update module-level client and config for API access
-    setCurrentTenantSupabaseClient(client)
+    setCurrentTenantPostgresClient(client)
     setCurrentTenantConfig(config)
     return client
   }, [config])
@@ -74,7 +74,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ tenantId, childr
   // Clean up module-level client and config when component unmounts
   useEffect(() => {
     return () => {
-      setCurrentTenantSupabaseClient(null)
+      setCurrentTenantPostgresClient(null)
       setCurrentTenantConfig(null)
     }
   }, [])
@@ -104,8 +104,8 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ tenantId, childr
     )
   }
 
-  // Ensure supabase client is available before providing context
-  if (!supabase) {
+  // Ensure postgres client is available before providing context
+  if (!postgres) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -118,7 +118,7 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ tenantId, childr
   const value: TenantContextValue = {
     tenantId,
     config,
-    supabase,
+    postgres,
     buildPath
   }
 

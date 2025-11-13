@@ -6,7 +6,7 @@ import type {
   MatchPlayer,
   CheckIn
 } from '@herlev-hjorten/common'
-import { createId, getStateCopy, getStatisticsSnapshots, createStatisticsSnapshot, createSession, createCheckIn, getMatches, getMatchPlayers, invalidateCache } from './supabase'
+import { createId, getStateCopy, getStatisticsSnapshots, createStatisticsSnapshot, createSession, createCheckIn, getMatches, getMatchPlayers, invalidateCache } from './postgres'
 
 /**
  * Determines season from a date string (August to July).
@@ -65,7 +65,7 @@ const snapshotSession = async (sessionId: string): Promise<StatisticsSnapshot> =
   try {
     console.log('[snapshotSession] Starting snapshot creation for session', sessionId)
     
-    // Invalidate cache to ensure we get fresh data from Supabase
+    // Invalidate cache to ensure we get fresh data from Postgres
     invalidateCache()
     
     const state = await getStateCopy()
@@ -93,15 +93,15 @@ const snapshotSession = async (sessionId: string): Promise<StatisticsSnapshot> =
     const season = getSeasonFromDate(session.date)
     console.log('[snapshotSession] Season calculated:', season)
 
-    // Directly query Supabase for fresh matches and matchPlayers to avoid stale cache
+    // Directly query Postgres for fresh matches and matchPlayers to avoid stale cache
     // Also get checkIns from fresh state
-    console.log('[snapshotSession] Querying Supabase for matches and matchPlayers...')
+    console.log('[snapshotSession] Querying Postgres for matches and matchPlayers...')
     const [allMatches, allMatchPlayers] = await Promise.all([
       getMatches(),
       getMatchPlayers()
     ])
     
-    console.log('[snapshotSession] Retrieved from Supabase:', {
+    console.log('[snapshotSession] Retrieved from Postgres:', {
       totalMatches: allMatches.length,
       totalMatchPlayers: allMatchPlayers.length
     })
@@ -570,8 +570,8 @@ const generateDummyHistoricalData = async (): Promise<void> => {
     throw new Error('Mindst 8 aktive spillere kræves for at generere dummy data')
   }
 
-  // Note: We don't clear existing statistics in Supabase - this function generates additional data
-  // If you want to clear, you would need to delete from Supabase directly
+  // Note: We don't clear existing statistics in Postgres - this function generates additional data
+  // If you want to clear, you would need to delete from Postgres directly
 
   const courts = state.courts
   const now = new Date()
@@ -610,7 +610,7 @@ const generateDummyHistoricalData = async (): Promise<void> => {
   for (const sessionInfo of sessions) {
     const sessionDate = new Date(sessionInfo.date)
       
-    // Create ended session in Supabase
+    // Create ended session in Postgres
     const session = await createSession({
       date: sessionInfo.date,
       status: 'ended'
@@ -626,7 +626,7 @@ const generateDummyHistoricalData = async (): Promise<void> => {
     const shuffledPlayers = [...players].sort(() => Math.random() - 0.5)
     const checkedInPlayers = shuffledPlayers.slice(0, checkInCount)
 
-    // Create check-ins in Supabase
+    // Create check-ins in Postgres
     const checkIns: CheckIn[] = []
     for (const player of checkedInPlayers) {
       const checkInTime = new Date(sessionDate)
@@ -753,7 +753,7 @@ const generateDummyHistoricalData = async (): Promise<void> => {
       allMatchPlayers.push(...matchPlayers)
     }
 
-    // Create snapshot in Supabase
+    // Create snapshot in Postgres
     await createStatisticsSnapshot({
       sessionId,
       sessionDate: sessionInfo.date,
