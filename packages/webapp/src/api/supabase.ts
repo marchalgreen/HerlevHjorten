@@ -166,7 +166,7 @@ export const loadState = async (): Promise<DatabaseState> => {
     }
 
     return cachedState
-  } catch (_error) {
+  } catch {
     // Return empty state on error - error is logged by caller
     cachedState = {
       players: [],
@@ -587,7 +587,7 @@ export const createBackup = async (): Promise<void> => {
   if (storage) {
     try {
       storage.setItem('herlev-hjorten-db-v2-backup', JSON.stringify(state))
-    } catch (_err) {
+    } catch {
       // Silently fail backup creation - not critical for app functionality
       // Error is logged by caller if needed
     }
@@ -610,7 +610,7 @@ export const restoreFromBackup = async (): Promise<boolean> => {
         // Note: This doesn't actually restore to Supabase
         // You would need to implement a migration script to restore from backup
         return true
-      } catch (_err) {
+      } catch {
         // Silently fail backup restoration - not critical for app functionality
         // Error is logged by caller if needed
         return false

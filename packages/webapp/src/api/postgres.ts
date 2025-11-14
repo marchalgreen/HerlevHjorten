@@ -2,7 +2,6 @@ import type {
   Player,
   PlayerUpdateInput,
   TrainingSession,
-  TrainingSessionStatus,
   CheckIn,
   Court,
   Match,
@@ -318,7 +317,7 @@ export const loadState = async (): Promise<DatabaseState> => {
     }
 
     return cachedState
-  } catch (_error) {
+  } catch {
     // Return empty state on error - error is logged by caller
     cachedState = {
       players: [],

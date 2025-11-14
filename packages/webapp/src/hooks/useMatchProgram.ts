@@ -332,7 +332,7 @@ export const useMatchProgram = ({
     } catch (err: any) {
       setError(err.message ?? 'Kunne ikke aktivere spiller')
     }
-  }, [session, unavailablePlayers, handleMarkAvailable])
+  }, [session, unavailablePlayers, handleMarkAvailable, handleMove])
   
   const handleToggleCourtLock = useCallback((courtIdx: number) => {
     setLockedCourts((prev) => {

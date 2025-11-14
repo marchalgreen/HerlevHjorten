@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { resolveCoachId } from '../lib/coachAdapter'
 import api from '../services/coachLandingApi'
 import type { Group, PlayerLite } from '../routes/landing/types'

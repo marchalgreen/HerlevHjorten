@@ -94,7 +94,7 @@ const GlassSurface: React.FC<GlassSurfaceProps> = ({
 
   const isDarkMode = useDarkMode()
 
-  const generateDisplacementMap = () => {
+  const generateDisplacementMap = useCallback(() => {
     const rect = containerRef.current?.getBoundingClientRect()
     const actualWidth = rect?.width || 400
     const actualHeight = rect?.height || 200
@@ -120,27 +120,20 @@ const GlassSurface: React.FC<GlassSurfaceProps> = ({
     `
 
     return `data:image/svg+xml,${encodeURIComponent(svgContent)}`
-  }
-
-  const updateDisplacementMap = useCallback(() => {
-    feImageRef.current?.setAttribute('href', generateDisplacementMap())
   }, [
-    width,
-    height,
-    borderRadius,
     borderWidth,
+    borderRadius,
     brightness,
     opacity,
     blur,
-    displace,
-    distortionScale,
-    redOffset,
-    greenOffset,
-    blueOffset,
-    xChannel,
-    yChannel,
-    mixBlendMode
+    mixBlendMode,
+    redGradId,
+    blueGradId
   ])
+
+  const updateDisplacementMap = useCallback(() => {
+    feImageRef.current?.setAttribute('href', generateDisplacementMap())
+  }, [generateDisplacementMap])
 
   useEffect(() => {
     updateDisplacementMap()

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import type { TenantConfig } from '@rundeklar/common'
 import type { PostgresClient } from '../lib/postgres'
-import { loadTenantConfig, getCurrentTenantId, buildTenantPath } from '../lib/tenant'
+import { loadTenantConfig, buildTenantPath } from '../lib/tenant'
 import { createTenantPostgresClient, setCurrentTenantPostgresClient, setCurrentTenantConfig } from '../lib/postgres'
 
 interface TenantContextValue {
