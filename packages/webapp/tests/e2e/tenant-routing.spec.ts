@@ -23,8 +23,8 @@ test.describe('Tenant Routing', () => {
     
     // Check for RundeManager branding - check document title or logo alt text
     const pageTitle = await page.title()
-    const hasBranding = /rundemanager/i.test(pageTitle) || 
-      (await page.locator('img[alt*="RundeManager"]').isVisible().catch(() => false))
+    const logoVisible = await page.locator('img[alt*="RundeManager"]').isVisible().catch(() => false)
+    const hasBranding = /rundemanager/i.test(pageTitle) || logoVisible
     
     expect(hasBranding).toBe(true)
   })
@@ -41,10 +41,12 @@ test.describe('Tenant Routing', () => {
     if (!isVisible) {
       // Try opening mobile menu
       const menuButton = page.getByRole('button', { name: /åbn menu|menu/i })
-      if (await menuButton.isVisible().catch(() => false)) {
+      const menuVisible = await menuButton.isVisible().catch(() => false)
+      
+      if (menuVisible) {
         await menuButton.click()
-        // Wait for menu to be visible instead of fixed timeout
-        await checkInLink.waitFor({ state: 'visible', timeout: 2000 }).catch(() => {})
+        // Wait for check-in link to be visible (menu should be open now)
+        await checkInLink.waitFor({ state: 'visible', timeout: 2000 })
       }
     }
     
@@ -54,4 +56,3 @@ test.describe('Tenant Routing', () => {
     await expect(page).toHaveURL(/#\/rundemanager\/check-in/i)
   })
 })
-

@@ -37,12 +37,16 @@ test.describe('Check-In Page', () => {
     // Type in search
     await searchInput.fill('test')
     
-    // Wait for search to process
-    await page.waitForTimeout(500)
+    // Wait for search to complete - either results appear or empty state is shown
+    // Use networkidle to ensure search request has completed
+    await page.waitForLoadState('networkidle')
     
-    // Check that page content is visible (either players or empty state)
-    const pageContent = page.locator('body')
-    await expect(pageContent).toBeVisible()
+    // Verify that either search results or empty state is visible
+    const hasResults = await page.locator('[role="list"]').isVisible().catch(() => false)
+    const hasEmptyState = await page.getByText(/ingen resultater|no results/i).isVisible().catch(() => false)
+    
+    // At least one should be true (results or empty state)
+    expect(hasResults || hasEmptyState).toBe(true)
   })
 
   test('should show empty state when no active session', async ({ page }) => {
@@ -64,4 +68,3 @@ test.describe('Check-In Page', () => {
     expect(count).toBeGreaterThanOrEqual(0)
   })
 })
-

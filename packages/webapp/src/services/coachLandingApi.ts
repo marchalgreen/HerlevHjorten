@@ -61,7 +61,7 @@ export const fetchTrainingGroups = async (): Promise<Group[]> => {
   const players = await api.players.list({})
   const map = new Map<string, { count: number }>()
   players.forEach((p) => {
-    const groups = ((p as any).trainingGroups as string[] | undefined) ?? []
+    const groups = p.trainingGroups ?? []
     groups.forEach((id) => {
       const prev = map.get(id) || { count: 0 }
       map.set(id, { count: prev.count + 1 })
@@ -88,7 +88,7 @@ export const searchPlayers = async (opts: { q?: string; groupId?: string | null;
   // Existing API supports q, active filtering; group we filter client-side.
   const players = await api.players.list({ q: q?.trim() || undefined, active: true })
   const filtered = players.filter((p) => {
-    const groups = ((p as any).trainingGroups as string[] | undefined) ?? []
+    const groups = p.trainingGroups ?? []
     // If a specific group was requested, only include those in that group
     const includeByGroup = groupId ? groups.includes(groupId) : true
     // Optionally exclude players who belong to a given group (e.g., active group)
@@ -98,10 +98,7 @@ export const searchPlayers = async (opts: { q?: string; groupId?: string | null;
   const mapped: PlayerLite[] = filtered.slice(0, limit).map((p) => ({
     id: p.id,
     displayName: p.name,
-    groupId: (() => {
-      const groups = ((p as any).trainingGroups as string[] | undefined) ?? []
-      return groups[0] ?? null
-    })(),
+    groupId: (p.trainingGroups?.[0] ?? null),
     avatarUrl: null,
     active: Boolean(p.active)
   }))

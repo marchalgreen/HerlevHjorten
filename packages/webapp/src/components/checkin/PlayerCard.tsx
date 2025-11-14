@@ -101,7 +101,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     window.addEventListener(VARIANT_CHANGED_EVENT, onChange as EventListener)
     return () => window.removeEventListener(VARIANT_CHANGED_EVENT, onChange as EventListener)
   }, [])
-  const _trainingGroups = useMemo(() => ((player as any).trainingGroups as string[] | undefined) ?? [], [player])
+  const _trainingGroups = useMemo(() => player.trainingGroups ?? [], [player])
   const avatarRailColor = useMemo(() => {
     if (variant !== 'A') return undefined
     const hue = getSeedHue(player.id || player.name, player.gender ?? null)
@@ -129,6 +129,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
       data-cat={undefined}
       style={{
         animation: isAnimatingIn ? 'slideInFromRight 0.3s ease-out forwards' : undefined,
+        // TODO: refine type - CSS custom properties need string index signature
         ...(variant === 'A' && avatarRailColor ? ({ ['--railColor' as any]: avatarRailColor } as React.CSSProperties) : {}),
         ...(variantCardBg ? ({ backgroundColor: variantCardBg } as React.CSSProperties) : {})
       }}

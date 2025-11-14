@@ -116,18 +116,17 @@ const PlayersPage = () => {
     (player: Player) => {
     setDialogMode('edit')
     setCurrentPlayer(player)
-      const playerAny = player as any
     setFormName(player.name)
     setFormAlias(player.alias ?? '')
-      setFormLevelSingle((playerAny.levelSingle ?? null)?.toString() ?? '')
-      setFormLevelDouble((playerAny.levelDouble ?? null)?.toString() ?? '')
-      setFormLevelMix((playerAny.levelMix ?? null)?.toString() ?? '')
+    setFormLevelSingle((player.levelSingle ?? null)?.toString() ?? '')
+    setFormLevelDouble((player.levelDouble ?? null)?.toString() ?? '')
+    setFormLevelMix((player.levelMix ?? null)?.toString() ?? '')
     setFormGender(player.gender ?? '')
     setFormPrimaryCategory(player.primaryCategory ?? '')
     setFormActive(player.active)
-      setFormPreferredDoublesPartners((playerAny.preferredDoublesPartners ?? null) ?? [])
-      setFormPreferredMixedPartners((playerAny.preferredMixedPartners ?? null) ?? [])
-      setFormTrainingGroups((playerAny.trainingGroups ?? null) ?? [])
+      setFormPreferredDoublesPartners((player.preferredDoublesPartners ?? null) ?? [])
+      setFormPreferredMixedPartners((player.preferredMixedPartners ?? null) ?? [])
+      setFormTrainingGroups((player.trainingGroups ?? null) ?? [])
     setIsSheetOpen(true)
     },
     []
@@ -304,24 +303,24 @@ const PlayersPage = () => {
         header: 'Rangliste Single',
         align: 'center',
         sortable: true,
-        sortValue: (row) => ((row as any).levelSingle ?? null) ?? 0,
-        accessor: (row: Player) => ((row as any).levelSingle ?? null) ?? '–'
+        sortValue: (row) => (row.levelSingle ?? null) ?? 0,
+        accessor: (row: Player) => (row.levelSingle ?? null) ?? '–'
       },
       {
         id: 'levelDouble',
         header: 'Rangliste Double',
         align: 'center',
         sortable: true,
-        sortValue: (row) => ((row as any).levelDouble ?? null) ?? 0,
-        accessor: (row: Player) => ((row as any).levelDouble ?? null) ?? '–'
+        sortValue: (row) => (row.levelDouble ?? null) ?? 0,
+        accessor: (row: Player) => (row.levelDouble ?? null) ?? '–'
       },
       {
         id: 'levelMix',
         header: 'Rangliste Mix',
         align: 'center',
         sortable: true,
-        sortValue: (row) => ((row as any).levelMix ?? null) ?? 0,
-        accessor: (row: Player) => ((row as any).levelMix ?? null) ?? '–'
+        sortValue: (row) => (row.levelMix ?? null) ?? 0,
+        accessor: (row: Player) => (row.levelMix ?? null) ?? '–'
       },
       {
         id: 'gender',
@@ -375,8 +374,8 @@ const PlayersPage = () => {
         align: 'center',
         sortable: true,
         sortValue: (row: Player) => {
-          const groups = (row as any).trainingGroups as string[] | undefined
-          return (groups ?? []).join(' | ')
+          const groups = row.trainingGroups ?? []
+          return groups.join(' | ')
         },
         cell: (row: Player) => (
           <EditableTrainingGroupsCell

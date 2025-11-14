@@ -197,10 +197,9 @@ export const EditablePartnerCell: React.FC<EditablePartnerCellProps> = ({
    * Resets editing state when player changes.
    */
   useEffect(() => {
-    const playerAny = player as any
     const currentPartnerId = partnerType === 'doubles'
-      ? (playerAny.preferredDoublesPartners?.[0] ?? null)
-      : (playerAny.preferredMixedPartners?.[0] ?? null)
+      ? (player.preferredDoublesPartners?.[0] ?? null)
+      : (player.preferredMixedPartners?.[0] ?? null)
     if (!isEditing) {
       setEditingPartnerId(currentPartnerId)
     }

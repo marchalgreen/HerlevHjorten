@@ -1,74 +1,66 @@
 import { test, expect } from '@playwright/test'
 
+/**
+ * Helper to ensure a navigation link is visible, opening mobile menu if needed.
+ * @param page - Playwright page object
+ * @param linkText - Text or regex pattern to match the link
+ * @returns The located link element
+ */
+async function ensureLinkVisible(
+  page: ReturnType<typeof test>['extend']['page'],
+  linkText: string | RegExp
+) {
+  const link = page.getByRole('link', { name: linkText })
+  
+  // Check if link is already visible
+  const isVisible = await link.isVisible().catch(() => false)
+  if (isVisible) {
+    return link
+  }
+  
+  // Try opening mobile menu
+  const menuButton = page.getByRole('button', { name: /åbn menu|menu/i })
+  const menuVisible = await menuButton.isVisible().catch(() => false)
+  
+  if (menuVisible) {
+    await menuButton.click()
+    // Wait for navigation menu to be visible
+    await page.locator('nav').waitFor({ state: 'visible', timeout: 2000 })
+  }
+  
+  // Return the link (should now be visible)
+  return link
+}
+
+/**
+ * Helper to navigate to a page via a link, handling mobile menu if needed.
+ * @param page - Playwright page object
+ * @param linkText - Text or regex pattern to match the link
+ * @param expectedUrl - Expected URL pattern after navigation
+ */
+async function navigateToPage(
+  page: ReturnType<typeof test>['extend']['page'],
+  linkText: string | RegExp,
+  expectedUrl: RegExp
+) {
+  const link = await ensureLinkVisible(page, linkText)
+  await link.waitFor({ state: 'visible', timeout: 2000 })
+  await link.click()
+  await expect(page).toHaveURL(expectedUrl, { timeout: 5000 })
+  await page.waitForLoadState('networkidle')
+}
+
 test.describe('Navigation', () => {
   test('should navigate between all main pages', async ({ page }) => {
     await page.goto('/#/coach')
     await page.waitForLoadState('networkidle')
     
-    // Helper to open mobile menu if needed
-    const ensureMenuOpen = async () => {
-      const menuButton = page.getByRole('button', { name: /åbn menu|menu/i })
-      const menuVisible = await menuButton.isVisible().catch(() => false)
-      if (menuVisible) {
-        await menuButton.click()
-        // Wait for navigation menu to be visible instead of fixed timeout
-        await page.locator('nav').waitFor({ state: 'visible', timeout: 2000 }).catch(() => {})
-      }
-    }
-    
-    // Navigate to Check-In
-    let checkInLink = page.getByRole('link', { name: /indtjekning/i })
-    if (!(await checkInLink.isVisible().catch(() => false))) {
-      await ensureMenuOpen()
-      checkInLink = page.getByRole('link', { name: /indtjekning/i })
-    }
-    await checkInLink.waitFor({ state: 'visible', timeout: 2000 })
-    await checkInLink.click()
-    await expect(page).toHaveURL(/#\/check-in/i, { timeout: 5000 })
-    await page.waitForLoadState('networkidle')
-    
-    // Navigate to Match Program
-    let matchProgramLink = page.getByRole('link', { name: /kampprogram/i })
-    if (!(await matchProgramLink.isVisible().catch(() => false))) {
-      await ensureMenuOpen()
-      matchProgramLink = page.getByRole('link', { name: /kampprogram/i })
-    }
-    await matchProgramLink.waitFor({ state: 'visible', timeout: 2000 })
-    await matchProgramLink.click()
-    await expect(page).toHaveURL(/#\/match-program/i, { timeout: 5000 })
-    await page.waitForLoadState('networkidle')
-    
-    // Navigate to Players
-    let playersLink = page.getByRole('link', { name: /spillere/i })
-    if (!(await playersLink.isVisible().catch(() => false))) {
-      await ensureMenuOpen()
-      playersLink = page.getByRole('link', { name: /spillere/i })
-    }
-    await playersLink.waitFor({ state: 'visible', timeout: 2000 })
-    await playersLink.click()
-    await expect(page).toHaveURL(/#\/players/i, { timeout: 5000 })
-    await page.waitForLoadState('networkidle')
-    
-    // Navigate to Statistics
-    let statisticsLink = page.getByRole('link', { name: /statistik/i })
-    if (!(await statisticsLink.isVisible().catch(() => false))) {
-      await ensureMenuOpen()
-      statisticsLink = page.getByRole('link', { name: /statistik/i })
-    }
-    await statisticsLink.waitFor({ state: 'visible', timeout: 2000 })
-    await statisticsLink.click()
-    await expect(page).toHaveURL(/#\/statistics/i, { timeout: 5000 })
-    await page.waitForLoadState('networkidle')
-    
-    // Navigate back to Coach
-    let coachLink = page.getByRole('link', { name: /træner/i })
-    if (!(await coachLink.isVisible().catch(() => false))) {
-      await ensureMenuOpen()
-      coachLink = page.getByRole('link', { name: /træner/i })
-    }
-    await coachLink.waitFor({ state: 'visible', timeout: 2000 })
-    await coachLink.click()
-    await expect(page).toHaveURL(/#\/coach/i, { timeout: 5000 })
+    // Navigate through all main pages
+    await navigateToPage(page, /indtjekning/i, /#\/check-in/i)
+    await navigateToPage(page, /kampprogram/i, /#\/match-program/i)
+    await navigateToPage(page, /spillere/i, /#\/players/i)
+    await navigateToPage(page, /statistik/i, /#\/statistics/i)
+    await navigateToPage(page, /træner/i, /#\/coach/i)
   })
 
   test('should have logo link to landing page', async ({ page }) => {
@@ -77,7 +69,9 @@ test.describe('Navigation', () => {
     
     // Click logo link (should navigate to coach/landing page)
     const logoLink = page.locator('a[href*="/coach"]').first()
-    if (await logoLink.isVisible()) {
+    const isVisible = await logoLink.isVisible().catch(() => false)
+    
+    if (isVisible) {
       await logoLink.click()
       await expect(page).toHaveURL(/#\/coach/i)
     }
@@ -87,21 +81,8 @@ test.describe('Navigation', () => {
     await page.goto('/#/coach')
     await page.waitForLoadState('networkidle')
     
-    // On mobile, navigation might be in hamburger menu
-    const coachLink = page.getByRole('link', { name: /træner/i })
-    const isVisible = await coachLink.isVisible().catch(() => false)
-    
-    if (!isVisible) {
-      // Try opening mobile menu
-      const menuButton = page.getByRole('button', { name: /åbn menu|menu/i })
-      if (await menuButton.isVisible().catch(() => false)) {
-        await menuButton.click()
-        // Wait for menu to be visible instead of fixed timeout
-        await coachLink.waitFor({ state: 'visible', timeout: 2000 })
-      }
-    }
-    
-    // Ensure link is visible before checking attribute
+    // Ensure coach link is visible (may need to open mobile menu)
+    const coachLink = await ensureLinkVisible(page, /træner/i)
     await coachLink.waitFor({ state: 'visible', timeout: 2000 })
     
     // Check that coach link is active
@@ -109,4 +90,3 @@ test.describe('Navigation', () => {
     expect(isActive).toBe('true')
   })
 })
-

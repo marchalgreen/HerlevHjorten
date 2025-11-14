@@ -170,21 +170,21 @@ const createPlayer = async (input: PlayerCreateInput): Promise<Player> => {
 const updatePlayer = async (input: PlayerUpdateInput): Promise<Player> => {
   try {
   const parsed = playerUpdateSchema.parse(input)
-    const updateData: PlayerUpdateInput['patch'] = {}
+  const updateData: PlayerUpdateInput['patch'] = {}
   if (parsed.patch.name !== undefined) updateData.name = parsed.patch.name.trim()
   if (parsed.patch.alias !== undefined) updateData.alias = parsed.patch.alias
   if (parsed.patch.level !== undefined) updateData.level = parsed.patch.level
-    if (parsed.patch.levelSingle !== undefined) (updateData as any).levelSingle = parsed.patch.levelSingle
-    if (parsed.patch.levelDouble !== undefined) (updateData as any).levelDouble = parsed.patch.levelDouble
-    if (parsed.patch.levelMix !== undefined) (updateData as any).levelMix = parsed.patch.levelMix
+  if (parsed.patch.levelSingle !== undefined) updateData.levelSingle = parsed.patch.levelSingle
+  if (parsed.patch.levelDouble !== undefined) updateData.levelDouble = parsed.patch.levelDouble
+  if (parsed.patch.levelMix !== undefined) updateData.levelMix = parsed.patch.levelMix
   if (parsed.patch.gender !== undefined) updateData.gender = parsed.patch.gender
   if (parsed.patch.primaryCategory !== undefined) updateData.primaryCategory = parsed.patch.primaryCategory
-  if (parsed.patch.trainingGroups !== undefined) (updateData as any).trainingGroups = parsed.patch.trainingGroups ?? []
+  if (parsed.patch.trainingGroups !== undefined) updateData.trainingGroups = parsed.patch.trainingGroups ?? []
   if (parsed.patch.active !== undefined) updateData.active = parsed.patch.active
-    if (parsed.patch.preferredDoublesPartners !== undefined) (updateData as any).preferredDoublesPartners = parsed.patch.preferredDoublesPartners
-    if (parsed.patch.preferredMixedPartners !== undefined) (updateData as any).preferredMixedPartners = parsed.patch.preferredMixedPartners
+  if (parsed.patch.preferredDoublesPartners !== undefined) updateData.preferredDoublesPartners = parsed.patch.preferredDoublesPartners
+  if (parsed.patch.preferredMixedPartners !== undefined) updateData.preferredMixedPartners = parsed.patch.preferredMixedPartners
 
-    const updated = await updatePlayerInDb(parsed.id, updateData as any)
+  const updated = await updatePlayerInDb(parsed.id, updateData)
   return normalisePlayer(updated)
   } catch (error) {
     if (error instanceof z.ZodError) {

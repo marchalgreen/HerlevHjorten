@@ -253,13 +253,12 @@ const StartSessionControls: React.FC<{
 const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin }) => {
   const { tenantId, config } = useTenant()
   const state = useLandingState({ coach, onRedirectToCheckin })
-  const landing = state as any
   const pickedIds = useMemo(() => new Set(state.crossGroupPlayers.map((p) => p.id)), [state.crossGroupPlayers])
   const searchOpenerRef = useRef<HTMLElement | null>(null)
   const [courtsInUse, setCourtsInUse] = useState<number>(() => courtsSettings.getEffectiveCourtsInUse(tenantId, config.maxCourts))
   
   // Get checked-in players for active session
-  const { checkedIn } = useCheckIns(landing.activeSession?.sessionId ?? null)
+  const { checkedIn } = useCheckIns(state.activeSession?.sessionId ?? null)
 
   const activeGroupName = useMemo(() => {
     if (!state.activeSession?.groupId) return null
@@ -269,13 +268,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin })
   
   // Calculate extra players: checked-in players NOT in the permanent training group
   const extraPlayersCount = useMemo(() => {
-    if (!landing.activeSession?.groupId || !checkedIn.length) return 0
+    if (!state.activeSession?.groupId || !checkedIn.length) return 0
     
     return checkedIn.filter((player) => {
-      const trainingGroups = ((player as any).trainingGroups as string[] | undefined) ?? []
-      return !trainingGroups.includes(landing.activeSession!.groupId!)
+      const trainingGroups = player.trainingGroups ?? []
+      return !trainingGroups.includes(state.activeSession!.groupId!)
     }).length
-  }, [checkedIn, landing.activeSession])
+  }, [checkedIn, state.activeSession])
 
   useEffect(() => {
     courtsSettings.setStoredCourtsInUse(tenantId, courtsInUse)
@@ -296,12 +295,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin })
     <div className="p-4 sm:p-6">
       <WelcomeHeader coachName={coach?.displayName} />
 
-      {landing.activeSession ? (
+      {state.activeSession ? (
         <PageCard className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
             <div>
               <div className="text-base sm:text-lg font-medium text-[hsl(var(--foreground))]">Aktiv træning</div>
-              <div className="text-sm text-[hsl(var(--muted))] mt-1">Startet: {formatDate(landing.activeSession.startedAt)}</div>
+              <div className="text-sm text-[hsl(var(--muted))] mt-1">Startet: {formatDate(state.activeSession.startedAt)}</div>
               {activeGroupName && (
                 <div className="inline-flex items-center gap-2 mt-1">
                   <span className="text-xs text-[hsl(var(--muted))]">Gruppe:</span>
@@ -312,11 +311,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin })
               )}
             </div>
             <div className="flex gap-2">
-              <Button onClick={landing.goToCheckIn}>
+              <Button onClick={state.goToCheckIn}>
                 <UserCheck className="w-4 h-4" aria-hidden />
                 Åbn indtjekning
               </Button>
-              <Button variant="secondary" loading={landing.ending} onClick={landing.endSession}>
+              <Button variant="secondary" loading={state.ending} onClick={state.endSession}>
                 <Square className="w-4 h-4" aria-hidden />
                 Afslut træning
               </Button>

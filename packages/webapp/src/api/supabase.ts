@@ -300,7 +300,9 @@ export const createPlayer = async (player: Omit<Player, 'id' | 'createdAt'>): Pr
  * Updates a player in Supabase.
  */
 export const updatePlayer = async (id: string, updates: PlayerUpdateInput['patch']): Promise<Player> => {
+  // TODO: refine type - dynamic object construction for database update
   const updateData: any = {}
+  // TODO: refine type - need camelCase to snake_case mapping for database fields
   const updatesAny = updates as any
   if (updates.name !== undefined) updateData.name = updates.name
   if (updates.alias !== undefined) updateData.alias = updates.alias

@@ -91,10 +91,12 @@ function createSqlProxy() {
   }
   
   // Add unsafe method to the function object
+  // TODO: refine type - postgres client proxy requires dynamic method attachment
   ;(sqlFunction as any).unsafe = (query: string, params: any[] = []) => {
     return executeQuery(query, params)
   }
   
+  // TODO: refine type - postgres client proxy returns function with unsafe method
   return sqlFunction as any
 }
 
@@ -466,9 +468,11 @@ export const createPlayer = async (player: Omit<Player, 'id' | 'createdAt'>): Pr
  */
 export const updatePlayer = async (id: string, updates: PlayerUpdateInput['patch']): Promise<Player> => {
   const sql = getPostgres()
+  // TODO: refine type - need camelCase to snake_case mapping for database fields
   const updatesAny = updates as any
   
   // Build update object dynamically
+  // TODO: refine type - dynamic object construction for database update
   const updateData: any = {}
   
   if (updates.name !== undefined) updateData.name = updates.name

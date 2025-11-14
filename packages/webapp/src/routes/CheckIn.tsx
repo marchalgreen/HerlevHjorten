@@ -231,7 +231,7 @@ const CheckInPage = () => {
       // Exclude checked-in players from the main list
       if (checkedInIds.has(player.id)) return false
       // Default to selected group from landing, but include extra allowed cross-group players
-      const groups = ((player as any).trainingGroups as string[] | undefined) ?? []
+      const groups = player.trainingGroups ?? []
       const matchesGroup = defaultGroupId ? (groups.includes(defaultGroupId) || extraAllowedIds.has(player.id)) : true
       if (!matchesGroup) return false
       const matchesLetter =
@@ -449,9 +449,9 @@ const CheckInPage = () => {
                     if (!defaultGroupId) return
                     void (async () => {
                       // Permanently add to the active training group
-                      const existing = ((picked as any).trainingGroups as string[] | undefined) ?? []
+                      const existing = picked.trainingGroups ?? []
                       const next = Array.from(new Set([...existing, defaultGroupId]))
-                      await api.players.update({ id: picked.id, patch: { trainingGroups: next } } as any)
+                      await api.players.update({ id: picked.id, patch: { trainingGroups: next } })
                       await refetchPlayers()
                       // Close both modals; player will now be part of the group list
                       setSearchOpen(false)
