@@ -13,11 +13,10 @@ import { TableSearch } from '../components/ui/Table'
 import { PlayerCard, CheckedInPlayerCard, LetterFilters, AnimatedList } from '../components/checkin'
 import { useSession, useCheckIns, usePlayers } from '../hooks'
 import { formatDate } from '../lib/formatting'
-import { LETTER_FILTERS, UI_CONSTANTS } from '../constants'
+import { LETTER_FILTERS } from '../constants'
 import coachLandingApi from '../services/coachLandingApi'
 import CrossGroupSearchModal from '../components/checkin/CrossGroupSearchModal'
 import api from '../api'
-import { getPlayerUiVariant, setPlayerUiVariant } from '../lib/uiVariants'
 
 /**
  * Check-in page component.
@@ -47,7 +46,7 @@ const CheckInPage = () => {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<Array<{ id: string; displayName: string; groupId: string | null }>>([])
-  const [searching, setSearching] = useState(false)
+  const [_searching, setSearching] = useState(false)
   const [searchOpener, setSearchOpener] = useState<HTMLElement | null>(null)
   // Confirm action modal for picked cross-group player
   const [confirmPlayerId, setConfirmPlayerId] = useState<string | null>(null)
@@ -357,7 +356,7 @@ const CheckInPage = () => {
                 enableArrowNavigation={true}
                 displayScrollbar={true}
                 maxHeight="600px"
-                renderItem={(player, index, isSelected) => (
+                renderItem={(player, _index, _isSelected) => (
                   <PlayerCard
                     key={player.id}
                     player={player}

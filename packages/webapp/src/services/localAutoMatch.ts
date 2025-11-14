@@ -5,7 +5,7 @@
  * making it instant for optimistic UI updates.
  */
 
-import type { CheckedInPlayer, CourtWithPlayers, Player } from '@rundeklar/common'
+import type { CheckedInPlayer, CourtWithPlayers } from '@rundeklar/common'
 
 export interface LocalAutoMatchOptions {
   checkedIn: CheckedInPlayer[]
@@ -355,7 +355,7 @@ export const localAutoMatch = (options: LocalAutoMatchOptions): AutoMatchResult 
 
   // Add new assignments
   assignments.forEach(({ courtIdx, playerIds }) => {
-    const maxCapacity = extendedCapacityCourts.get(courtIdx) || 4
+    const _maxCapacity = extendedCapacityCourts.get(courtIdx) || 4
     const slots: CourtWithPlayers['slots'] = []
 
     if (playerIds.length === 2) {

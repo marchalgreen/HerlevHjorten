@@ -14,8 +14,8 @@ import { DataTable, TableSearch, type Column } from '../components/ui/Table'
 import { EditablePartnerCell, PlayerForm } from '../components/players'
 import { EditableTrainingGroupsCell } from '../components/players/EditableTrainingGroupsCell'
 import { usePlayers } from '../hooks'
-import { formatDate, formatPlayerName } from '../lib/formatting'
-import { PLAYER_CATEGORIES, UI_CONSTANTS } from '../constants'
+import { formatDate } from '../lib/formatting'
+import { PLAYER_CATEGORIES } from '../constants'
 
 /**
  * Players page component.
@@ -182,7 +182,7 @@ const PlayersPage = () => {
           })
         }
       setIsSheetOpen(false)
-      } catch (err) {
+      } catch {
         // Error is handled by the hook
       }
     },
@@ -461,7 +461,7 @@ const PlayersPage = () => {
         )
       }
     ],
-    [allPlayersForDropdown, refetch, toggleActive, updatePrimaryCategory, openEdit]
+    [allPlayersForDropdown, refetch, toggleActive, updatePrimaryCategory, openEdit, saveScrollPosition]
   )
 
   return (
