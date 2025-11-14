@@ -244,7 +244,7 @@ export const FullScreenMatchProgram: React.FC<FullScreenMatchProgramProps> = ({
                       <span className="inline-flex h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 items-center justify-center rounded-full bg-[hsl(var(--destructive)/.2)] text-[9px] sm:text-[10px] md:text-xs font-bold text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive)/.3)]">
                         !
                       </span>
-                      <span className="absolute left-1/2 top-full z-10 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-[hsl(var(--surface-2))] px-2 py-1 text-xs text-[hsl(var(--foreground))] shadow-lg ring-1 ring-[hsl(var(--line)/.12)] group-hover:block">
+                      <span className="absolute left-1/2 top-full z-10 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-[hsl(var(--surface-2)/.85)] backdrop-blur-md px-2 py-1 text-xs text-[hsl(var(--foreground))] shadow-lg ring-1 ring-[hsl(var(--line)/.12)] group-hover:block">
                         3+ spillere har allerede spillet sammen i en tidligere runde
                       </span>
                     </span>

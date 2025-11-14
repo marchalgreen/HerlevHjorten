@@ -5,6 +5,9 @@ import CheckInPage from './routes/CheckIn'
 import MatchProgramPage from './routes/MatchProgram'
 import StatisticsPage from './routes/Statistics'
 import LandingPage from './routes/LandingPage'
+import PrismTestPage from './routes/PrismTest'
+import Prism from './components/Prism'
+import GlassSurface from './components/GlassSurface'
 import LoginPage from './routes/auth/Login'
 import RegisterPage from './routes/auth/Register'
 import VerifyEmailPage from './routes/auth/VerifyEmail'
@@ -105,96 +108,112 @@ const Header = () => {
 
   return (
     <>
-      <header className="relative flex items-center justify-between ring-1 ring-[hsl(var(--line)/.12)] bg-[hsl(var(--surface)/.7)] px-3 sm:px-6 py-3 sm:py-4 backdrop-blur shadow-[inset_0_-1px_0_hsl(var(--line)/.08)]">
-        {/* Left section: Logo and title */}
-        <Link 
-          to={buildPath('/coach')}
-          className="flex items-center gap-2 sm:gap-3 flex-shrink-0 min-w-0 max-w-[calc(50%-120px)] lg:max-w-[200px] hover:opacity-80 transition-opacity cursor-pointer"
-          aria-label={`Gå til ${config.name} startside`}
+      <header className="relative z-10" style={{ willChange: 'transform' }}>
+        <GlassSurface
+          width="100%"
+          height="auto"
+          borderRadius={0}
+          backgroundOpacity={0.1}
+          blur={16}
+          brightness={100}
+          opacity={0.85}
+          saturation={1.5}
+          displace={0}
+          distortionScale={0}
+          className="relative"
+          style={{ minHeight: '64px', transform: 'translateZ(0)' }}
         >
-          <img 
-            src={logoPath} 
-            alt={config.name} 
-            className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 rounded-full ring-1 ring-[hsl(var(--line)/.2)] object-cover flex-shrink-0" 
-          />
-          <p className="text-xs sm:text-sm md:text-base lg:text-lg font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] whitespace-nowrap truncate">
-            {config.name}
-          </p>
-        </Link>
-
-        {/* Desktop: Horizontal navigation - absolutely positioned and centered */}
-        <nav 
-          aria-label="Primær navigation" 
-          className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 xl:gap-2 z-10"
-          style={{ 
-            width: 'max-content',
-            minWidth: 'max-content',
-            pointerEvents: 'auto'
-          }}
-        >
-          {navItems.map((item) => (
-            <SidebarItem key={item.to} to={item.to} icon={item.icon} label={item.label} />
-          ))}
-        </nav>
-
-        {/* Mobile/Tablet: Hamburger menu button */}
-        <button
-          ref={buttonRef}
-          type="button"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="lg:hidden p-2 rounded-md text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] outline-none"
-          aria-expanded={isMenuOpen}
-          aria-controls="mobile-menu"
-          aria-label={isMenuOpen ? 'Luk menu' : 'Åbn menu'}
-        >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-
-        {/* Desktop: Right section - User menu or login */}
-        <div className="hidden lg:flex items-center justify-end flex-shrink-0" style={{ width: '200px' }}>
-          {isAuthenticated ? (
-            <div className="relative" ref={userMenuRef}>
-              <button
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[hsl(var(--surface-2))] transition-colors"
-                aria-label="Bruger menu"
+          <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 w-full">
+            {/* Left section: Logo */}
+            <div className="flex items-center flex-shrink-0">
+              <Link 
+                to={buildPath('/coach')}
+                className="flex items-center flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
+                aria-label={`Gå til ${config.name} startside`}
               >
-                <User size={20} />
-                <span className="text-sm">{club?.email}</span>
-              </button>
-              {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-[hsl(var(--surface))] border border-[hsl(var(--line))] rounded-md shadow-lg z-50">
-                  <Link
-                    to={buildPath('/account')}
-                    className="block px-4 py-2 hover:bg-[hsl(var(--surface-2))] text-sm"
-                    onClick={() => setIsUserMenuOpen(false)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <User size={16} />
-                      Kontoindstillinger
-                    </div>
-                  </Link>
+                <img 
+                  src={logoPath} 
+                  alt={config.name} 
+                  className="h-10 sm:h-12 flex-shrink-0 object-contain" 
+                />
+              </Link>
+            </div>
+
+            {/* Desktop: Horizontal navigation - absolutely positioned and centered */}
+            <nav 
+              aria-label="Primær navigation" 
+              className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 xl:gap-2 z-10"
+              style={{ 
+                width: 'max-content',
+                minWidth: 'max-content',
+                pointerEvents: 'auto'
+              }}
+            >
+              {navItems.map((item) => (
+                <SidebarItem key={item.to} to={item.to} icon={item.icon} label={item.label} />
+              ))}
+            </nav>
+
+            {/* Mobile/Tablet: Hamburger menu button */}
+            <button
+              ref={buttonRef}
+              type="button"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="lg:hidden p-2 rounded-md text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] outline-none flex-shrink-0"
+              aria-expanded={isMenuOpen}
+              aria-controls="mobile-menu"
+              aria-label={isMenuOpen ? 'Luk menu' : 'Åbn menu'}
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+
+            {/* Desktop: Right section - User menu or login */}
+            <div className="hidden lg:flex items-center justify-end flex-shrink-0" style={{ width: '200px', minWidth: '200px', flexBasis: '200px' }}>
+              {isAuthenticated ? (
+                <div className="relative" ref={userMenuRef}>
                   <button
-                    onClick={() => {
-                      logout()
-                      setIsUserMenuOpen(false)
-                    }}
-                    className="w-full text-left px-4 py-2 hover:bg-[hsl(var(--surface-2))] text-sm text-red-600 dark:text-red-400"
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[hsl(var(--surface-2))] transition-colors whitespace-nowrap"
+                    aria-label="Bruger menu"
                   >
-                    <div className="flex items-center gap-2">
-                      <LogOut size={16} />
-                      Log ud
-                    </div>
+                    <User size={20} />
+                    <span className="text-sm truncate max-w-[120px]">{club?.email}</span>
                   </button>
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-[hsl(var(--surface))] border border-[hsl(var(--line))] rounded-md shadow-lg z-50">
+                      <Link
+                        to={buildPath('/account')}
+                        className="block px-4 py-2 hover:bg-[hsl(var(--surface-2))] text-sm"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <User size={16} />
+                          Kontoindstillinger
+                        </div>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          logout()
+                          setIsUserMenuOpen(false)
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-[hsl(var(--surface-2))] text-sm text-red-600 dark:text-red-400"
+                      >
+                        <div className="flex items-center gap-2">
+                          <LogOut size={16} />
+                          Log ud
+                        </div>
+                      </button>
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <Link to={buildPath('/login')} className="flex-shrink-0">
+                  <Button size="sm">Log ind</Button>
+                </Link>
               )}
             </div>
-          ) : (
-            <Link to={buildPath('/login')}>
-              <Button size="sm">Log ind</Button>
-            </Link>
-          )}
-        </div>
+          </div>
+        </GlassSurface>
       </header>
 
       {/* Mobile/Tablet: Slide-out menu */}
@@ -264,14 +283,38 @@ const AppInner = () => {
 
   // Check if current route is an auth route (should hide header)
   const isAuthRoute = /^\/([^/]+\/)?(login|register|verify-email|forgot-password|reset-password)(\/|$)/.test(actualPath)
+  
+  // Check if current route is a key page (should show Prism background)
+  const isKeyPage = /^\/([^/]+\/)?(coach|check-in|match-program|players|statistics|prism-test)(\/|$)/.test(actualPath)
+  
+  // Feature flag: Set to false to disable Prism animated background
+  const ENABLE_PRISM_BACKGROUND = true
 
   return (
     <TenantProvider tenantId={tenantId}>
       <AuthProvider>
         <TenantTitleUpdater />
-        <div className="flex min-h-screen flex-col text-[hsl(var(--foreground))] overflow-x-hidden max-w-full">
+        <div className="flex min-h-screen flex-col text-[hsl(var(--foreground))] overflow-x-hidden max-w-full relative">
+          {/* Full-screen Prism background for key pages */}
+          {ENABLE_PRISM_BACKGROUND && isKeyPage && (
+            <div className="fixed inset-0 -z-10 opacity-50">
+              <Prism
+                animationType="3drotate"
+                timeScale={0.4}
+                height={3.5}
+                baseWidth={5.5}
+                scale={5}
+                hueShift={0}
+                colorFrequency={0.6}
+                noise={0}
+                glow={0.6}
+                bloom={0.7}
+                transparent={true}
+              />
+            </div>
+          )}
           {!isAuthRoute && <Header />}
-          <main className="flex-1 overflow-y-auto overflow-x-hidden max-w-full">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden max-w-full relative z-0">
             <div className="flex w-full flex-col gap-4 sm:gap-6 px-4 sm:px-6 pb-6 sm:pb-10 pt-4 sm:pt-6 md:px-8 lg:px-12 max-w-full overflow-x-hidden">
               <Routes>
                 {/* Auth routes */}
@@ -299,6 +342,7 @@ const AppInner = () => {
                 <Route path="/check-in" element={<CheckInPage />} />
                 <Route path="/match-program" element={<MatchProgramPage />} />
                 <Route path="/statistics" element={<StatisticsPage />} />
+                <Route path="/prism-test" element={<PrismTestPage />} />
                 
                 {/* Tenant-prefixed routes */}
                 <Route path="/:tenantId/coach" element={<LandingPage onRedirectToCheckin={() => {

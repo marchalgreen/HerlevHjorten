@@ -120,7 +120,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         'border-hair flex min-h-[64px] items-center justify-between gap-3 rounded-lg px-2 py-2 sm:px-3 sm:py-3',
         'transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none',
         'cursor-pointer hover:shadow-sm ring-0 hover:ring-2 hover:ring-[hsl(var(--accent)/.15)]',
-        'bg-[hsl(var(--surface-2))]',
+        'bg-[hsl(var(--surface-2)/.7)] backdrop-blur-sm',
         'avatar-rail',
         isJustCheckedIn && 'ring-2 ring-[hsl(206_88%_60%)] scale-[1.02] shadow-lg',
         isAnimatingOut && 'opacity-0 scale-95 -translate-x-4 pointer-events-none',

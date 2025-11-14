@@ -297,7 +297,7 @@ const CheckInPage = () => {
         <PageCard className="space-y-2 flex flex-col">
           <header className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">Tjekket ind</h3>
-            <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-xs font-medium">
+            <span className="rounded-full bg-[hsl(var(--surface-2)/.7)] backdrop-blur-sm px-2 py-0.5 text-xs font-medium">
               {checkedIn.length}
             </span>
           </header>

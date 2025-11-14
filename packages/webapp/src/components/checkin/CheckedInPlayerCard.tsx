@@ -98,7 +98,7 @@ export const CheckedInPlayerCard: React.FC<CheckedInPlayerCardProps> = ({
       className={clsx(
         'flex items-center justify-between gap-3 rounded-md border-hair px-2 py-2 sm:px-3 sm:py-3 min-h-[64px]',
         'hover:shadow-sm transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)]',
-        'motion-reduce:transition-none bg-[hsl(var(--success)/.06)]',
+        'motion-reduce:transition-none bg-[hsl(var(--success)/.08)] backdrop-blur-sm',
         'avatar-rail',
         isAnimatingOut && 'opacity-0 scale-95 translate-x-4 pointer-events-none',
         isAnimatingIn && 'opacity-0 scale-95 -translate-x-4'
@@ -118,7 +118,7 @@ export const CheckedInPlayerCard: React.FC<CheckedInPlayerCardProps> = ({
               {formatPlayerCardName(player.name, player.alias)}
             </p>
             {isOneRoundOnly && (
-              <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-2 py-1 text-xs whitespace-nowrap">
+              <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2)/.7)] backdrop-blur-sm text-[hsl(var(--muted))] border-hair px-2 py-1 text-xs whitespace-nowrap">
                 Kun 1 runde
               </span>
             )}
