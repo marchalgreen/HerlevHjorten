@@ -43,7 +43,8 @@ test.describe('Tenant Routing', () => {
       const menuButton = page.getByRole('button', { name: /åbn menu|menu/i })
       if (await menuButton.isVisible().catch(() => false)) {
         await menuButton.click()
-        await page.waitForTimeout(300) // Wait for menu animation
+        // Wait for menu to be visible instead of fixed timeout
+        await checkInLink.waitFor({ state: 'visible', timeout: 2000 }).catch(() => {})
       }
     }
     
