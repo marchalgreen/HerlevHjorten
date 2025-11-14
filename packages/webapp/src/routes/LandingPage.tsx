@@ -295,6 +295,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin })
   return (
     <div className="p-4 sm:p-6">
       <WelcomeHeader coachName={coach?.displayName} />
+      
+      {/* Big button for Christian */}
+      <div className="mb-6 sm:mb-8 flex justify-center">
+        <Button 
+          size="lg" 
+          className="text-2xl sm:text-3xl px-8 sm:px-12 py-4 sm:py-6 font-bold"
+          onClick={() => {
+            // Optional: Add action here if needed
+            console.log('HEJ CHRISTIAN!')
+          }}
+        >
+          HEJ CHRISTIAN
+        </Button>
+      </div>
 
       {landing.activeSession ? (
         <PageCard className="mb-4">
