@@ -20,5 +20,6 @@
     },
     "resolveJsonModule": true
   },
-  "include": ["src", "scripts", "vite.config.ts", "tailwind.config.ts", "postcss.config.cjs"]
+  "include": ["src", "vite.config.ts", "tailwind.config.ts", "postcss.config.cjs"],
+  "exclude": ["scripts"]
 }
