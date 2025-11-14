@@ -1,4 +1,4 @@
-import type { TenantConfig } from '@herlev-hjorten/common'
+import type { TenantConfig } from '@rundeklar/common'
 
 /**
  * Extracts tenant ID from URL path.

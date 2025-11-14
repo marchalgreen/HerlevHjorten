@@ -15,8 +15,8 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@herlev-hjorten/common": ["../common/dist/index.d.ts", "../common/src/index.ts"],
-      "@herlev-hjorten/webapp/*": ["src/*"]
+      "@rundeklar/common": ["../common/dist/index.d.ts", "../common/src/index.ts"],
+      "@rundeklar/webapp/*": ["src/*"]
     },
     "resolveJsonModule": true
   },

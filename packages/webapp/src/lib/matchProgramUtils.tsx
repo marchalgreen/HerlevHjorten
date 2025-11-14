@@ -5,7 +5,7 @@
  */
 
 import React from 'react'
-import type { CourtWithPlayers, Player } from '@herlev-hjorten/common'
+import type { CourtWithPlayers, Player } from '@rundeklar/common'
 
 /**
  * Gets category letter (S/D/B) for data-cat attribute.

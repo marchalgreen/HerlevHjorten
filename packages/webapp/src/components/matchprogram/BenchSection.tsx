@@ -5,7 +5,7 @@
  */
 
 import React from 'react'
-import type { CheckedInPlayer } from '@herlev-hjorten/common'
+import type { CheckedInPlayer } from '@rundeklar/common'
 import { PageCard } from '../ui'
 import { getCategoryLetter, getCategoryBadge, getPlayerSlotBgColor } from '../../lib/matchProgramUtils'
 import { formatPlayerCardName } from '../../lib/formatting'

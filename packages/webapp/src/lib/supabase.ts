@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { TenantConfig } from '@herlev-hjorten/common'
+import type { TenantConfig } from '@rundeklar/common'
 
 /**
  * Cache of Supabase clients by tenant ID to avoid creating duplicate instances.

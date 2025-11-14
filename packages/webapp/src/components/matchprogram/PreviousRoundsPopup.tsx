@@ -5,7 +5,7 @@
  */
 
 import React, { useMemo } from 'react'
-import type { CourtWithPlayers } from '@herlev-hjorten/common'
+import type { CourtWithPlayers } from '@rundeklar/common'
 import { PageCard } from '../ui'
 import { MATCH_CONSTANTS } from '../../constants'
 import { getCategoryLetter, getPlayerSlotBgColor } from '../../lib/matchProgramUtils'

@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
-import type { Player, PlayerCategory, PlayerGender } from '@herlev-hjorten/common'
+import type { Player, PlayerCategory, PlayerGender } from '@rundeklar/common'
 import { Button } from '../ui'
 import { formatPlayerName } from '../../lib/formatting'
 import { PLAYER_CATEGORIES, PLAYER_GENDERS } from '../../constants'

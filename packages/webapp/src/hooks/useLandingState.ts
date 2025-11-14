@@ -4,7 +4,7 @@ import api from '../services/coachLandingApi'
 import type { Group, PlayerLite } from '../routes/landing/types'
 import { useToast } from '../components/ui/Toast'
 import { loadPersistedState } from '../lib/matchProgramPersistence'
-import type { CourtWithPlayers } from '@herlev-hjorten/common'
+import type { CourtWithPlayers } from '@rundeklar/common'
 
 export type UseLandingStateOptions = {
   coach?: { id: string; displayName?: string } | null

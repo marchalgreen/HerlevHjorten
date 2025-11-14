@@ -6,7 +6,7 @@
  */
 
 import { VALIDATION } from '../constants'
-import type { PlayerGender, PlayerCategory } from '@herlev-hjorten/common'
+import type { PlayerGender, PlayerCategory } from '@rundeklar/common'
 
 /**
  * Validates a player name.

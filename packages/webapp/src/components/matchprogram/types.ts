@@ -2,7 +2,7 @@
  * Shared types for match program components.
  */
 
-import type { Player } from '@herlev-hjorten/common'
+import type { Player } from '@rundeklar/common'
 import type React from 'react'
 
 /**

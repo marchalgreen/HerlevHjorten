@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import type { CourtWithPlayers, Player } from '@herlev-hjorten/common'
+import type { CourtWithPlayers, Player } from '@rundeklar/common'
 import { getCategoryLetter, getPlayerSlotBgColor } from '../../lib/matchProgramUtils'
 import { formatPlayerCardName } from '../../lib/formatting'
 import { InitialsAvatar, getSeedHue } from '../ui/PlayerAvatar'

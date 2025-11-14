@@ -6,7 +6,7 @@
  */
 
 import React from 'react'
-import type { Player } from '@herlev-hjorten/common'
+import type { Player } from '@rundeklar/common'
 import { clsx } from 'clsx'
 import { Button } from '../ui'
 import { InitialsAvatar, getSeedHue } from '../ui/PlayerAvatar'

@@ -1,5 +1,5 @@
 {
-  "name": "@herlev-hjorten/main",
+  "name": "@rundeklar/main",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/main.cjs",

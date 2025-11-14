@@ -5,7 +5,7 @@
  */
 
 import React from 'react'
-import type { TrainingSession } from '@herlev-hjorten/common'
+import type { TrainingSession } from '@rundeklar/common'
 // Variant selector removed — only option A is kept
 
 interface MatchProgramHeaderProps {

@@ -1,6 +1,6 @@
 import api from '../api'
 import type { Group, PlayerLite, ActiveSession, StartSessionPayload } from '../routes/landing/types'
-import type { CourtWithPlayers } from '@herlev-hjorten/common'
+import type { CourtWithPlayers } from '@rundeklar/common'
 
 /**
  * Thin adapter matching the landing page contract.

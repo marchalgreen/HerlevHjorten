@@ -8,7 +8,7 @@ import type {
   Match,
   MatchPlayer,
   StatisticsSnapshot
-} from '@herlev-hjorten/common'
+} from '@rundeklar/common'
 // Browser-compatible Postgres client using Vercel API proxy
 // Since postgres.js doesn't work in browsers, we proxy queries through Vercel serverless functions
 

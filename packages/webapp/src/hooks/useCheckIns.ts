@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import type { CheckedInPlayer, Player } from '@herlev-hjorten/common'
+import type { CheckedInPlayer, Player } from '@rundeklar/common'
 import api from '../api'
 import { normalizeError } from '../lib/errors'
 import { useToast } from '../components/ui/Toast'

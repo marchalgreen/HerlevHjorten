@@ -11,7 +11,7 @@ import type {
   PlayerListFilters,
   PlayerUpdateInput,
   TrainingSession
-} from '@herlev-hjorten/common'
+} from '@rundeklar/common'
 import {
   createBackup,
   restoreFromBackup,

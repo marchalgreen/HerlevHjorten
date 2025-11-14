@@ -6,7 +6,7 @@ import type {
   Match,
   MatchPlayer,
   StatisticsSnapshot
-} from '@herlev-hjorten/common'
+} from '@rundeklar/common'
 
 /** LocalStorage key for database state. */
 const STORAGE_KEY = 'herlev-hjorten-db-v2'

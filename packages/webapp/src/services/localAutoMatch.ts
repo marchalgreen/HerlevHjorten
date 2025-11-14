@@ -5,7 +5,7 @@
  * making it instant for optimistic UI updates.
  */
 
-import type { CheckedInPlayer, CourtWithPlayers, Player } from '@herlev-hjorten/common'
+import type { CheckedInPlayer, CourtWithPlayers, Player } from '@rundeklar/common'
 
 export interface LocalAutoMatchOptions {
   checkedIn: CheckedInPlayer[]

@@ -7,7 +7,7 @@
  */
 
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { Player, PlayerCategory, PlayerGender } from '@herlev-hjorten/common'
+import type { Player, PlayerCategory, PlayerGender } from '@rundeklar/common'
 import { Pencil, Plus, Trash2, UsersRound } from 'lucide-react'
 import { Badge, Button, EmptyState, PageCard } from '../components/ui'
 import { DataTable, TableSearch, type Column } from '../components/ui/Table'

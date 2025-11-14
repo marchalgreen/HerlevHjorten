@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
-import type { CheckedInPlayer } from '@herlev-hjorten/common'
+import type { CheckedInPlayer } from '@rundeklar/common'
 import { clsx } from 'clsx'
 import { Button } from '../ui'
 import { formatCategoryLetter, formatPlayerCardName } from '../../lib/formatting'

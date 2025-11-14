@@ -5,7 +5,7 @@ import type {
   Match,
   MatchPlayer,
   CheckIn
-} from '@herlev-hjorten/common'
+} from '@rundeklar/common'
 import { createId, getStateCopy, getStatisticsSnapshots, createStatisticsSnapshot, createSession, createCheckIn, getMatches, getMatchPlayers, invalidateCache } from './postgres'
 
 /**

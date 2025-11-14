@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import type { Player, PlayerStatistics } from '@herlev-hjorten/common'
+import type { Player, PlayerStatistics } from '@rundeklar/common'
 import { BarChart3, Users, Target, X, Search } from 'lucide-react'
 import api from '../api'
 import statsApi from '../api/stats'

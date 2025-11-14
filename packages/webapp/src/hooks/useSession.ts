@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import type { TrainingSession } from '@herlev-hjorten/common'
+import type { TrainingSession } from '@rundeklar/common'
 import api from '../api'
 import { normalizeError } from '../lib/errors'
 import { useToast } from '../components/ui/Toast'

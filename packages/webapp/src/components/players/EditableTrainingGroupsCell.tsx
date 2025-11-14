@@ -4,7 +4,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Player } from '@herlev-hjorten/common'
+import type { Player } from '@rundeklar/common'
 import api from '../../api'
 import { normalizeError } from '../../lib/errors'
 import { useToast } from '../ui/Toast'

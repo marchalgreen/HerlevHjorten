@@ -6,7 +6,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import type { Player } from '@herlev-hjorten/common'
+import type { Player } from '@rundeklar/common'
 import { UsersRound } from 'lucide-react'
 import { PageCard, EmptyState, Button } from '../components/ui'
 import { TableSearch } from '../components/ui/Table'

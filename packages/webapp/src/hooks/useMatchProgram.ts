@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { CheckedInPlayer, CourtWithPlayers, Player, TrainingSession } from '@herlev-hjorten/common'
+import type { CheckedInPlayer, CourtWithPlayers, Player, TrainingSession } from '@rundeklar/common'
 import api from '../api'
 import { useToast } from '../components/ui/Toast'
 import {

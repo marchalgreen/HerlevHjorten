@@ -8,7 +8,7 @@ import type {
   Match,
   MatchPlayer,
   StatisticsSnapshot
-} from '@herlev-hjorten/common'
+} from '@rundeklar/common'
 import { getCurrentTenantSupabaseClient } from '../lib/supabase'
 
 // Get the current tenant Supabase client

@@ -4,7 +4,7 @@
  * Handles player filtering, duplicate detection, and court management.
  */
 
-import type { CheckedInPlayer, CourtWithPlayers, Player } from '@herlev-hjorten/common'
+import type { CheckedInPlayer, CourtWithPlayers, Player } from '@rundeklar/common'
 import { sortPlayersForDisplay, ensureAllCourtsPresent } from '../lib/matchProgramUtils'
 
 /**

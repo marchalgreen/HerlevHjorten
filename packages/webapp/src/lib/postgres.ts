@@ -1,7 +1,7 @@
 // Note: postgres.js doesn't work in browsers - it's Node.js only
 // We use an API proxy approach: browser calls Vercel API routes, which use postgres.js
 // This type is just for compatibility - actual queries go through API routes
-import type { TenantConfig } from '@herlev-hjorten/common'
+import type { TenantConfig } from '@rundeklar/common'
 
 export type PostgresClient = {
   // Placeholder type - actual implementation is in api/postgres.ts

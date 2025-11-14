@@ -51,12 +51,12 @@ importers:
 
   packages/webapp:
     dependencies:
-      '@herlev-hjorten/common':
-        specifier: workspace:*
-        version: link:../common
       '@node-rs/argon2':
         specifier: ^2.0.2
         version: 2.0.2
+      '@rundeklar/common':
+        specifier: workspace:*
+        version: link:../common
       '@supabase/supabase-js':
         specifier: ^2.79.0
         version: 2.79.0

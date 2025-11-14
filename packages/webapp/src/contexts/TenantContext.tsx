@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from 'react'
-import type { TenantConfig } from '@herlev-hjorten/common'
+import type { TenantConfig } from '@rundeklar/common'
 import type { PostgresClient } from '../lib/postgres'
 import { loadTenantConfig, getCurrentTenantId, buildTenantPath } from '../lib/tenant'
 import { createTenantPostgresClient, setCurrentTenantPostgresClient, setCurrentTenantConfig } from '../lib/postgres'

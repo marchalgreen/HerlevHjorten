@@ -5,7 +5,7 @@
  * for persistence across page reloads and navigation.
  */
 
-import type { CourtWithPlayers } from '@herlev-hjorten/common'
+import type { CourtWithPlayers } from '@rundeklar/common'
 
 /** LocalStorage key for Match Program state persistence. */
 const MATCH_PROGRAM_STORAGE_KEY = 'herlev-hjorten-match-program-state'

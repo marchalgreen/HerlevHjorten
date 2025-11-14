@@ -1,4 +1,4 @@
-# Herlev/Hjorten – Webapp
+# Rundeklar – Webapp
 
 En letvægts webapplikation til den lokale badmintonklub. Alt kører i browseren og gemmes lokalt i IndexedDB; ingen server eller desktop-wrapper er nødvendig.
 
