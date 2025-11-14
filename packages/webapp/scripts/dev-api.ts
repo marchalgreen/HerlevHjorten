@@ -93,7 +93,7 @@ function getPostgresClient() {
 }
 
 // Wrapper to convert Vercel handler to Express handler
-const wrapHandler = (handler: (req: VercelRequest, res: VercelResponse) => Promise<void>) => {
+const wrapHandler = (handler: (req: VercelRequest, res: VercelResponse) => Promise<VercelResponse | void>) => {
   return async (req: express.Request, res: express.Response) => {
     // Convert Express req/res to Vercel format
     const vercelReq = req as unknown as VercelRequest

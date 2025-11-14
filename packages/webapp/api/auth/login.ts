@@ -30,6 +30,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const body = loginSchema.parse(req.body)
     const ipAddress = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress
 
+    const sql = getPostgresClient(getDatabaseUrl())
+
     // Check rate limiting
     const rateLimit = await checkLoginAttempts(sql, body.email, ipAddress)
     if (!rateLimit.allowed) {
@@ -38,8 +40,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         lockoutUntil: rateLimit.lockoutUntil
       })
     }
-
-    const sql = getPostgresClient(getDatabaseUrl())
 
     // Find club
     const clubs = await sql`
