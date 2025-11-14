@@ -154,16 +154,19 @@ app.post('/api/db', async (req, res) => {
 
     return res.status(200).json({ data: result })
   } catch (error) {
-    console.error('Database error:', error)
+    console.error('❌ Database error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Database query failed'
+    const errorStack = error instanceof Error ? error.stack : undefined
     console.error('Error details:', {
       message: errorMessage,
-      stack: error instanceof Error ? error.stack : undefined,
-      query: req.body.query?.substring(0, 100),
+      stack: errorStack,
+      query: req.body.query?.substring(0, 200),
+      params: req.body.params?.slice(0, 5),
       tenantId: req.body.tenantId
     })
     return res.status(500).json({ 
-      error: errorMessage 
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? errorStack : undefined
     })
   }
 })

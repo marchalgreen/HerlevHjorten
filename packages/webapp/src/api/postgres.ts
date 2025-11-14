@@ -42,9 +42,11 @@ async function executeQuery(query: string, params: any[] = []): Promise<any[]> {
   if (!response.ok) {
     const errorText = await response.text()
     let errorMessage = 'Database query failed'
+    let errorDetails: any = null
     try {
       const errorJson = JSON.parse(errorText)
       errorMessage = errorJson.error || errorMessage
+      errorDetails = errorJson
     } catch {
       errorMessage = errorText || errorMessage
     }
@@ -52,7 +54,9 @@ async function executeQuery(query: string, params: any[] = []): Promise<any[]> {
       status: response.status,
       statusText: response.statusText,
       error: errorMessage,
-      query: query.substring(0, 100) + '...'
+      errorDetails,
+      query: query.substring(0, 200) + (query.length > 200 ? '...' : ''),
+      params: params.slice(0, 5) // Show first 5 params
     })
     throw new Error(errorMessage)
   }
