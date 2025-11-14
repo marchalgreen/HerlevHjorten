@@ -23,6 +23,7 @@
 release/
 packages/common/dist/
 packages/webapp/dist/
+dist/
 
 # misc
 .DS_Store
