@@ -54,7 +54,7 @@ export async function codexRequest(
 ): Promise<CodexResponse> {
   const config = getCodexConfig()
   
-  const messages = []
+  const messages: Array<{ role: string; content: string }> = []
   
   if (options.systemPrompt) {
     messages.push({

@@ -45,7 +45,7 @@ export async function requireAuth(req: AuthenticatedRequest): Promise<void> {
   }
 
   // Verify club exists and is active
-  const sql = getCurrentTenantPostgresClient()
+  const sql = getCurrentTenantPostgresClient() as any
   if (!sql) {
     throw new Error('Database client not available')
   }

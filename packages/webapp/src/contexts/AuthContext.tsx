@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!refresh) {
       setClub(null)
       clearTokens()
-      return false
+      return
     }
 
     try {
@@ -77,18 +77,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (response.ok) {
         const data = await response.json()
         localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken)
-        return true
       } else {
         // Refresh failed, logout
         setClub(null)
         clearTokens()
-        return false
       }
     } catch (error) {
       console.error('Token refresh failed:', error)
       setClub(null)
       clearTokens()
-      return false
     }
   }, [getRefreshToken, getApiUrl, clearTokens])
 
@@ -113,10 +110,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setClub(data.club)
       } else {
         // Token invalid, try refresh
-        const refreshed = await refreshToken()
-        if (refreshed) {
-          // Retry with new token
-          const newToken = getAccessToken()
+        await refreshToken()
+        // Retry with new token
+        const newToken = getAccessToken()
+        if (newToken) {
           const retryResponse = await fetch(getApiUrl('/me'), {
             headers: {
               'Authorization': `Bearer ${newToken}`

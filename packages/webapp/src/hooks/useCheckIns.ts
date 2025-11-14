@@ -128,7 +128,7 @@ export const useCheckIns = (sessionId: string | null): UseCheckInsReturn => {
         active: true,
         checkInAt: new Date().toISOString(),
         maxRounds: maxRounds ?? null
-      }
+      } as CheckedInPlayer
       
       return [...prev, checkedInPlayer]
     })
