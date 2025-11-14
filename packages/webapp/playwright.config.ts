@@ -6,14 +6,27 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './tests/e2e',
   
+  /* Test timeout - reduced for faster CI feedback */
+  timeout: 15000, // 15 seconds per test
+  
+  /* Expect timeout - how long to wait for assertions */
+  expect: {
+    timeout: 5000, // 5 seconds for assertions
+  },
+  
+  /* Action timeout - how long to wait for actions like click, fill */
+  use: {
+    actionTimeout: 10000, // 10 seconds for actions
+  },
+  
   /* Run tests in files in parallel */
   fullyParallel: true,
   
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  /* Retry on CI only - reduced from 2 to 1 for faster feedback */
+  retries: process.env.CI ? 1 : 0,
   
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
@@ -28,6 +41,9 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: 'http://127.0.0.1:5173',
+    
+    /* Navigation timeout - how long to wait for page loads */
+    navigationTimeout: 10000, // 10 seconds
     
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -76,7 +92,7 @@ export default defineConfig({
     command: 'pnpm dev',
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+    timeout: 60 * 1000, // Reduced from 120s to 60s
   },
 })
 
