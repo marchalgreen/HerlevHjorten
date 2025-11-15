@@ -93,21 +93,9 @@ export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
           <h1 className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))]">Runder</h1>
           <p className="text-xs sm:text-sm md:text-base text-[hsl(var(--muted))] mt-1">
             {session ? (
-              <>
-                <span className="whitespace-nowrap">Aktiv træning: {new Date(session.date).toLocaleDateString('da-DK')}</span>
-                {checkedInCount > 0 && (
-                  <>
-                    <span className="hidden md:inline"> <span className="font-bold text-[hsl(var(--foreground))]">•</span> </span>
-                    <span className="block md:inline mt-1 md:mt-0">
-                      {' '}Indtjekkede spillere: {checkedInCount}
-                      <span className="hidden md:inline"> <span className="font-bold text-[hsl(var(--foreground))]">•</span> </span>
-                      <span className="block md:inline mt-1 md:mt-0"> {genderBreakdown.male} Herrer & {genderBreakdown.female} Damer</span>
-                    </span>
-                  </>
-                )}
-              </>
+              'Fordel spillere på baner og sæt runder op.'
             ) : (
-              'Start en træning for at begynde at matche spillere'
+              'Start en træning for at begynde at matche spillere.'
             )}
           </p>
           {error && <span className="mt-2 inline-block text-sm text-[hsl(var(--destructive))]">{error}</span>}

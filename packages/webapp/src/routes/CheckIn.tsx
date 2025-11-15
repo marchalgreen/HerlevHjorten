@@ -243,13 +243,19 @@ const CheckInPage = () => {
     })
   }, [players, search, filterLetter, checkedInIds, defaultGroupId, extraAllowedIds])
 
-  /** Sorted checked-in players by first name. */
-  const sortedCheckedIn = useMemo(() => {
-    return [...checkedIn].sort((a, b) => {
+  /** Sorted checked-in players by first name, grouped by gender. */
+  const sortedCheckedInByGender = useMemo(() => {
+    const sorted = [...checkedIn].sort((a, b) => {
       const firstNameA = a.name.split(' ')[0] || ''
       const firstNameB = b.name.split(' ')[0] || ''
       return firstNameA.localeCompare(firstNameB, 'da')
     })
+    
+    const femalePlayers = sorted.filter((p) => p.gender === 'Dame')
+    const malePlayers = sorted.filter((p) => p.gender === 'Herre')
+    const playersWithoutGender = sorted.filter((p) => !p.gender || (p.gender !== 'Herre' && p.gender !== 'Dame'))
+    
+    return { femalePlayers, malePlayers, playersWithoutGender }
   }, [checkedIn])
 
   if (loading) {
@@ -277,16 +283,7 @@ const CheckInPage = () => {
           <div className="flex-1 min-w-0">
             <h1 className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))]">Indtjekning</h1>
             <p className="text-xs sm:text-sm md:text-base text-[hsl(var(--muted))] mt-1">
-            Aktiv træning: {formatDate(session.date, false)}
-            {checkedIn.length > 0 && (
-              <>
-                {' '}
-                <span className="font-bold text-[hsl(var(--foreground))]">•</span> Indtjekkede spillere:{' '}
-                {checkedIn.length}{' '}
-                <span className="font-bold text-[hsl(var(--foreground))]">•</span> {genderBreakdown.male} Herrer &{' '}
-                {genderBreakdown.female} Damer
-              </>
-            )}
+              Tjek spillere ind til træningen.
             </p>
           </div>
         </div>
@@ -301,19 +298,79 @@ const CheckInPage = () => {
               {checkedIn.length}
             </span>
           </header>
-          <div className="flex flex-col space-y-1.5 sm:space-y-2 pr-1 sm:pr-2">
+          <div className="flex flex-col space-y-1.5 sm:space-y-2 pr-1 sm:pr-2 max-h-[calc(100vh-440px)] sm:max-h-[calc(100vh-400px)] xl:max-h-[calc(100vh-360px)] overflow-y-auto scrollbar-thin">
             {checkedIn.length === 0 ? (
               <p className="text-xs text-[hsl(var(--muted))] text-center py-4">Ingen spillere tjekket ind endnu.</p>
             ) : (
-              sortedCheckedIn.map((player) => (
-                <CheckedInPlayerCard
-                  key={player.id}
-                  player={player}
-                  isAnimatingOut={animatingOut.has(player.id)}
-                  isAnimatingIn={animatingIn.has(player.id)}
-                  onCheckOut={handleCheckOut}
-                />
-              ))
+              <>
+                {/* Female players section */}
+                {sortedCheckedInByGender.femalePlayers.length > 0 && (
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <div className="flex items-center gap-2 py-1">
+                      <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+                      <span className="text-xs sm:text-sm font-semibold text-[hsl(var(--muted))] uppercase tracking-wide px-2">
+                        Damer ({sortedCheckedInByGender.femalePlayers.length})
+                      </span>
+                      <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+                    </div>
+                    {sortedCheckedInByGender.femalePlayers.map((player) => (
+                      <CheckedInPlayerCard
+                        key={player.id}
+                        player={player}
+                        isAnimatingOut={animatingOut.has(player.id)}
+                        isAnimatingIn={animatingIn.has(player.id)}
+                        onCheckOut={handleCheckOut}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Male players section */}
+                {sortedCheckedInByGender.malePlayers.length > 0 && (
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <div className="flex items-center gap-2 py-1">
+                      <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+                      <span className="text-xs sm:text-sm font-semibold text-[hsl(var(--muted))] uppercase tracking-wide px-2">
+                        Herrer ({sortedCheckedInByGender.malePlayers.length})
+                      </span>
+                      <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+                    </div>
+                    {sortedCheckedInByGender.malePlayers.map((player) => (
+                      <CheckedInPlayerCard
+                        key={player.id}
+                        player={player}
+                        isAnimatingOut={animatingOut.has(player.id)}
+                        isAnimatingIn={animatingIn.has(player.id)}
+                        onCheckOut={handleCheckOut}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Players without gender (fallback) */}
+                {sortedCheckedInByGender.playersWithoutGender.length > 0 && (
+                  <div className="space-y-1.5 sm:space-y-2">
+                    {(sortedCheckedInByGender.malePlayers.length > 0 || sortedCheckedInByGender.femalePlayers.length > 0) && (
+                      <div className="flex items-center gap-2 py-1">
+                        <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+                        <span className="text-xs sm:text-sm font-semibold text-[hsl(var(--muted))] uppercase tracking-wide px-2">
+                          Uden køn ({sortedCheckedInByGender.playersWithoutGender.length})
+                        </span>
+                        <div className="flex-1 h-px bg-[hsl(var(--line)/.2)]"></div>
+                      </div>
+                    )}
+                    {sortedCheckedInByGender.playersWithoutGender.map((player) => (
+                      <CheckedInPlayerCard
+                        key={player.id}
+                        player={player}
+                        isAnimatingOut={animatingOut.has(player.id)}
+                        isAnimatingIn={animatingIn.has(player.id)}
+                        onCheckOut={handleCheckOut}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </PageCard>

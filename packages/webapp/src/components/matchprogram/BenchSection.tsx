@@ -164,7 +164,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 sm:px-4 sm:py-2.5 h-[64px] sm:h-[68px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                  className={`flex items-center gap-2 rounded-md px-3 py-1.5 sm:px-4 sm:py-2 h-[52px] sm:h-[56px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
                   data-cat={catLetter || undefined}
                   draggable
                   onDragStart={(event) => onBenchDragStart(event, player.id)}
@@ -173,7 +173,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2.5">
                       {getCategoryBadge(player.primaryCategory)}
-                      <p className="text-base sm:text-lg font-semibold text-[hsl(var(--foreground))] truncate">{formatPlayerCardName(player.name, player.alias)}</p>
+                      <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate">{formatPlayerCardName(player.name, player.alias)}</p>
                     </div>
                   </div>
                 </div>
@@ -197,7 +197,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 sm:px-4 sm:py-2.5 h-[64px] sm:h-[68px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                  className={`flex items-center gap-2 rounded-md px-3 py-1.5 sm:px-4 sm:py-2 h-[52px] sm:h-[56px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
                   data-cat={catLetter || undefined}
                   draggable
                   onDragStart={(event) => onBenchDragStart(event, player.id)}
@@ -206,7 +206,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2.5">
                       {getCategoryBadge(player.primaryCategory)}
-                      <p className="text-base sm:text-lg font-semibold text-[hsl(var(--foreground))] truncate">{formatPlayerCardName(player.name, player.alias)}</p>
+                      <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate">{formatPlayerCardName(player.name, player.alias)}</p>
                     </div>
                   </div>
                 </div>
@@ -232,7 +232,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
               return (
                 <div
                   key={player.id}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 sm:px-4 sm:py-2.5 h-[64px] sm:h-[68px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                  className={`flex items-center gap-2 rounded-md px-3 py-1.5 sm:px-4 sm:py-2 h-[52px] sm:h-[56px] w-full hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
                   data-cat={catLetter || undefined}
                   draggable
                   onDragStart={(event) => onBenchDragStart(event, player.id)}
@@ -241,7 +241,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2.5">
                       {getCategoryBadge(player.primaryCategory)}
-                      <p className="text-base sm:text-lg font-semibold text-[hsl(var(--foreground))] truncate">{formatPlayerCardName(player.name, player.alias)}</p>
+                      <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate">{formatPlayerCardName(player.name, player.alias)}</p>
                     </div>
                   </div>
                 </div>
@@ -297,7 +297,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                       return (
                         <div
                           key={player.id}
-                          className={`flex items-center gap-2 rounded-md px-2.5 py-2.5 sm:px-3 sm:py-3 xl:px-2.5 xl:py-2 h-[64px] sm:h-[72px] xl:h-[68px] w-full max-w-full box-border opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] overflow-hidden ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
+                          className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 sm:px-3 sm:py-2 h-[52px] sm:h-[56px] w-full max-w-full box-border opacity-60 hover:opacity-100 hover:shadow-sm cursor-grab active:cursor-grabbing transition-all ring-1 ring-[hsl(var(--line)/.12)] overflow-hidden ${getPlayerSlotBgColor()} ${catLetter ? 'cat-rail' : ''}`}
                           data-cat={catLetter || undefined}
                           draggable
                           onDragStart={(event) => onInactiveDragStart(event, player.id)}
@@ -305,7 +305,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                         >
                           <div className="min-w-0 flex-1 overflow-hidden">
                             <p className="text-sm sm:text-base font-semibold text-[hsl(var(--foreground))] truncate w-full">{formatPlayerCardName(player.name, player.alias)}</p>
-                            <div className="flex items-center gap-1.5 mt-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
                               {getCategoryBadge(player.primaryCategory)}
                               {isOneRoundOnly && !isUnavailable && (
                                 <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-1.5 py-0.5 text-[9px] sm:text-[10px] whitespace-nowrap flex-shrink-0">1 runde</span>
