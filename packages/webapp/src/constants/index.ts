@@ -109,7 +109,8 @@ export const LETTER_FILTERS = {
  */
 export const ROUTES = {
   CHECK_IN: '/check-in',
-  MATCH_PROGRAM: '/match-program',
+  ROUNDS: '/runder',
+  MATCH_PROGRAM: '/match-program', // Deprecated: use ROUNDS instead
   PLAYERS: '/players',
   STATISTICS: '/statistics',
 } as const

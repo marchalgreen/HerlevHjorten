@@ -303,7 +303,7 @@ const CheckInPage = () => {
           </header>
           <div className="flex flex-col space-y-1.5 sm:space-y-2 pr-1 sm:pr-2">
             {checkedIn.length === 0 ? (
-              <p className="text-xs text-[hsl(var(--muted))] text-center py-4">Ingen spillere tjekket ind</p>
+              <p className="text-xs text-[hsl(var(--muted))] text-center py-4">Ingen spillere tjekket ind endnu.</p>
             ) : (
               sortedCheckedIn.map((player) => (
                 <CheckedInPlayerCard
@@ -334,7 +334,7 @@ const CheckInPage = () => {
                 title="Tillad spiller fra anden gruppe i denne træning"
                 className="w-full sm:w-auto text-xs sm:text-sm whitespace-nowrap"
               >
-                Tilføj fra anden gruppe
+                Tilføj fra gruppe
               </Button>
             </div>
             <LetterFilters selectedLetter={filterLetter} onLetterSelect={setFilterLetter} />
@@ -344,7 +344,7 @@ const CheckInPage = () => {
             {filteredPlayers.length === 0 ? (
               <EmptyState
                 icon={<UsersRound />}
-                title="Ingen spillere matcher"
+                title="Ingen spillere matcher din søgning."
                 helper="Prøv en anden søgning eller vælg et andet bogstav."
               />
             ) : (

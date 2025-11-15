@@ -31,12 +31,12 @@ test.describe('Landing Page', () => {
     if (isVisible) {
       await groupCard.click()
       
-      // Check that start session button becomes enabled
-      const startButton = page.getByRole('button', { name: /start session/i })
+      // Check that start training button becomes enabled
+      const startButton = page.getByRole('button', { name: /start træning/i })
       await expect(startButton).toBeEnabled()
     } else {
-      // If no groups, check that start session button exists (may be disabled)
-      const startButton = page.getByRole('button', { name: /start session/i })
+      // If no groups, check that start training button exists (may be disabled)
+      const startButton = page.getByRole('button', { name: /start træning/i })
       // Button should exist even if disabled
       await expect(startButton).toBeVisible()
     }
@@ -49,13 +49,13 @@ test.describe('Landing Page', () => {
     
     if (hasGroups) {
       await groupCard.click()
-      const startButton = page.getByRole('button', { name: /start session/i })
+      const startButton = page.getByRole('button', { name: /start træning/i })
       // Wait for button to be enabled if it was disabled
       await startButton.waitFor({ state: 'visible' })
       await startButton.click()
     } else {
-      // If no groups, try to start session anyway (button might be disabled but clickable)
-      const startButton = page.getByRole('button', { name: /start session/i })
+      // If no groups, try to start training anyway (button might be disabled but clickable)
+      const startButton = page.getByRole('button', { name: /start træning/i })
       const isEnabled = await startButton.isEnabled().catch(() => false)
       if (isEnabled) {
         await startButton.click()

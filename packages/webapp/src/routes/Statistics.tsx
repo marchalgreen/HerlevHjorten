@@ -552,7 +552,7 @@ const StatisticsPage = () => {
           <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
             <BarChart3 className="w-10 h-10 sm:w-12 sm:h-12 text-[hsl(var(--muted))] mb-3 sm:mb-4" />
             <p className="text-base sm:text-lg font-medium text-[hsl(var(--foreground))] mb-1.5 sm:mb-2">Vælg en spiller</p>
-            <p className="text-xs sm:text-sm text-[hsl(var(--muted))] px-4">Vælg en spiller fra listen ovenfor for at se deres statistik</p>
+            <p className="text-xs sm:text-sm text-[hsl(var(--muted))] px-4">Vælg en spiller for at se statistik.</p>
           </div>
         </PageCard>
       )}

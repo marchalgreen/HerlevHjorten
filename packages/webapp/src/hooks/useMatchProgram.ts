@@ -295,7 +295,7 @@ export const useMatchProgram = ({
         notify({
           variant: 'default',
           title: 'Alle spillere er placeret!',
-          description: 'Tryk på "Vis kampprogram" eller F11 for at vise spillerne deres baner',
+          description: 'Tryk på "Vis runde" eller F11 for at vise spillerne deres baner',
           duration: 5000
         })
       }

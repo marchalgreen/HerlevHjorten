@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Match Program Page', () => {
+test.describe('Rounds Page', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to match program page
-    await page.goto('/#/match-program')
+    // Navigate to rounds page (supports both old and new routes)
+    await page.goto('/#/rounds')
     await page.waitForLoadState('networkidle')
   })
 
-  test('should display match program interface', async ({ page }) => {
-    // Check for match program heading
-    const heading = page.getByRole('heading', { name: /kampprogram/i })
+  test('should display rounds interface', async ({ page }) => {
+    // Check for rounds heading
+    const heading = page.getByRole('heading', { name: /runder/i })
     await expect(heading).toBeVisible()
   })
 
@@ -22,10 +22,10 @@ test.describe('Match Program Page', () => {
     expect(isVisible || true).toBe(true) // Always pass - bench section exists even if empty
   })
 
-  test('should have auto-match button', async ({ page }) => {
-    // Check for auto-match/omfordel button
-    const autoMatchButton = page.getByRole('button', { name: /omfordel|auto-match/i })
-    const isVisible = await autoMatchButton.isVisible().catch(() => false)
+  test('should have distribute/redistribute button', async ({ page }) => {
+    // Check for distribute/genfordel button
+    const distributeButton = page.getByRole('button', { name: /genfordel|fordel runde/i })
+    const isVisible = await distributeButton.isVisible().catch(() => false)
     
     // Button should be visible if there's an active session
     expect(isVisible || true).toBe(true)
@@ -46,4 +46,3 @@ test.describe('Match Program Page', () => {
     expect(hasMessage || true).toBe(true)
   })
 })
-

@@ -90,7 +90,7 @@ export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
       {/* Top section: Title and buttons aligned */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))]">Kampprogram</h1>
+          <h1 className="text-lg sm:text-xl font-semibold text-[hsl(var(--foreground))]">Runder</h1>
           <p className="text-xs sm:text-sm md:text-base text-[hsl(var(--muted))] mt-1">
             {session ? (
               <>
@@ -146,7 +146,7 @@ export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
             disabled={!session || (benchCount === 0 && !hasRunAutoMatch)}
             className="rounded-md px-3 py-2 sm:px-4 text-xs sm:text-sm font-medium transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none bg-[hsl(var(--surface-glass)/.85)] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-glass)/.95)] ring-1 ring-[hsl(var(--line)/.12)] disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-sm whitespace-nowrap"
           >
-            {hasRunAutoMatch ? 'Omfordel' : 'Auto-match'}
+            {hasRunAutoMatch ? 'Genfordel' : 'Fordel runde'}
           </button>
           <button
             type="button"
@@ -154,7 +154,7 @@ export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
             disabled={!session}
               className="rounded-md px-2.5 py-1.5 sm:px-3 sm:py-2 md:px-4 text-xs sm:text-sm font-medium transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none bg-transparent text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/.08)] ring-1 ring-[hsl(var(--destructive)/.3)] disabled:opacity-40 disabled:cursor-not-allowed hover:ring-[hsl(var(--destructive)/.4)] focus:ring-[hsl(var(--destructive)/.4)] focus:ring-2 whitespace-nowrap"
           >
-            Nulstil kampe
+            Nulstil runde
           </button>
           {session && (
             <button
@@ -169,9 +169,9 @@ export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
                 animation: 'pulse-gentle 2s ease-in-out infinite',
                 transition: 'none'
               } : undefined}
-              title="Tryk F11 eller klik for at vise kampprogram"
+              title="Tryk F11 eller klik for at vise runde"
             >
-              Vis kampprogram {shouldPulse && '(F11)'}
+              Vis runde {shouldPulse && '(F11)'}
             </button>
           )}
           {/* Variant selector removed — only option A is kept */}

@@ -98,7 +98,7 @@ const Header = () => {
   const navItems = [
     { page: 'coach' as const, icon: <PlayCircle />, label: 'Træner' },
     { page: 'check-in' as const, icon: <UserCheck />, label: 'Indtjekning' },
-    { page: 'match-program' as const, icon: <Grid2x2 />, label: 'Kampprogram' },
+    { page: 'rounds' as const, icon: <Grid2x2 />, label: 'Runder' },
     { page: 'players' as const, icon: <UsersRound />, label: 'Spillere' },
     { page: 'statistics' as const, icon: <BarChart3 />, label: 'Statistik' }
   ]
@@ -319,7 +319,7 @@ const AppContent = () => {
               <LandingPage onRedirectToCheckin={() => navigate('check-in')} />
             )}
             {!isAuthRoute && currentPage === 'check-in' && <CheckInPage />}
-            {!isAuthRoute && currentPage === 'match-program' && <MatchProgramPage />}
+            {!isAuthRoute && (currentPage === 'rounds' || currentPage === 'match-program') && <MatchProgramPage />}
             {!isAuthRoute && currentPage === 'players' && <PlayersPage />}
             {!isAuthRoute && currentPage === 'statistics' && <StatisticsPage />}
             {!isAuthRoute && currentPage === 'prism-test' && <PrismTestPage />}

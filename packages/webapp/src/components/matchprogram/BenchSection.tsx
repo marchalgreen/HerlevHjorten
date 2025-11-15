@@ -283,7 +283,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                 <>
                   <header className="flex items-center justify-between mb-2">
                     <h4 className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
-                      Inaktive / Kun 1 runde
+                      Inaktive / 1 runde
                     </h4>
                     <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[9px] sm:text-[10px] font-medium text-[hsl(var(--muted))]">
                       {inactivePlayers.length}
@@ -308,7 +308,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                             <div className="flex items-center gap-1.5 mt-1 min-w-0">
                               {getCategoryBadge(player.primaryCategory)}
                               {isOneRoundOnly && !isUnavailable && (
-                                <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-1.5 py-0.5 text-[9px] sm:text-[10px] whitespace-nowrap flex-shrink-0">Kun 1 runde</span>
+                                <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-1.5 py-0.5 text-[9px] sm:text-[10px] whitespace-nowrap flex-shrink-0">1 runde</span>
                               )}
                               {isUnavailable && (
                                 <span className="text-[9px] sm:text-[10px] font-normal text-[hsl(var(--destructive))] whitespace-nowrap flex-shrink-0">Inaktiv</span>
@@ -342,7 +342,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
                 <div className="py-4">
                   <header className="flex items-center justify-between mb-2">
                     <h4 className="text-[10px] sm:text-xs font-semibold text-[hsl(var(--muted))] uppercase tracking-wide">
-                      Inaktive / Kun 1 runde
+                      Inaktive / 1 runde
                     </h4>
                     <span className="rounded-full bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[9px] sm:text-[10px] font-medium text-[hsl(var(--muted))]">
                       0

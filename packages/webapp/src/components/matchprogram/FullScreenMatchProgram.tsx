@@ -230,14 +230,15 @@ export const FullScreenMatchProgram: React.FC<FullScreenMatchProgramProps> = ({
             <option value={3}>Runde 3</option>
             <option value={4}>Runde 4</option>
           </select>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-[hsl(var(--foreground))]">Kampprogram</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-[hsl(var(--foreground))]">Runder</h1>
         </div>
         <button
           type="button"
           onClick={onExitFullScreen}
           className="rounded-md bg-accent px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 text-xs sm:text-sm md:text-base font-semibold text-white hover:opacity-90 transition-all duration-200 ease-[cubic-bezier(.2,.8,.2,1)] motion-reduce:transition-none ring-focus hover:shadow-sm whitespace-nowrap w-full sm:w-auto"
+          title="Luk (Esc)"
         >
-          Luk (ESC)
+          Luk
         </button>
       </header>
       <div className="flex-1 overflow-auto p-3 sm:p-4 md:p-6" style={{ height: 'calc(100vh - 80px)' }}>

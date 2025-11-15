@@ -218,7 +218,7 @@ const StartSessionControls: React.FC<{
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={onStart} disabled={disabled} loading={starting} className="w-full sm:w-auto">
             <Play className="w-4 h-4" aria-hidden />
-            <span className="text-xs sm:text-sm">Start session</span>
+            <span className="text-xs sm:text-sm">Start træning</span>
           </Button>
         </div>
         {addedPlayers.length > 0 && (

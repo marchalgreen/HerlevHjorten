@@ -57,7 +57,7 @@ test.describe('Navigation', () => {
     
     // Navigate through all main pages
     await navigateToPage(page, /indtjekning/i, /#\/check-in/i)
-    await navigateToPage(page, /kampprogram/i, /#\/match-program/i)
+    await navigateToPage(page, /runder/i, /#\/rounds/i)
     await navigateToPage(page, /spillere/i, /#\/players/i)
     await navigateToPage(page, /statistik/i, /#\/statistics/i)
     await navigateToPage(page, /træner/i, /#\/coach/i)

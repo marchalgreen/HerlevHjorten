@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-type Page = 'coach' | 'check-in' | 'match-program' | 'players' | 'statistics' | 'prism-test'
+type Page = 'coach' | 'check-in' | 'rounds' | 'match-program' | 'players' | 'statistics' | 'prism-test'
 type AuthPage = 'login' | 'register' | 'verify-email' | 'forgot-password' | 'reset-password' | 'account'
 
 interface NavigationContextType {
@@ -62,7 +62,14 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
       const hash = window.location.hash.replace(/^#/, '')
       if (hash) {
         const path = hash.split('/').pop() || ''
-        const knownPages: Page[] = ['coach', 'check-in', 'match-program', 'players', 'statistics', 'prism-test']
+        const knownPages: Page[] = ['coach', 'check-in', 'rounds', 'match-program', 'players', 'statistics', 'prism-test']
+        // Handle redirect from old route
+        if (path === 'match-program') {
+          setCurrentPage('rounds')
+          setAuthPage(null)
+          window.history.replaceState(null, '', window.location.pathname)
+          return
+        }
         const knownAuthPages: AuthPage[] = ['login', 'register', 'verify-email', 'forgot-password', 'reset-password', 'account']
         
         if (knownPages.includes(path as Page)) {

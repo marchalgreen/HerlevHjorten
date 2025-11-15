@@ -119,7 +119,7 @@ export const CheckedInPlayerCard: React.FC<CheckedInPlayerCardProps> = ({
             </p>
             {isOneRoundOnly && (
               <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2)/.7)] backdrop-blur-sm text-[hsl(var(--muted))] border-hair px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs whitespace-nowrap">
-                Kun 1 runde
+                1 runde
               </span>
             )}
           </div>

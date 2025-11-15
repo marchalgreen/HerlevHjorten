@@ -156,7 +156,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded ring-1 ring-[hsl(var(--line)/.12)] focus:ring-2 focus:ring-[hsl(var(--ring))] outline-none transition-all duration-200 motion-reduce:transition-none cursor-pointer flex-shrink-0"
           />
           <span className="inline-flex items-center rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))] border-hair px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs whitespace-nowrap">
-            Kun 1 runde
+            1 runde
           </span>
         </label>
         <Button

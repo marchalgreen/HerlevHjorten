@@ -2,7 +2,7 @@ import React from 'react'
 import { clsx } from 'clsx'
 import { useNavigation } from '../../contexts/NavigationContext'
 
-type Page = 'coach' | 'check-in' | 'match-program' | 'players' | 'statistics'
+type Page = 'coach' | 'check-in' | 'rounds' | 'match-program' | 'players' | 'statistics'
 
 type Props = {
   page: Page
