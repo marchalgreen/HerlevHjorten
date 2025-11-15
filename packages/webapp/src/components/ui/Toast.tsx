@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 import { clsx } from 'clsx'
 import { CheckCircle2, Info, TriangleAlert, X, XCircle } from 'lucide-react'
 
@@ -41,16 +41,36 @@ const variantIcon: Record<ToastVariant, React.ReactElement> = {
  */
 export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [toasts, setToasts] = useState<ToastRecord[]>([])
+  const timeoutsRef = useRef<Map<number, number>>(new Map())
 
   const remove = useCallback((id: number) => {
+    // Clear timeout if it exists
+    const timeoutId = timeoutsRef.current.get(id)
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+      timeoutsRef.current.delete(id)
+    }
     setToasts((current) => current.filter((toast) => toast.id !== id))
   }, [])
 
   const notify = useCallback(
     ({ duration = 3200, variant = 'default', ...options }: ToastOptions) => {
-      const id = Date.now()
-      setToasts((current) => [...current, { id, variant, ...options }])
-      window.setTimeout(() => remove(id), duration)
+      setToasts((current) => {
+        // Prevent duplicate toasts with same title and description
+        const isDuplicate = current.some(
+          (toast) => toast.title === options.title && toast.description === options.description
+        )
+        if (isDuplicate) {
+          return current
+        }
+        
+        const id = Date.now()
+        const newToast = { id, variant, ...options }
+        // Set timeout and store reference
+        const timeoutId = window.setTimeout(() => remove(id), duration)
+        timeoutsRef.current.set(id, timeoutId)
+        return [...current, newToast]
+      })
     },
     [remove]
   )
@@ -79,11 +99,14 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
               </div>
               <button
                 type="button"
-                onClick={() => remove(toast.id)}
-                className="text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  remove(toast.id)
+                }}
+                className="flex-shrink-0 p-1 -mr-1 -mt-1 rounded-md text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2)/.5)] transition-colors cursor-pointer"
                 aria-label="Luk besked"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
           </div>
