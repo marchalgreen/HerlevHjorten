@@ -110,7 +110,7 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
 
   return (
     <PageCard 
-      className={`space-y-3 transition-all duration-300 ease-in-out p-3 sm:p-4 md:self-stretch flex flex-col ${
+      className={`space-y-3 transition-all duration-300 ease-in-out p-3 sm:p-4 md:self-stretch flex flex-col max-h-[calc(100vh-440px+48px)] sm:max-h-[calc(100vh-400px+56px)] xl:max-h-[calc(100vh-360px+56px)] ${
         dragOverBench 
           ? 'bg-[hsl(var(--primary)/.05)]' 
           : ''
@@ -120,14 +120,14 @@ export const BenchSection: React.FC<BenchSectionProps> = ({
         outlineOffset: '-2px'
       } : undefined}
     >
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between flex-shrink-0">
         <h3 className="text-sm sm:text-base font-semibold">BÆNK</h3>
         <span className="rounded-full bg-[hsl(var(--surface-2))] px-2.5 py-1 text-xs sm:text-sm font-medium">
           {bench.length}
         </span>
       </header>
       <div 
-        className="flex flex-col space-y-4 max-h-[calc(100vh-440px)] sm:max-h-[calc(100vh-400px)] xl:max-h-[calc(100vh-360px)] overflow-y-auto scrollbar-thin min-w-0"
+        className="flex flex-col space-y-4 max-h-[calc(100vh-440px)] sm:max-h-[calc(100vh-400px)] xl:max-h-[calc(100vh-360px)] overflow-y-auto scrollbar-thin min-w-0 min-h-0"
         onDragOver={(e) => {
           e.preventDefault()
           e.stopPropagation()
