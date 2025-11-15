@@ -107,10 +107,10 @@ const Header = () => {
       <header 
         className="relative z-10 fullscreen-hide border-b" 
         style={{ 
-          willChange: 'transform',
+          transform: 'translateZ(0)',
           background: 'linear-gradient(to right, rgba(240, 245, 250, 0.29), rgba(245, 248, 252, 0.29))',
-          backdropFilter: 'blur(17px) saturate(155%) brightness(105%)',
-          WebkitBackdropFilter: 'blur(17px) saturate(155%) brightness(105%)',
+          backdropFilter: 'blur(14px) saturate(155%) brightness(105%)',
+          WebkitBackdropFilter: 'blur(14px) saturate(155%) brightness(105%)',
           borderColor: 'rgba(230, 235, 240, 0.5)',
           boxShadow: `
             0 1px 3px rgba(0, 0, 0, 0.08),
