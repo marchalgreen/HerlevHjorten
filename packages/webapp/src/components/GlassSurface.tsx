@@ -288,25 +288,29 @@ const GlassSurface: React.FC<GlassSurfaceProps> = ({
           }
         }
       } else {
+        // Light mode - ensure glass effect works on mobile
         if (!backdropFilterSupported) {
+          // Fallback for browsers without backdrop-filter support (older mobile browsers)
           return {
             ...baseStyles,
-            background: 'rgba(255, 255, 255, 0.4)',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            boxShadow: `inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
-                        inset 0 -1px 0 0 rgba(255, 255, 255, 0.3)`
+            background: `rgba(255, 255, 255, ${Math.min(0.5, backgroundOpacity + 0.15)})`,
+            border: 'none',
+            boxShadow: `inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
+                        inset 0 -1px 0 0 rgba(255, 255, 255, 0.5),
+                        0 1px 3px 0 rgba(0, 0, 0, 0.08)`
           }
         } else {
+          // Use backdrop-filter for modern browsers (including mobile Safari iOS 9+)
           return {
             ...baseStyles,
-            background: 'rgba(255, 255, 255, 0.25)',
-            backdropFilter: 'blur(12px) saturate(1.8) brightness(1.1)',
-            WebkitBackdropFilter: 'blur(12px) saturate(1.8) brightness(1.1)',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            boxShadow: `0 8px 32px 0 rgba(31, 38, 135, 0.2),
-                        0 2px 16px 0 rgba(31, 38, 135, 0.1),
-                        inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
-                        inset 0 -1px 0 0 rgba(255, 255, 255, 0.2)`
+            background: `rgba(255, 255, 255, ${backgroundOpacity})`,
+            backdropFilter: `blur(${blur}px) saturate(${saturation}) brightness(${brightness / 100})`,
+            WebkitBackdropFilter: `blur(${blur}px) saturate(${saturation}) brightness(${brightness / 100})`,
+            border: 'none',
+            boxShadow: `0 8px 32px 0 rgba(31, 38, 135, 0.12),
+                        0 2px 16px 0 rgba(31, 38, 135, 0.06),
+                        inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+                        inset 0 -1px 0 0 rgba(255, 255, 255, 0.4)`
           }
         }
       }

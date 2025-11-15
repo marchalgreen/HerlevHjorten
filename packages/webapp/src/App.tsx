@@ -109,11 +109,11 @@ const Header = () => {
           width="100%"
           height="auto"
           borderRadius={0}
-          backgroundOpacity={0.1}
+          backgroundOpacity={0.25}
           blur={16}
-          brightness={100}
-          opacity={0.85}
-          saturation={1.5}
+          brightness={105}
+          opacity={0.9}
+          saturation={1.6}
           displace={0}
           distortionScale={0}
           className="relative"
