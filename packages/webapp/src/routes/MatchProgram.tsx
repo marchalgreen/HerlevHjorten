@@ -129,7 +129,7 @@ const MatchProgramPage = () => {
 
   if (loading) {
     return (
-      <section className="mx-auto flex h-full max-w-5xl items-center justify-center pt-6">
+      <section className="mx-auto flex h-full max-w-5xl items-center justify-center pt-2 sm:pt-4 xl:pt-2">
         <p className="text-lg text-[hsl(var(--muted))]">Loader...</p>
       </section>
     )
@@ -161,7 +161,7 @@ const MatchProgramPage = () => {
 
 
   return (
-    <section className="flex h-full flex-col gap-4 sm:gap-6 xl:gap-3 pt-2 sm:pt-4 xl:pt-2 overflow-x-hidden max-w-full">
+    <section className="flex flex-col gap-4 sm:gap-6 pt-2 sm:pt-4 xl:pt-2">
       <MatchProgramHeader
         session={session}
         checkedInCount={checkedIn.length}
