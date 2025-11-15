@@ -173,19 +173,33 @@ const GlassSurface: React.FC<GlassSurfaceProps> = ({
     if (!containerRef.current) return
 
     let resizeTimeout: number | null = null
+    let rafId: number | null = null
     const resizeObserver = new ResizeObserver(() => {
-      if (resizeTimeout !== null) return
-      resizeTimeout = requestAnimationFrame(() => {
-        updateDisplacementMap()
-        resizeTimeout = null
-      })
+      // Clear any pending timeout
+      if (resizeTimeout !== null) {
+        clearTimeout(resizeTimeout)
+      }
+      // Use debounce + RAF for smoother performance
+      resizeTimeout = window.setTimeout(() => {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId)
+        }
+        rafId = requestAnimationFrame(() => {
+          updateDisplacementMap()
+          resizeTimeout = null
+          rafId = null
+        })
+      }, 150) // 150ms debounce
     })
 
     resizeObserver.observe(containerRef.current)
 
     return () => {
       if (resizeTimeout !== null) {
-        cancelAnimationFrame(resizeTimeout)
+        clearTimeout(resizeTimeout)
+      }
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
       }
       resizeObserver.disconnect()
     }

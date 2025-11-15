@@ -656,13 +656,28 @@ export const useMatchProgram = ({
   useEffect(() => {
     if (!isFullScreen) return
     
+    let resizeTimeout: number | null = null
     const updateViewportSize = () => {
       setViewportSize({ width: window.innerWidth, height: window.innerHeight })
     }
+    const throttledUpdateViewportSize = () => {
+      if (resizeTimeout !== null) {
+        clearTimeout(resizeTimeout)
+      }
+      resizeTimeout = window.setTimeout(() => {
+        updateViewportSize()
+        resizeTimeout = null
+      }, 150) // 150ms debounce
+    }
     
     updateViewportSize()
-    window.addEventListener('resize', updateViewportSize)
-    return () => window.removeEventListener('resize', updateViewportSize)
+    window.addEventListener('resize', throttledUpdateViewportSize)
+    return () => {
+      window.removeEventListener('resize', throttledUpdateViewportSize)
+      if (resizeTimeout !== null) {
+        clearTimeout(resizeTimeout)
+      }
+    }
   }, [isFullScreen])
   
   // Handle popup dragging

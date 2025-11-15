@@ -241,6 +241,7 @@ const Prism: React.FC<PrismProps> = ({
     const mesh = new Mesh(gl, { geometry, program })
 
     let resizeTimeout: number | null = null
+    let rafId: number | null = null
     const resize = () => {
       const w = container.clientWidth || 1
       const h = container.clientHeight || 1
@@ -252,11 +253,21 @@ const Prism: React.FC<PrismProps> = ({
       program.uniforms.uPxScale.value = 1 / ((gl.drawingBufferHeight || 1) * 0.1 * SCALE)
     }
     const throttledResize = () => {
-      if (resizeTimeout !== null) return
-      resizeTimeout = requestAnimationFrame(() => {
-        resize()
-        resizeTimeout = null
-      })
+      // Clear any pending timeout
+      if (resizeTimeout !== null) {
+        clearTimeout(resizeTimeout)
+      }
+      // Use debounce + RAF for smoother performance
+      resizeTimeout = window.setTimeout(() => {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId)
+        }
+        rafId = requestAnimationFrame(() => {
+          resize()
+          resizeTimeout = null
+          rafId = null
+        })
+      }, 150) // 150ms debounce
     }
     const ro = new ResizeObserver(throttledResize)
     ro.observe(container)
@@ -444,7 +455,10 @@ const Prism: React.FC<PrismProps> = ({
     return () => {
       stopRAF()
       if (resizeTimeout !== null) {
-        cancelAnimationFrame(resizeTimeout)
+        clearTimeout(resizeTimeout)
+      }
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId)
       }
       document.removeEventListener('dragstart', handleDragStart)
       document.removeEventListener('dragend', handleDragEnd)

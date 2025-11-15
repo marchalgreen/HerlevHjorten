@@ -294,7 +294,7 @@ const AppInner = () => {
         <div className="flex min-h-screen flex-col text-[hsl(var(--foreground))] overflow-x-hidden max-w-full relative">
           {/* Full-screen Prism background for key pages */}
           {ENABLE_PRISM_BACKGROUND && isKeyPage && (
-            <div className="fixed inset-0 -z-10 opacity-50">
+            <div className="fixed inset-0 -z-10 opacity-50" style={{ willChange: 'transform' }}>
               <Prism
                 animationType="3drotate"
                 timeScale={0.4}
