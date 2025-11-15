@@ -108,18 +108,18 @@ const Header = () => {
         className="relative z-10 fullscreen-hide border-b" 
         style={{ 
           willChange: 'transform',
-          background: 'rgba(255, 255, 255, 0.15)',
-          backdropFilter: 'blur(20px) saturate(180%) brightness(105%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%) brightness(105%)',
-          borderColor: 'rgba(255, 255, 255, 0.4)',
+          background: 'linear-gradient(to right, rgba(240, 245, 250, 0.29), rgba(245, 248, 252, 0.29))',
+          backdropFilter: 'blur(17px) saturate(155%) brightness(105%)',
+          WebkitBackdropFilter: 'blur(17px) saturate(155%) brightness(105%)',
+          borderColor: 'rgba(230, 235, 240, 0.5)',
           boxShadow: `
             0 1px 3px rgba(0, 0, 0, 0.08),
             0 4px 12px rgba(0, 0, 0, 0.04),
-            inset 0 1px 0 rgba(255, 255, 255, 0.5),
-            inset 0 -1px 0 rgba(255, 255, 255, 0.1)
+            inset 0 1px 0 rgba(250, 252, 255, 0.6),
+            inset 0 -1px 0 rgba(230, 235, 240, 0.25)
           `,
-          borderTop: '1px solid rgba(255, 255, 255, 0.6)',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.06)'
+          borderTop: '1px solid rgba(240, 245, 250, 0.7)',
+          borderBottom: '1px solid rgba(0, 0, 0, 0.08)'
         }}
       >
         <div className="relative flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 w-full" style={{ minHeight: '64px', position: 'relative' }}>
