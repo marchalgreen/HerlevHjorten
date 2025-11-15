@@ -1222,6 +1222,19 @@ export const useMatchProgram = ({
     setDragSource('bench')
     event.dataTransfer.setData('application/x-player-id', playerId)
     event.dataTransfer.effectAllowed = 'move'
+    // Create a clone of the element for drag preview with rounded corners
+    const dragElement = event.currentTarget.cloneNode(true) as HTMLElement
+    dragElement.style.position = 'absolute'
+    dragElement.style.top = '-1000px'
+    dragElement.style.width = `${event.currentTarget.offsetWidth}px`
+    dragElement.style.opacity = '0.8'
+    // Ensure rounded corners are preserved
+    dragElement.style.borderRadius = window.getComputedStyle(event.currentTarget).borderRadius || '6px'
+    document.body.appendChild(dragElement)
+    const rect = event.currentTarget.getBoundingClientRect()
+    event.dataTransfer.setDragImage(dragElement, event.clientX - rect.left, event.clientY - rect.top)
+    // Clean up after a short delay
+    setTimeout(() => document.body.removeChild(dragElement), 0)
   }, [])
   
   const handleBenchDragEnd = useCallback(() => {
@@ -1238,6 +1251,8 @@ export const useMatchProgram = ({
     dragElement.style.top = '-1000px'
     dragElement.style.width = `${event.currentTarget.offsetWidth}px`
     dragElement.style.opacity = '0.8'
+    // Ensure rounded corners are preserved
+    dragElement.style.borderRadius = window.getComputedStyle(event.currentTarget).borderRadius || '6px'
     document.body.appendChild(dragElement)
     const rect = event.currentTarget.getBoundingClientRect()
     event.dataTransfer.setDragImage(dragElement, event.clientX - rect.left, event.clientY - rect.top)
