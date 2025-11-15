@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react'
-import { Search, Play, Users, UserCheck, Square } from 'lucide-react'
+import { Search, Play, Users, UserCheck, StopCircle } from 'lucide-react'
 import { Button, PageCard } from '../components/ui'
 import { formatDate } from '../lib/formatting'
 import useLandingState from '../hooks/useLandingState'
@@ -317,7 +317,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin })
                 <span className="text-xs sm:text-sm">Åbn indtjekning</span>
               </Button>
               <Button variant="secondary" loading={state.ending} onClick={state.endSession} className="w-full sm:w-auto">
-                <Square className="w-4 h-4" aria-hidden />
+                <StopCircle className="w-4 h-4" aria-hidden />
                 <span className="text-xs sm:text-sm">Afslut træning</span>
               </Button>
             </div>
