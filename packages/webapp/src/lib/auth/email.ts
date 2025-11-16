@@ -122,3 +122,49 @@ export async function send2FASetupEmail(
   })
 }
 
+/**
+ * Send PIN reset email
+ * @param email - Recipient email
+ * @param token - Reset token
+ * @param tenantId - Tenant ID for URL building
+ * @param username - Coach username
+ */
+export async function sendPINResetEmail(
+  email: string,
+  token: string,
+  tenantId: string,
+  username: string
+): Promise<void> {
+  if (!resend) {
+    console.warn('Resend not configured - skipping PIN reset email')
+    return
+  }
+
+  // Build reset URL based on tenant subdomain
+  const subdomain = tenantId === 'herlev-hjorten' ? '' : `${tenantId}.`
+  const resetUrl = `${APP_URL}/#/${tenantId}/reset-pin?token=${token}`
+
+  await resend.emails.send({
+    from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
+    to: email,
+    subject: 'Reset your PIN',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1>Reset your PIN</h1>
+        <p>Hej ${username},</p>
+        <p>Du har anmodet om at nulstille din PIN for ${RESEND_FROM_NAME}.</p>
+        <p>Klik på linket nedenfor for at nulstille din PIN:</p>
+        <p>
+          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;">
+            Nulstil PIN
+          </a>
+        </p>
+        <p>Eller kopier og indsæt denne URL i din browser:</p>
+        <p style="word-break: break-all; color: #666;">${resetUrl}</p>
+        <p>Dette link udløber om 1 time.</p>
+        <p>Hvis du ikke har anmodet om en PIN-nulstilling, kan du ignorere denne email.</p>
+      </div>
+    `
+  })
+}
+
