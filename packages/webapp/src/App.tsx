@@ -19,6 +19,9 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { NavigationProvider, useNavigation } from './contexts/NavigationContext'
 import { getCurrentTenantId } from './lib/tenant'
 import { Button } from './components/ui'
+import { UserRole } from './lib/auth/roles'
+import { RoleDebug } from './components/debug/RoleDebug'
+import AdminPage from './routes/admin/AdminPage'
 
 /**
  * Component that updates document title.
@@ -94,12 +97,17 @@ const Header = () => {
     }
   }, [isMenuOpen])
 
+  const clubRole = (club as any)?.role as string | undefined
+  const isSuperAdmin = clubRole === UserRole.SUPER_ADMIN || clubRole === 'super_admin'
+  const isAdmin = clubRole === UserRole.ADMIN || clubRole === 'admin' || isSuperAdmin
+
   const navItems = [
     { page: 'coach' as const, icon: <PlayCircle />, label: 'Træner' },
     { page: 'check-in' as const, icon: <UserCheck />, label: 'Indtjekning' },
     { page: 'rounds' as const, icon: <Grid2x2 />, label: 'Runder' },
     { page: 'players' as const, icon: <UsersRound />, label: 'Spillere' },
-    { page: 'statistics' as const, icon: <BarChart3 />, label: 'Statistik' }
+    { page: 'statistics' as const, icon: <BarChart3 />, label: 'Statistik' },
+    ...(isAdmin ? [{ page: 'admin' as const, icon: <User />, label: 'Admin' }] : [])
   ]
 
   return (
@@ -211,13 +219,13 @@ const Header = () => {
                   )}
                 </div>
               ) : (
-                <button
-                  type="button"
+                <Button 
+                  size="sm" 
                   onClick={() => navigateToAuth('login')}
                   className="flex-shrink-0"
                 >
-                  <Button size="sm">Log ind</Button>
-                </button>
+                  Log ind
+                </Button>
               )}
             </div>
           </div>
@@ -307,6 +315,7 @@ const AppContent = () => {
           {!isAuthRoute && <Header />}
           <main className="flex-1 overflow-y-auto overflow-x-hidden max-w-full relative z-0">
             <div className="flex w-full flex-col gap-4 sm:gap-6 px-4 sm:px-6 pb-6 sm:pb-10 pt-4 sm:pt-6 md:px-8 lg:px-12 max-w-full overflow-x-hidden">
+              {!isAuthRoute && <RoleDebug />}
             {/* Auth pages */}
             {authPage === 'login' && <LoginPage />}
             {authPage === 'register' && <RegisterPage />}
@@ -324,6 +333,11 @@ const AppContent = () => {
             {!isAuthRoute && currentPage === 'players' && <PlayersPage />}
             {!isAuthRoute && currentPage === 'statistics' && <StatisticsPage />}
             {!isAuthRoute && currentPage === 'prism-test' && <PrismTestPage />}
+            {!isAuthRoute && currentPage === 'admin' && (
+              <ProtectedRoute requireMinRole={UserRole.ADMIN}>
+                <AdminPage />
+              </ProtectedRoute>
+            )}
             </div>
           </main>
         </div>

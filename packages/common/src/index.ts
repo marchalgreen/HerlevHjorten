@@ -136,15 +136,18 @@ export type StatisticsFilters = {
 export type TenantConfig = {
   id: string
   name: string
+  subdomain: string // Subdomain for tenant (e.g., "herlev-hjorten" for herlev-hjorten.rundeklar.dk)
   logo: string
   maxCourts: number
-  postgresUrl: string // Postgres connection string (e.g., postgresql://user:password@host:port/database?sslmode=require)
+  postgresUrl?: string // Postgres connection string (optional - can use DATABASE_URL env var)
   // Legacy Supabase fields (deprecated, kept for backward compatibility during migration)
   supabaseUrl?: string
   supabaseKey?: string
   features?: {
     [key: string]: boolean | string | number
   }
+  deleted?: boolean // Soft delete flag
+  deletedAt?: string // Deletion timestamp
 }
 
 export type RendererApi = {
