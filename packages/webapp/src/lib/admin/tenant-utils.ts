@@ -199,14 +199,28 @@ export async function getAllTenantConfigs(): Promise<TenantConfig[]> {
  */
 export async function getTenantConfig(tenantId: string): Promise<TenantConfig | null> {
   try {
-    const configPath = join(
-      process.cwd(),
-      'packages/webapp/src/config/tenants',
-      `${tenantId}.json`
-    )
-    const configContent = await readFile(configPath, 'utf-8')
-    return JSON.parse(configContent) as TenantConfig
-  } catch {
+    // Try multiple possible paths for tenant configs directory
+    const possiblePaths = [
+      join(process.cwd(), 'packages/webapp/src/config/tenants'),
+      join(process.cwd(), 'src/config/tenants'),
+      join(__dirname, '../../config/tenants'),
+      join(__dirname, '../../../config/tenants')
+    ]
+    
+    for (const basePath of possiblePaths) {
+      try {
+        const configPath = join(basePath, `${tenantId}.json`)
+        const configContent = await readFile(configPath, 'utf-8')
+        return JSON.parse(configContent) as TenantConfig
+      } catch {
+        // Try next path
+        continue
+      }
+    }
+    
+    return null
+  } catch (error) {
+    console.error(`Failed to get tenant config for ${tenantId}:`, error)
     return null
   }
 }
