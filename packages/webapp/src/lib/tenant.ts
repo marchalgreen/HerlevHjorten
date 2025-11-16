@@ -11,11 +11,15 @@ import type { TenantConfig } from '@rundeklar/common'
 export const extractTenantId = (pathname: string): string => {
   // Check if we're on the demo domain and default to demo tenant
   if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname
-    // Check for demo domain (can be configured via VERCEL_URL or custom domain)
-    // Demo tenant should be on a different domain/subdomain than production
-    if (hostname.includes('demo') || hostname.includes('demo.') || hostname.includes('-demo')) {
+    const hostname = window.location.hostname.toLowerCase()
+    // Explicitly check for demo subdomain (e.g., demo.rundeklar.dk)
+    // This ensures rundeklar.dk uses default tenant, while demo.rundeklar.dk uses demo tenant
+    if (hostname === 'demo.rundeklar.dk' || hostname.startsWith('demo.') || hostname.includes('.demo.') || hostname.endsWith('-demo')) {
       return 'demo'
+    }
+    // Explicitly ensure rundeklar.dk uses default tenant
+    if (hostname === 'rundeklar.dk' || hostname === 'www.rundeklar.dk') {
+      return 'default'
     }
   }
   
@@ -51,12 +55,19 @@ export const loadTenantConfig = async (tenantId: string): Promise<TenantConfig> 
     
     // If postgresUrl is not set in config, try to get it from environment variables
     if (!tenantConfig.postgresUrl) {
+      // Check both import.meta.env (Vite) and process.env (Node.js scripts)
       // Vite exposes env vars prefixed with VITE_ to client code
-      // Check for VITE_DATABASE_URL first, then DATABASE_URL (for server-side/build-time)
-      const dbUrl = import.meta.env.VITE_DATABASE_URL || 
-                    import.meta.env.DATABASE_URL ||
-                    import.meta.env.VITE_DATABASE_URL_UNPOOLED ||
-                    import.meta.env.DATABASE_URL_UNPOOLED
+      const viteEnv = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}
+      const nodeEnv = typeof process !== 'undefined' && process.env ? process.env : {}
+      
+      const dbUrl = (viteEnv as any).VITE_DATABASE_URL || 
+                    (viteEnv as any).DATABASE_URL ||
+                    (viteEnv as any).VITE_DATABASE_URL_UNPOOLED ||
+                    (viteEnv as any).DATABASE_URL_UNPOOLED ||
+                    nodeEnv.DATABASE_URL ||
+                    nodeEnv.VITE_DATABASE_URL ||
+                    nodeEnv.DATABASE_URL_UNPOOLED ||
+                    nodeEnv.VITE_DATABASE_URL_UNPOOLED
       
       if (dbUrl) {
         console.log(`Using DATABASE_URL from environment variables for tenant "${tenantId}"`)
@@ -89,12 +100,17 @@ export const getCurrentTenantId = (): string => {
   }
   
   // Check if we're on the demo domain and default to demo tenant
-  const hostname = window.location.hostname
-  const isDemoDomain = hostname.includes('demo') || hostname.includes('demo.') || hostname.includes('-demo')
+  const hostname = window.location.hostname.toLowerCase()
   
-  // If on demo domain, always use demo tenant (regardless of URL path)
-  if (isDemoDomain) {
+  // Explicitly check for demo subdomain (e.g., demo.rundeklar.dk)
+  // This ensures rundeklar.dk uses default tenant, while demo.rundeklar.dk uses demo tenant
+  if (hostname === 'demo.rundeklar.dk' || hostname.startsWith('demo.') || hostname.includes('.demo.') || hostname.endsWith('-demo')) {
     return 'demo'
+  }
+  
+  // Explicitly ensure rundeklar.dk uses default tenant
+  if (hostname === 'rundeklar.dk' || hostname === 'www.rundeklar.dk') {
+    return 'default'
   }
   
   // For HashRouter, pathname is like "/#/demo/check-in" or "/#/check-in"
