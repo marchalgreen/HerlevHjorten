@@ -24,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const body = logoutSchema.parse(req.body)
 
     const sql = getPostgresClient(getDatabaseUrl())
-    const tokenHash = hashRefreshToken(body.refreshToken)
+    const tokenHash = await hashRefreshToken(body.refreshToken)
 
     // Delete session
     await sql`

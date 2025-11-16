@@ -67,8 +67,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Generate backup codes
-    const backupCodes = generateBackupCodes(10)
-    const hashedBackupCodes = hashBackupCodes(backupCodes)
+    const backupCodes = await generateBackupCodes(10)
+    const hashedBackupCodes = await hashBackupCodes(backupCodes)
 
     // Enable 2FA
     await sql`

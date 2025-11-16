@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Get club info (no sensitive data)
     const clubs = await sql`
-      SELECT id, email, tenant_id, email_verified, two_factor_enabled, created_at, last_login
+      SELECT id, email, username, role, tenant_id, email_verified, two_factor_enabled, created_at, last_login
       FROM clubs
       WHERE id = ${payload.clubId}
         AND tenant_id = ${payload.tenantId}
@@ -49,6 +49,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       club: {
         id: club.id,
         email: club.email,
+        username: club.username,
+        role: club.role,
         tenantId: club.tenant_id,
         emailVerified: club.email_verified,
         twoFactorEnabled: club.two_factor_enabled,

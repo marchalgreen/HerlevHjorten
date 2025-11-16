@@ -25,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const sql = getPostgresClient(getDatabaseUrl())
     const { hashRefreshToken } = await import('../../src/lib/auth/jwt')
-    const tokenHash = hashRefreshToken(body.refreshToken)
+    const tokenHash = await hashRefreshToken(body.refreshToken)
 
     // Find session
     const sessions = await sql`
