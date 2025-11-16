@@ -96,7 +96,18 @@ function getPostgresClient() {
 const wrapHandler = (handler: (req: VercelRequest, res: VercelResponse) => Promise<VercelResponse | void>) => {
   return async (req: express.Request, res: express.Response) => {
     // Convert Express req/res to Vercel format
-    const vercelReq = req as unknown as VercelRequest
+    // Map Express params to both params and query for compatibility
+    // Ensure headers and socket are properly preserved
+    const vercelReq = {
+      ...req,
+      headers: req.headers || {},
+      socket: req.socket || undefined,
+      params: req.params || {},
+      query: {
+        ...req.query,
+        ...req.params // Include path parameters in query for Vercel compatibility
+      }
+    } as unknown as VercelRequest
     const vercelRes = res as unknown as VercelResponse
     await handler(vercelReq, vercelRes)
   }
@@ -135,6 +146,36 @@ async function setupAuthRoutes() {
   app.post('/api/auth/update-profile', wrapHandler(updateProfileHandler))
 }
 
+// Load admin route handlers
+async function setupAdminRoutes() {
+  const tenantsHandler = (await import('../api/admin/tenants.js')).default
+  const tenantByIdHandler = (await import('../api/admin/tenants/[id].js')).default
+  const tenantAdminsHandler = (await import('../api/admin/tenants/[id]/admins.js')).default
+  
+  // Admin routes
+  app.get('/api/admin/tenants', wrapHandler(tenantsHandler))
+  app.post('/api/admin/tenants', wrapHandler(tenantsHandler))
+  app.get('/api/admin/tenants/:id', wrapHandler(tenantByIdHandler))
+  app.put('/api/admin/tenants/:id', wrapHandler(tenantByIdHandler))
+  app.delete('/api/admin/tenants/:id', wrapHandler(tenantByIdHandler))
+  app.get('/api/admin/tenants/:id/admins', wrapHandler(tenantAdminsHandler))
+  app.post('/api/admin/tenants/:id/admins', wrapHandler(tenantAdminsHandler))
+}
+
+// Load tenant admin route handlers
+async function setupTenantAdminRoutes() {
+  const coachesHandler = (await import('../api/[tenantId]/admin/coaches.js')).default
+  const coachByIdHandler = (await import('../api/[tenantId]/admin/coaches/[id].js')).default
+  
+  // Tenant admin routes (dynamically handle tenantId)
+  app.get('/api/:tenantId/admin/coaches', wrapHandler(coachesHandler))
+  app.post('/api/:tenantId/admin/coaches', wrapHandler(coachesHandler))
+  app.get('/api/:tenantId/admin/coaches/:id', wrapHandler(coachByIdHandler))
+  app.put('/api/:tenantId/admin/coaches/:id', wrapHandler(coachByIdHandler))
+  app.delete('/api/:tenantId/admin/coaches/:id', wrapHandler(coachByIdHandler))
+  app.post('/api/:tenantId/admin/coaches/:id', wrapHandler(coachByIdHandler)) // For PIN reset
+}
+
 // API route handler (same as Vercel serverless function)
 app.post('/api/db', async (req, res) => {
   try {
@@ -171,20 +212,43 @@ app.post('/api/db', async (req, res) => {
   }
 })
 
-// Setup auth routes and start server
-setupAuthRoutes().then(() => {
-  app.listen(PORT, () => {
+// Setup all routes and start server
+Promise.all([
+  setupAuthRoutes(),
+  setupAdminRoutes(),
+  setupTenantAdminRoutes()
+]).then(() => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 API server running on http://127.0.0.1:${PORT}`)
     console.log(`📡 API endpoints:`)
     console.log(`   - POST /api/db`)
     console.log(`   - POST /api/auth/register`)
     console.log(`   - POST /api/auth/login`)
-    console.log(`   - ... and other auth routes`)
+    console.log(`   - GET /api/admin/tenants`)
+    console.log(`   - GET /api/:tenantId/admin/coaches`)
+    console.log(`   - ... and other routes`)
     console.log(`\n💡 Keep this running while developing`)
     console.log(`💡 Frontend will start automatically via concurrently\n`)
   })
+
+  // Graceful shutdown
+  const shutdown = () => {
+    console.log('\n🛑 Shutting down API server...')
+    server.close(() => {
+      console.log('✅ API server closed')
+      // Close database connections
+      if (sql) {
+        sql.end()
+        console.log('✅ Database connections closed')
+      }
+      process.exit(0)
+    })
+  }
+
+  process.on('SIGINT', shutdown)
+  process.on('SIGTERM', shutdown)
 }).catch((error) => {
-  console.error('Failed to load auth routes:', error)
+  console.error('Failed to load routes:', error)
   process.exit(1)
 })
 

@@ -68,6 +68,12 @@ export default defineConfig({
     cspPlugin(), 
     copyTenantConfigsPlugin()
   ],
+  optimizeDeps: {
+    exclude: ['@node-rs/argon2'] // Exclude native dependency from optimization
+  },
+  ssr: {
+    noExternal: ['@node-rs/argon2'] // Don't externalize for SSR, but it won't be bundled for client
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true
@@ -88,7 +94,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
+      '@': resolve(__dirname, 'src'),
+      // Stub argon2 for browser - it's only used server-side
+      '@node-rs/argon2': resolve(__dirname, 'src/lib/auth/argon2-stub.ts')
     }
   }
 })
