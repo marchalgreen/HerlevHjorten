@@ -7,8 +7,8 @@
 
 import postgres from 'postgres'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { logger } from '../src/lib/utils/logger'
-import { setCorsHeaders } from '../src/lib/utils/cors'
+import { logger } from '../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../src/lib/utils/cors.js'
 
 // Initialize Postgres client (reused across invocations)
 let sql: ReturnType<typeof postgres> | null = null

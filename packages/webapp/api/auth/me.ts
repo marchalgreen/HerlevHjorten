@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getPostgresClient, getDatabaseUrl } from './db-helper'
-import { verifyAccessToken } from '../../src/lib/auth/jwt'
-import { logger } from '../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../src/lib/utils/cors'
+import { getPostgresClient, getDatabaseUrl } from './db-helper.js'
+import { verifyAccessToken } from '../../src/lib/auth/jwt.js'
+import { logger } from '../../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../../src/lib/utils/cors.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCorsHeaders(res, req.headers.origin)

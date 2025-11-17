@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { generateAccessToken } from '../../src/lib/auth/jwt'
-import { getPostgresClient, getDatabaseUrl } from './db-helper'
-import { logger } from '../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../src/lib/utils/cors'
+import { generateAccessToken } from '../../src/lib/auth/jwt.js'
+import { getPostgresClient, getDatabaseUrl } from './db-helper.js'
+import { logger } from '../../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../../src/lib/utils/cors.js'
 
 const refreshSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token is required')
