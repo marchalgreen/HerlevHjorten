@@ -265,31 +265,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         twoFactorEnabled: club.two_factor_enabled
       }
     })
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors
-        })
-      }
-
-      // Log error but don't expose internal details
-      logger.error('Login error', error)
-      
-      // Always return JSON, never HTML
-      return res.status(500).json({
-        error: 'Login failed',
-        message: error instanceof Error ? error.message : 'An unexpected error occurred'
+  } catch (outerError) {
+    // Handle all errors - validation, database, PIN verification, etc.
+    if (outerError instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: outerError.errors
       })
     }
-  } catch (outerError) {
-    // Catch any errors from imports or top-level code
-    // This ensures we always return JSON, even if imports fail
+
+    // Log error but don't expose internal details
     try {
-      logger.error('Login handler error', outerError)
+      logger.error('Login error', outerError)
     } catch {
       // If logger fails, use console.error as fallback
-      console.error('[ERROR] Login handler error', outerError)
+      console.error('[ERROR] Login error', outerError)
     }
     
     // Always return JSON, never HTML - even for import/runtime errors
@@ -297,7 +287,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.setHeader('Content-Type', 'application/json')
       res.setHeader('Access-Control-Allow-Origin', '*')
       return res.status(500).json({
-        error: 'Server error',
+        error: 'Login failed',
         message: outerError instanceof Error ? outerError.message : 'An unexpected error occurred'
       })
     } catch {
