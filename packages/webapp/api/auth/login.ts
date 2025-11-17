@@ -29,7 +29,9 @@ const loginSchema = z.object({
 )
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers and ensure JSON content type
   setCorsHeaders(res, req.headers.origin)
+  res.setHeader('Content-Type', 'application/json')
   
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -39,13 +41,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  // Ensure we always return JSON, even on errors
   try {
-    const body = loginSchema.parse(req.body)
+    // Parse body safely with proper error handling
+    let body
+    try {
+      body = loginSchema.parse(req.body)
+    } catch (parseError) {
+      if (parseError instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: parseError.errors
+        })
+      }
+      return res.status(400).json({
+        error: 'Invalid request body'
+      })
+    }
+
     // Safely get IP address - handle both Express and Vercel formats
     const forwardedFor = req.headers?.['x-forwarded-for'] as string | undefined
     const ipAddress = forwardedFor?.split(',')[0]?.trim() || 'unknown'
 
-    const sql = getPostgresClient(getDatabaseUrl())
+    // Get database connection safely
+    let sql
+    try {
+      const databaseUrl = getDatabaseUrl()
+      if (!databaseUrl) {
+        return res.status(500).json({
+          error: 'Database configuration error'
+        })
+      }
+      sql = getPostgresClient(databaseUrl)
+    } catch (dbError) {
+      logger.error('Database connection failed', dbError)
+      return res.status(500).json({
+        error: 'Database connection failed',
+        message: dbError instanceof Error ? dbError.message : 'Unknown database error'
+      })
+    }
 
     // Determine login method
     const isPINLogin = !!(body.username && body.pin)
@@ -141,7 +175,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const totpValid = verifyTOTP(club.two_factor_secret, body.totpCode)
       if (!totpValid) {
-        await recordLoginAttempt(sql, club.id, body.email, ipAddress, false)
+        await recordLoginAttempt(sql, club.id, rateLimitIdentifier, ipAddress, false)
         return res.status(401).json({
           error: 'Invalid 2FA code'
         })
@@ -192,10 +226,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
+    // Log error but don't expose internal details
     logger.error('Login error', error)
+    
+    // Always return JSON, never HTML
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'Login failed'
+      error: 'Login failed',
+      message: error instanceof Error ? error.message : 'An unexpected error occurred'
     })
   }
 }
-
