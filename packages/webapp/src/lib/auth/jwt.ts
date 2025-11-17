@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken'
-import crypto from 'crypto'
 
 function getJWTSecret(): string {
   const secret = process.env.AUTH_JWT_SECRET || process.env.VITE_AUTH_JWT_SECRET
@@ -14,6 +13,8 @@ const JWT_SECRET = getJWTSecret()
 export interface JWTPayload {
   clubId: string
   tenantId: string
+  role: string
+  email: string
   type: 'access' | 'refresh'
 }
 
@@ -23,12 +24,21 @@ const ACCESS_TOKEN_EXPIRY = '15m'
  * Generate an access token for a club
  * @param clubId - Club UUID
  * @param tenantId - Tenant ID
+ * @param role - User role (coach, admin, super_admin)
+ * @param email - User email
  * @returns JWT access token (15min expiry)
  */
-export function generateAccessToken(clubId: string, tenantId: string): string {
+export function generateAccessToken(
+  clubId: string,
+  tenantId: string,
+  role: string,
+  email: string
+): string {
   const payload: JWTPayload = {
     clubId,
     tenantId,
+    role,
+    email,
     type: 'access'
   }
   return jwt.sign(payload, JWT_SECRET, {
@@ -37,12 +47,33 @@ export function generateAccessToken(clubId: string, tenantId: string): string {
   })
 }
 
+// Browser-compatible random bytes generator
+async function getRandomBytes(count: number): Promise<Uint8Array> {
+  if (typeof window !== 'undefined') {
+    // Browser: use Web Crypto API
+    const array = new Uint8Array(count)
+    crypto.getRandomValues(array)
+    return array
+  } else {
+    // Node.js: use crypto module (dynamic import to avoid bundling)
+    const cryptoModule = await import('node:crypto')
+    return cryptoModule.randomBytes(count)
+  }
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 /**
  * Generate a refresh token string (random, not JWT)
  * @returns Random token string
  */
-export function generateRefreshToken(): string {
-  return crypto.randomBytes(32).toString('hex')
+export async function generateRefreshToken(): Promise<string> {
+  const bytes = await getRandomBytes(32)
+  return bytesToHex(bytes)
 }
 
 /**
@@ -67,8 +98,13 @@ export function verifyAccessToken(token: string): JWTPayload | null {
  * @param token - Refresh token to hash
  * @returns Hashed token
  */
-export function hashRefreshToken(token: string): string {
-  return crypto.createHash('sha256').update(token).digest('hex')
+export async function hashRefreshToken(token: string): Promise<string> {
+  if (typeof window !== 'undefined') {
+    // Browser: this should only be called server-side
+    throw new Error('hashRefreshToken can only be used server-side')
+  }
+  const cryptoModule = await import('node:crypto')
+  return cryptoModule.createHash('sha256').update(token).digest('hex')
 }
 
 /**
@@ -77,8 +113,8 @@ export function hashRefreshToken(token: string): string {
  * @param hash - Stored hash
  * @returns True if token matches hash
  */
-export function verifyRefreshTokenHash(token: string, hash: string): boolean {
-  const tokenHash = hashRefreshToken(token)
+export async function verifyRefreshTokenHash(token: string, hash: string): Promise<boolean> {
+  const tokenHash = await hashRefreshToken(token)
   return tokenHash === hash
 }
 

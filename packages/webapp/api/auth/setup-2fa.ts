@@ -2,11 +2,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { generateTOTPSecret, generateQRCode } from '../../src/lib/auth/totp'
 import { getPostgresClient, getDatabaseUrl } from './db-helper'
 import { verifyAccessToken } from '../../src/lib/auth/jwt'
+import { logger } from '../../src/lib/utils/logger'
+import { setCorsHeaders } from '../../src/lib/utils/cors'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  setCorsHeaders(res, req.headers.origin)
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -70,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       manualEntryKey: secretBase32
     })
   } catch (error) {
-    console.error('2FA setup error:', error)
+    logger.error('2FA setup error', error)
     return res.status(500).json({
       error: error instanceof Error ? error.message : '2FA setup failed'
     })

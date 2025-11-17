@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-export type Page = 'coach' | 'check-in' | 'rounds' | 'match-program' | 'players' | 'statistics' | 'prism-test'
-type AuthPage = 'login' | 'register' | 'verify-email' | 'forgot-password' | 'reset-password' | 'account'
+export type Page = 'coach' | 'check-in' | 'rounds' | 'match-program' | 'players' | 'statistics' | 'prism-test' | 'admin'
+type AuthPage = 'login' | 'register' | 'verify-email' | 'forgot-password' | 'reset-password' | 'reset-pin' | 'account'
 
 interface NavigationContextType {
   currentPage: Page
@@ -61,8 +61,10 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace(/^#/, '')
       if (hash) {
-        const path = hash.split('/').pop() || ''
-        const knownPages: Page[] = ['coach', 'check-in', 'rounds', 'match-program', 'players', 'statistics', 'prism-test']
+        // Remove query params before matching
+        const pathWithoutQuery = hash.split('?')[0]
+        const path = pathWithoutQuery.split('/').pop() || ''
+        const knownPages: Page[] = ['coach', 'check-in', 'rounds', 'match-program', 'players', 'statistics', 'prism-test', 'admin']
         // Handle redirect from old route
         if (path === 'match-program') {
           setCurrentPage('rounds')
@@ -70,7 +72,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
           window.history.replaceState(null, '', window.location.pathname)
           return
         }
-        const knownAuthPages: AuthPage[] = ['login', 'register', 'verify-email', 'forgot-password', 'reset-password', 'account']
+        const knownAuthPages: AuthPage[] = ['login', 'register', 'verify-email', 'forgot-password', 'reset-password', 'reset-pin', 'account']
         
         if (knownPages.includes(path as Page)) {
           setCurrentPage(path as Page)
@@ -80,8 +82,11 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
         } else if (knownAuthPages.includes(path as AuthPage)) {
           setAuthPage(path as AuthPage)
           setCurrentPage('coach')
-          // Clear hash to keep URL clean
-          window.history.replaceState(null, '', window.location.pathname)
+          // Don't clear hash for reset-pin/reset-password to preserve token in query params
+          // But clear it for other auth pages
+          if (path !== 'reset-pin' && path !== 'reset-password') {
+            window.history.replaceState(null, '', window.location.pathname)
+          }
         }
       }
     }

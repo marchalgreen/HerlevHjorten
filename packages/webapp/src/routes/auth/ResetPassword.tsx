@@ -15,12 +15,28 @@ export default function ResetPasswordPage() {
   const [passwordErrors, setPasswordErrors] = useState<string[]>([])
 
   useEffect(() => {
-    // Extract token from URL query params
-    const params = new URLSearchParams(window.location.search)
-    const tokenParam = params.get('token')
-    setToken(tokenParam)
-    if (!tokenParam) {
-      setError('Ingen nulstillings-token fundet')
+    // Extract token from URL hash (hash routing format: /#/${tenantId}/reset-password?token=...)
+    const hash = window.location.hash.replace(/^#/, '')
+    
+    // Split hash into path and query string
+    const [pathPart, queryPart] = hash.split('?')
+    
+    // Extract token from query params in hash
+    if (queryPart) {
+      const params = new URLSearchParams(queryPart)
+      const tokenParam = params.get('token')
+      setToken(tokenParam)
+      if (!tokenParam) {
+        setError('Ingen nulstillings-token fundet')
+      }
+    } else {
+      // Fallback to window.location.search for backward compatibility
+      const params = new URLSearchParams(window.location.search)
+      const tokenParam = params.get('token')
+      setToken(tokenParam)
+      if (!tokenParam) {
+        setError('Ingen nulstillings-token fundet')
+      }
     }
   }, [])
 

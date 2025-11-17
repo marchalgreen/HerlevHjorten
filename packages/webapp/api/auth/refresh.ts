@@ -2,15 +2,15 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { generateAccessToken } from '../../src/lib/auth/jwt'
 import { getPostgresClient, getDatabaseUrl } from './db-helper'
+import { logger } from '../../src/lib/utils/logger'
+import { setCorsHeaders } from '../../src/lib/utils/cors'
 
 const refreshSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token is required')
 })
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  setCorsHeaders(res, req.headers.origin)
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -25,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const sql = getPostgresClient(getDatabaseUrl())
     const { hashRefreshToken } = await import('../../src/lib/auth/jwt')
-    const tokenHash = hashRefreshToken(body.refreshToken)
+    const tokenHash = await hashRefreshToken(body.refreshToken)
 
     // Find session
     const sessions = await sql`
@@ -59,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    console.error('Token refresh error:', error)
+    logger.error('Token refresh error', error)
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Token refresh failed'
     })

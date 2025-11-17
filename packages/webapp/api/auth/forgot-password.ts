@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { sendPasswordResetEmail } from '../../src/lib/auth/email'
 import { getPostgresClient, getDatabaseUrl } from './db-helper'
 import { randomBytes } from 'crypto'
+import { logger } from '../../src/lib/utils/logger'
+import { setCorsHeaders } from '../../src/lib/utils/cors'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -10,9 +12,7 @@ const forgotPasswordSchema = z.object({
 })
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  setCorsHeaders(res, req.headers.origin)
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -55,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         await sendPasswordResetEmail(club.email, resetToken, body.tenantId)
       } catch (emailError) {
-        console.error('Failed to send password reset email:', emailError)
+        logger.error('Failed to send password reset email', emailError)
         // Don't fail the request if email fails
       }
     }
@@ -72,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    console.error('Forgot password error:', error)
+    logger.error('Forgot password error', error)
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Password reset request failed'
     })

@@ -1,6 +1,7 @@
 {
   "id": "demo",
   "name": "DEMO",
+  "subdomain": "demo",
   "logo": "fulllogo_transparent_nobuffer_horizontal.png",
   "maxCourts": 5,
   "features": {}

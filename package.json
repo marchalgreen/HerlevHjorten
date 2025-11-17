@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "pnpm --filter webapp dev",
     "build": "pnpm --filter common build && pnpm --filter webapp build && mkdir -p dist && cp -R packages/webapp/dist/* dist/",
+    "validate": "pnpm typecheck && pnpm lint",
     "lint": "pnpm --filter webapp lint",
     "typecheck": "pnpm --filter webapp typecheck",
     "test": "pnpm --filter webapp test",

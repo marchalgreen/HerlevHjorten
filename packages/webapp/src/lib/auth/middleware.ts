@@ -1,14 +1,18 @@
 import type { VercelRequest } from '@vercel/node'
 import { verifyAccessToken } from './jwt'
-import { getCurrentTenantPostgresClient } from '../postgres'
+import { getPostgresClient, getDatabaseUrl } from '../../../api/auth/db-helper'
+import { UserRole, isSuperAdmin, isAdmin, isCoach } from './roles'
 
 export interface AuthenticatedRequest extends VercelRequest {
   clubId?: string
   tenantId?: string
+  role?: string
+  email?: string
   club?: {
     id: string
     email: string
     tenantId: string
+    role: string
     emailVerified: boolean
     twoFactorEnabled: boolean
   }
@@ -45,14 +49,11 @@ export async function requireAuth(req: AuthenticatedRequest): Promise<void> {
   }
 
   // Verify club exists and is active
-  // TODO: refine type - postgres client proxy type needs better definition
-  const sql = getCurrentTenantPostgresClient() as any
-  if (!sql) {
-    throw new Error('Database client not available')
-  }
+  // Use direct database connection (server-side) instead of tenant-specific client
+  const sql = getPostgresClient(getDatabaseUrl())
 
   const clubs = await sql`
-    SELECT id, email, tenant_id, email_verified, two_factor_enabled
+    SELECT id, email, tenant_id, role, email_verified, two_factor_enabled
     FROM clubs
     WHERE id = ${payload.clubId}
       AND tenant_id = ${payload.tenantId}
@@ -67,10 +68,14 @@ export async function requireAuth(req: AuthenticatedRequest): Promise<void> {
   // Attach to request
   req.clubId = payload.clubId
   req.tenantId = payload.tenantId
+  // Use database role if JWT role is missing or different (database is source of truth)
+  req.role = club.role || payload.role
+  req.email = payload.email
   req.club = {
     id: club.id,
     email: club.email,
     tenantId: club.tenant_id,
+    role: club.role,
     emailVerified: club.email_verified,
     twoFactorEnabled: club.two_factor_enabled
   }
@@ -100,6 +105,39 @@ export async function optionalAuth(req: AuthenticatedRequest): Promise<void> {
     await requireAuth(req)
   } catch {
     // Ignore errors - auth is optional
+  }
+}
+
+/**
+ * Require super admin role
+ * @param req - Authenticated request
+ * @throws Error if not super admin
+ */
+export function requireSuperAdmin(req: AuthenticatedRequest): void {
+  if (!req.role || !isSuperAdmin(req.role)) {
+    throw new Error('Super admin access required')
+  }
+}
+
+/**
+ * Require admin or super admin role
+ * @param req - Authenticated request
+ * @throws Error if not admin or super admin
+ */
+export function requireAdmin(req: AuthenticatedRequest): void {
+  if (!req.role || !isAdmin(req.role)) {
+    throw new Error('Admin access required')
+  }
+}
+
+/**
+ * Require coach role
+ * @param req - Authenticated request
+ * @throws Error if not coach
+ */
+export function requireCoach(req: AuthenticatedRequest): void {
+  if (!req.role || !isCoach(req.role)) {
+    throw new Error('Coach access required')
   }
 }
 

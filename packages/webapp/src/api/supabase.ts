@@ -130,14 +130,14 @@ const rowToStatisticsSnapshot = (row: any): StatisticsSnapshot => {
   }
 
   return {
-    id: row.id,
-    sessionId: row.session_id,
-    sessionDate: row.session_date,
-    season: row.season,
+  id: row.id,
+  sessionId: row.session_id,
+  sessionDate: row.session_date,
+  season: row.season,
     matches: ensureArray(row.matches),
     matchPlayers: ensureArray(row.match_players),
     checkIns: ensureArray(row.check_ins),
-    createdAt: row.created_at
+  createdAt: row.created_at
   }
 }
 

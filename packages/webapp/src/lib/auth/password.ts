@@ -1,4 +1,13 @@
-import * as argon2 from '@node-rs/argon2'
+// Dynamic import argon2 only on server-side
+// In browser, Vite will use the stub from vite.config.ts
+async function getArgon2() {
+  if (typeof window !== 'undefined') {
+    throw new Error('argon2 can only be used server-side')
+  }
+  // Use dynamic import to avoid bundling in browser
+  const argon2Module = await import('@node-rs/argon2')
+  return argon2Module
+}
 
 const ARGON2_OPTIONS = {
   memoryCost: 65536, // 64 MB
@@ -13,6 +22,7 @@ const ARGON2_OPTIONS = {
  * @returns Hashed password
  */
 export async function hashPassword(password: string): Promise<string> {
+  const argon2 = await getArgon2()
   return await argon2.hash(password, ARGON2_OPTIONS)
 }
 
@@ -24,6 +34,7 @@ export async function hashPassword(password: string): Promise<string> {
  */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   try {
+    const argon2 = await getArgon2()
     return await argon2.verify(hash, password)
   } catch {
     return false

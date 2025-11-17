@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import PlayersPage from './routes/PlayersDB'
 import CheckInPage from './routes/CheckIn'
 import MatchProgramPage from './routes/MatchProgram'
@@ -10,15 +10,18 @@ import RegisterPage from './routes/auth/Register'
 import VerifyEmailPage from './routes/auth/VerifyEmail'
 import ForgotPasswordPage from './routes/auth/ForgotPassword'
 import ResetPasswordPage from './routes/auth/ResetPassword'
+import ResetPinPage from './routes/auth/ResetPin'
 import AccountSettingsPage from './routes/auth/AccountSettings'
 import { SidebarItem } from './components/navigation/SidebarItem'
 import { UserCheck, UsersRound, Grid2x2, BarChart3, Menu, X, PlayCircle, User, LogOut } from 'lucide-react'
 import { TenantProvider, useTenant } from './contexts/TenantContext'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
-import { NavigationProvider, useNavigation } from './contexts/NavigationContext'
+import { NavigationProvider, useNavigation, type Page } from './contexts/NavigationContext'
 import { getCurrentTenantId } from './lib/tenant'
 import { Button } from './components/ui'
+import { UserRole } from './lib/auth/roles'
+import AdminPage from './routes/admin/AdminPage'
 
 /**
  * Component that updates document title.
@@ -43,6 +46,8 @@ const Header = () => {
   const { config } = useTenant()
   const { isAuthenticated, club, logout } = useAuth()
   const { navigate, navigateToAuth } = useNavigation()
+  const tenantId = getCurrentTenantId()
+  const isDemoTenant = tenantId === 'demo'
   const logoPath = `${import.meta.env.BASE_URL}${config.logo}`
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -94,12 +99,17 @@ const Header = () => {
     }
   }, [isMenuOpen])
 
-  const navItems = [
-    { page: 'coach' as const, icon: <PlayCircle />, label: 'Træner' },
-    { page: 'check-in' as const, icon: <UserCheck />, label: 'Indtjekning' },
-    { page: 'rounds' as const, icon: <Grid2x2 />, label: 'Runder' },
-    { page: 'players' as const, icon: <UsersRound />, label: 'Spillere' },
-    { page: 'statistics' as const, icon: <BarChart3 />, label: 'Statistik' }
+  const clubRole = (club as any)?.role as string | undefined
+  const isSuperAdmin = clubRole === UserRole.SUPER_ADMIN || clubRole === 'super_admin'
+  const isAdmin = clubRole === UserRole.ADMIN || clubRole === 'admin' || isSuperAdmin
+
+  const navItems: Array<{ page: Page; icon: React.ReactNode; label: string }> = [
+    { page: 'coach', icon: <PlayCircle />, label: 'Træner' },
+    { page: 'check-in', icon: <UserCheck />, label: 'Indtjekning' },
+    { page: 'rounds', icon: <Grid2x2 />, label: 'Runder' },
+    { page: 'players', icon: <UsersRound />, label: 'Spillere' },
+    { page: 'statistics', icon: <BarChart3 />, label: 'Statistik' },
+    ...(isAdmin ? [{ page: 'admin' as Page, icon: <User />, label: 'Admin' }] : [])
   ]
 
   return (
@@ -167,59 +177,63 @@ const Header = () => {
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
 
-            {/* Desktop: Right section - User menu or login */}
-            <div className="hidden lg:flex items-center justify-end flex-shrink-0" style={{ width: '200px', minWidth: '200px', flexBasis: '200px' }}>
-              {isAuthenticated ? (
-                <div className="relative" ref={userMenuRef}>
-                  <button
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[hsl(var(--surface-2))] transition-colors whitespace-nowrap"
-                    aria-label="Bruger menu"
+            {/* Desktop: Right section - User menu or login (hidden on demo tenant) */}
+            {!isDemoTenant && (
+              <div className="hidden lg:flex items-center justify-end flex-shrink-0" style={{ width: '200px', minWidth: '200px', flexBasis: '200px' }}>
+                {isAuthenticated ? (
+                  <div className="relative" ref={userMenuRef}>
+                    <button
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-[hsl(var(--surface-2))] transition-colors whitespace-nowrap"
+                      aria-label="Bruger menu"
+                    >
+                      <User size={20} />
+                      <span className="text-sm truncate max-w-[120px]">
+                        {club?.role === 'coach' && club?.username ? club.username : club?.email}
+                      </span>
+                    </button>
+                    {isUserMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-48 bg-[hsl(var(--surface))] border border-[hsl(var(--line))] rounded-md shadow-lg z-50">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigateToAuth('account')
+                            setIsUserMenuOpen(false)
+                          }}
+                          className="w-full text-left block px-4 py-2 hover:bg-[hsl(var(--surface-2))] text-sm"
+                        >
+                          <div className="flex items-center gap-2">
+                            <User size={16} />
+                            Kontoindstillinger
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            logout()
+                            setIsUserMenuOpen(false)
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-[hsl(var(--surface-2))] text-sm text-red-600 dark:text-red-400"
+                        >
+                          <div className="flex items-center gap-2">
+                            <LogOut size={16} />
+                            Log ud
+                          </div>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Button 
+                    size="sm" 
+                    onClick={() => navigateToAuth('login')}
+                    className="flex-shrink-0"
                   >
-                    <User size={20} />
-                    <span className="text-sm truncate max-w-[120px]">{club?.email}</span>
-                  </button>
-                  {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-[hsl(var(--surface))] border border-[hsl(var(--line))] rounded-md shadow-lg z-50">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigateToAuth('account')
-                          setIsUserMenuOpen(false)
-                        }}
-                        className="w-full text-left block px-4 py-2 hover:bg-[hsl(var(--surface-2))] text-sm"
-                      >
-                        <div className="flex items-center gap-2">
-                          <User size={16} />
-                          Kontoindstillinger
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          logout()
-                          setIsUserMenuOpen(false)
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-[hsl(var(--surface-2))] text-sm text-red-600 dark:text-red-400"
-                      >
-                        <div className="flex items-center gap-2">
-                          <LogOut size={16} />
-                          Log ud
-                        </div>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => navigateToAuth('login')}
-                  className="flex-shrink-0"
-                >
-                  <Button size="sm">Log ind</Button>
-                </button>
-              )}
-            </div>
+                    Log ind
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
       </header>
 
@@ -295,16 +309,68 @@ const AppInner = () => {
 }
 
 /**
+ * Component that wraps content with tenant-based authentication protection
+ * herlev-hjorten tenant requires login, demo tenant is public
+ */
+const TenantProtectedContent = ({ children }: { children: React.ReactNode }) => {
+  const tenantId = getCurrentTenantId()
+  // Always call hooks unconditionally (React Rules of Hooks)
+  const { isAuthenticated, loading } = useAuth()
+  const { navigateToAuth } = useNavigation()
+  
+  // All other tenants (including herlev-hjorten) require authentication
+  useEffect(() => {
+    // Skip authentication check for demo tenant
+    if (tenantId === 'demo') {
+      return
+    }
+    
+    if (!loading && !isAuthenticated) {
+      navigateToAuth('login')
+    }
+  }, [tenantId, loading, isAuthenticated, navigateToAuth])
+  
+  // Demo tenant is public - no authentication required
+  if (tenantId === 'demo') {
+    return <>{children}</>
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-lg text-[hsl(var(--muted))]">Indlæser...</p>
+        </div>
+      </div>
+    )
+  }
+  
+  if (!isAuthenticated) {
+    return null // Will redirect via useEffect
+  }
+  
+  return <>{children}</>
+}
+
+/**
  * Main app content component that renders based on navigation state.
  */
 const AppContent = () => {
   const { currentPage, authPage, isAuthRoute, navigate } = useNavigation()
+  const { club } = useAuth()
+  
+  // Prepare coach object for LandingPage - use username for coaches, email for admins
+  const coachForLanding = club ? {
+    id: club.id,
+    displayName: club.role === 'coach' && club.username ? club.username : club.email
+  } : undefined
   
   return (
     <>
         <TenantTitleUpdater />
         <div className="flex min-h-screen flex-col text-[hsl(var(--foreground))] overflow-x-hidden max-w-full relative">
-          {!isAuthRoute && <Header />}
+          {/* Show header for all routes except login/register/auth flows - but include account settings */}
+          {(!isAuthRoute || authPage === 'account') && <Header />}
           <main className="flex-1 overflow-y-auto overflow-x-hidden max-w-full relative z-0">
             <div className="flex w-full flex-col gap-4 sm:gap-6 px-4 sm:px-6 pb-6 sm:pb-10 pt-4 sm:pt-6 md:px-8 lg:px-12 max-w-full overflow-x-hidden">
             {/* Auth pages */}
@@ -313,17 +379,27 @@ const AppContent = () => {
             {authPage === 'verify-email' && <VerifyEmailPage />}
             {authPage === 'forgot-password' && <ForgotPasswordPage />}
             {authPage === 'reset-password' && <ResetPasswordPage />}
+            {authPage === 'reset-pin' && <ResetPinPage />}
             {authPage === 'account' && <ProtectedRoute><AccountSettingsPage /></ProtectedRoute>}
             
-            {/* Main app pages */}
-            {!isAuthRoute && currentPage === 'coach' && (
-              <LandingPage onRedirectToCheckin={() => navigate('check-in')} />
+            {/* Main app pages - protected by tenant */}
+            {!isAuthRoute && (
+              <TenantProtectedContent>
+                {currentPage === 'coach' && (
+                  <LandingPage coach={coachForLanding} onRedirectToCheckin={() => navigate('check-in')} />
+                )}
+                {currentPage === 'check-in' && <CheckInPage />}
+                {(currentPage === 'rounds' || currentPage === 'match-program') && <MatchProgramPage />}
+                {currentPage === 'players' && <PlayersPage />}
+                {currentPage === 'statistics' && <StatisticsPage />}
+                {currentPage === 'prism-test' && <PrismTestPage />}
+                {currentPage === ('admin' as Page) && (
+                  <ProtectedRoute requireMinRole={UserRole.ADMIN}>
+                    <AdminPage />
+                  </ProtectedRoute>
+                )}
+              </TenantProtectedContent>
             )}
-            {!isAuthRoute && currentPage === 'check-in' && <CheckInPage />}
-            {!isAuthRoute && (currentPage === 'rounds' || currentPage === 'match-program') && <MatchProgramPage />}
-            {!isAuthRoute && currentPage === 'players' && <PlayersPage />}
-            {!isAuthRoute && currentPage === 'statistics' && <StatisticsPage />}
-            {!isAuthRoute && currentPage === 'prism-test' && <PrismTestPage />}
             </div>
           </main>
         </div>

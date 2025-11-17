@@ -1,11 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getPostgresClient, getDatabaseUrl } from './db-helper'
 import { verifyAccessToken } from '../../src/lib/auth/jwt'
+import { logger } from '../../src/lib/utils/logger'
+import { setCorsHeaders } from '../../src/lib/utils/cors'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  setCorsHeaders(res, req.headers.origin)
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Get club info (no sensitive data)
     const clubs = await sql`
-      SELECT id, email, tenant_id, email_verified, two_factor_enabled, created_at, last_login
+      SELECT id, email, username, role, tenant_id, email_verified, two_factor_enabled, created_at, last_login
       FROM clubs
       WHERE id = ${payload.clubId}
         AND tenant_id = ${payload.tenantId}
@@ -49,6 +49,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       club: {
         id: club.id,
         email: club.email,
+        username: club.username,
+        role: club.role,
         tenantId: club.tenant_id,
         emailVerified: club.email_verified,
         twoFactorEnabled: club.two_factor_enabled,
@@ -57,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     })
   } catch (error) {
-    console.error('Get club info error:', error)
+    logger.error('Get club info error', error)
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Failed to get club info'
     })

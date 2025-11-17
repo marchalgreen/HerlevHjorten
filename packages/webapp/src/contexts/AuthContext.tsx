@@ -4,6 +4,8 @@ import { useTenant } from './TenantContext'
 export interface Club {
   id: string
   email: string
+  username?: string
+  role: string
   tenantId: string
   emailVerified: boolean
   twoFactorEnabled: boolean
@@ -14,6 +16,7 @@ interface AuthContextValue {
   loading: boolean
   isAuthenticated: boolean
   login: (email: string, password: string, totpCode?: string) => Promise<void>
+  loginWithPIN: (username: string, pin: string) => Promise<void>
   logout: () => Promise<void>
   register: (email: string, password: string) => Promise<void>
   refreshToken: () => Promise<void>
@@ -133,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [getAccessToken, getApiUrl, refreshToken])
 
-  // Login
+  // Login with email/password (for admins)
   const login = useCallback(async (email: string, password: string, totpCode?: string) => {
     const response = await fetch(getApiUrl('/login'), {
       method: 'POST',
@@ -168,6 +171,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('2FA_REQUIRED')
       }
       throw new Error(data.error || data.message || 'Login failed')
+    }
+
+    setTokens(data.accessToken, data.refreshToken)
+    setClub(data.club)
+  }, [tenantId, getApiUrl, setTokens])
+
+  // Login with username/PIN (for coaches)
+  const loginWithPIN = useCallback(async (username: string, pin: string) => {
+    // Normalize username to lowercase for case-insensitive matching
+    const normalizedUsername = username.toLowerCase().trim()
+    
+    const response = await fetch(getApiUrl('/login'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: normalizedUsername,
+        pin,
+        tenantId
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed')
     }
 
     setTokens(data.accessToken, data.refreshToken)
@@ -237,6 +267,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     isAuthenticated: !!club,
     login,
+    loginWithPIN,
     logout,
     register,
     refreshToken

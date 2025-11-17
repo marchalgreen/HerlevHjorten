@@ -360,13 +360,13 @@ const CheckInPage = () => {
                       </div>
                     )}
                     {sortedCheckedInByGender.playersWithoutGender.map((player) => (
-                      <CheckedInPlayerCard
-                        key={player.id}
-                        player={player}
-                        isAnimatingOut={animatingOut.has(player.id)}
-                        isAnimatingIn={animatingIn.has(player.id)}
-                        onCheckOut={handleCheckOut}
-                      />
+                <CheckedInPlayerCard
+                  key={player.id}
+                  player={player}
+                  isAnimatingOut={animatingOut.has(player.id)}
+                  isAnimatingIn={animatingIn.has(player.id)}
+                  onCheckOut={handleCheckOut}
+                />
                     ))}
                   </div>
                 )}

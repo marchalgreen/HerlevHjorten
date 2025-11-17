@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { hashPassword, verifyPassword, validatePasswordStrength } from '../../src/lib/auth/password'
 import { getPostgresClient, getDatabaseUrl } from './db-helper'
 import { verifyAccessToken } from '../../src/lib/auth/jwt'
+import { logger } from '../../src/lib/utils/logger'
+import { setCorsHeaders } from '../../src/lib/utils/cors'
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -10,9 +12,7 @@ const changePasswordSchema = z.object({
 })
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  setCorsHeaders(res, req.headers.origin)
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -48,19 +48,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const sql = getPostgresClient(getDatabaseUrl())
 
-    // Get club
+    // Get club - must be admin or super_admin (coaches use PIN, not password)
     const clubs = await sql`
-      SELECT id, password_hash
+      SELECT id, password_hash, role
       FROM clubs
       WHERE id = ${payload.clubId}
         AND tenant_id = ${payload.tenantId}
+        AND role IN ('admin', 'super_admin')
     `
 
     if (clubs.length === 0) {
-      return res.status(404).json({ error: 'Club not found' })
+      return res.status(403).json({ error: 'Password change is only available for administrators. Coaches should use PIN change instead.' })
     }
 
     const club = clubs[0]
+
+    if (!club.password_hash) {
+      return res.status(400).json({ error: 'Password not set for this account' })
+    }
 
     // Verify current password
     const passwordValid = await verifyPassword(body.currentPassword, club.password_hash)
@@ -98,7 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    console.error('Change password error:', error)
+    logger.error('Change password error', error)
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Password change failed'
     })

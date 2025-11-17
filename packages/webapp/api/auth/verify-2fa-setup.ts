@@ -3,15 +3,15 @@ import { z } from 'zod'
 import { verifyTOTP, generateBackupCodes, hashBackupCodes } from '../../src/lib/auth/totp'
 import { getPostgresClient, getDatabaseUrl } from './db-helper'
 import { verifyAccessToken } from '../../src/lib/auth/jwt'
+import { logger } from '../../src/lib/utils/logger'
+import { setCorsHeaders } from '../../src/lib/utils/cors'
 
 const verify2FASetupSchema = z.object({
   code: z.string().length(6, 'Code must be 6 digits')
 })
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  setCorsHeaders(res, req.headers.origin)
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -67,8 +67,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Generate backup codes
-    const backupCodes = generateBackupCodes(10)
-    const hashedBackupCodes = hashBackupCodes(backupCodes)
+    const backupCodes = await generateBackupCodes(10)
+    const hashedBackupCodes = await hashBackupCodes(backupCodes)
 
     // Enable 2FA
     await sql`
@@ -91,7 +91,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    console.error('2FA verification error:', error)
+    logger.error('2FA verification error', error)
     return res.status(500).json({
       error: error instanceof Error ? error.message : '2FA verification failed'
     })

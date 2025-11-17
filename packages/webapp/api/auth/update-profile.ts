@@ -4,15 +4,15 @@ import { getPostgresClient, getDatabaseUrl } from './db-helper'
 import { verifyAccessToken } from '../../src/lib/auth/jwt'
 import { randomBytes } from 'crypto'
 import { sendVerificationEmail } from '../../src/lib/auth/email'
+import { logger } from '../../src/lib/utils/logger'
+import { setCorsHeaders } from '../../src/lib/utils/cors'
 
 const updateProfileSchema = z.object({
   email: z.string().email('Invalid email address').optional()
 })
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'PUT, POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  setCorsHeaders(res, req.headers.origin)
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -84,7 +84,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         await sendVerificationEmail(body.email, verificationToken, club.tenant_id)
       } catch (emailError) {
-        console.error('Failed to send verification email:', emailError)
+        logger.error('Failed to send verification email', emailError)
         // Don't fail the request if email fails
       }
     }
@@ -119,7 +119,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    console.error('Update profile error:', error)
+    logger.error('Update profile error', error)
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Profile update failed'
     })

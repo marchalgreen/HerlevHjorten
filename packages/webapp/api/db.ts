@@ -7,6 +7,8 @@
 
 import postgres from 'postgres'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { logger } from '../src/lib/utils/logger'
+import { setCorsHeaders } from '../src/lib/utils/cors'
 
 // Initialize Postgres client (reused across invocations)
 let sql: ReturnType<typeof postgres> | null = null
@@ -31,11 +33,8 @@ function getPostgresClient() {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-
+  setCorsHeaders(res, req.headers.origin)
+  
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
@@ -61,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ data: result })
   } catch (error) {
-    console.error('Database error:', error)
+    logger.error('Database error', error)
     return res.status(500).json({ 
       error: error instanceof Error ? error.message : 'Database query failed' 
     })
