@@ -85,13 +85,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body = loginSchema.parse(req.body)
     } catch (parseError) {
       if (parseError instanceof z.ZodError) {
+        logger.error('Login validation error', parseError.errors)
         return res.status(400).json({
           error: 'Validation error',
-          details: parseError.errors
+          details: parseError.errors,
+          received: req.body // Debug: show what was received
         })
       }
+      logger.error('Login parse error', parseError)
       return res.status(400).json({
-        error: 'Invalid request body'
+        error: 'Invalid request body',
+        received: req.body // Debug: show what was received
       })
     }
 
@@ -119,8 +123,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Determine login method
     // Only allow PIN login if verifyPIN is available
-    const isPINLogin = !!(body.username && body.pin && verifyPIN)
+    const isPINLogin = !!(body.username && body.pin)
     const isEmailLogin = !!(body.email && body.password)
+    
+    // Check if PIN login is requested but PIN module not available
+    if (isPINLogin && !verifyPIN) {
+      logger.error('PIN login requested but PIN module not available')
+      return res.status(400).json({
+        error: 'PIN login not available',
+        message: 'PIN authentication module is not loaded. Please use email/password login or contact support.'
+      })
+    }
 
     // Check rate limiting (use email or username as identifier)
     const rateLimitIdentifier = body.email || body.username || ''
@@ -153,8 +166,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           AND role IN ('admin', 'super_admin')
       `
     } else {
+      logger.error('Invalid login method', { body, isPINLogin, isEmailLogin, verifyPINAvailable: !!verifyPIN })
       return res.status(400).json({
-        error: 'Invalid login credentials'
+        error: 'Invalid login credentials',
+        message: 'Either email/password or username/PIN must be provided',
+        debug: {
+          received: {
+            email: !!body.email,
+            password: !!body.password,
+            username: !!body.username,
+            pin: !!body.pin,
+            pinLength: body.pin?.length
+          },
+          verifyPINAvailable: !!verifyPIN
+        }
       })
     }
 

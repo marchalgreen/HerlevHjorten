@@ -16,34 +16,53 @@ export default function ResetPinPage() {
 
   useEffect(() => {
     // Extract token and tenantId from URL
-    // URL format: /#/${tenantId}/reset-pin?token=...
+    // Try multiple URL formats:
+    // 1. Hash routing: /#/${tenantId}/reset-pin?token=...
+    // 2. Hash routing: /#/reset-pin?token=...
+    // 3. Query params: ?token=...
+    
     const hash = window.location.hash.replace(/^#/, '')
+    const search = window.location.search
     
-    // Split hash into path and query string
-    const [pathPart, queryPart] = hash.split('?')
-    const parts = pathPart.split('/')
-    
-    // Find tenantId (should be before 'reset-pin')
-    const resetPinIndex = parts.findIndex(part => part === 'reset-pin')
-    if (resetPinIndex > 0) {
-      setTenantId(parts[resetPinIndex - 1])
-    } else {
-      // Fallback to current tenant
-      setTenantId(getCurrentTenantId())
-    }
-    
-    // Extract token from query params in hash
-    if (queryPart) {
-      const params = new URLSearchParams(queryPart)
-      const tokenParam = params.get('token')
-      setToken(tokenParam)
+    // Try hash first
+    if (hash) {
+      const [pathPart, queryPart] = hash.split('?')
+      const parts = pathPart.split('/').filter(p => p)
       
-      if (!tokenParam) {
-        setError('Ingen nulstillings-token fundet')
+      // Find tenantId (should be before 'reset-pin')
+      const resetPinIndex = parts.findIndex(part => part === 'reset-pin')
+      if (resetPinIndex > 0) {
+        setTenantId(parts[resetPinIndex - 1])
+      } else {
+        // Fallback to current tenant
+        setTenantId(getCurrentTenantId())
       }
-    } else {
-      setError('Ingen nulstillings-token fundet')
+      
+      // Extract token from query params in hash
+      if (queryPart) {
+        const params = new URLSearchParams(queryPart)
+        const tokenParam = params.get('token')
+        if (tokenParam) {
+          setToken(tokenParam)
+          return
+        }
+      }
     }
+    
+    // Fallback to window.location.search
+    if (search) {
+      const params = new URLSearchParams(search)
+      const tokenParam = params.get('token')
+      if (tokenParam) {
+        setToken(tokenParam)
+        setTenantId(getCurrentTenantId())
+        return
+      }
+    }
+    
+    // No token found
+    setError('Ingen nulstillings-token fundet. Tjek om linket i emailen er korrekt.')
+    setTenantId(getCurrentTenantId())
   }, [])
 
   const validatePIN = (pinValue: string): string[] => {
