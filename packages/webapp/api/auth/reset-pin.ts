@@ -6,24 +6,32 @@ import { getPostgresClient, getDatabaseUrl } from './db-helper'
 import { logger } from '../../src/lib/utils/logger'
 import { setCorsHeaders } from '../../src/lib/utils/cors'
 
-const requestResetSchema = z.object({
-  email: z.string().email('Invalid email address').optional().or(z.literal('')),
-  username: z.string().min(1, 'Username is required').optional().or(z.literal('')),
-  tenantId: z.string().min(1, 'Tenant ID is required')
-}).transform((data) => ({
-  ...data,
-  email: data.email?.trim() || undefined,
-  username: data.username?.trim() || undefined
-})).refine(
+const requestResetSchema = z.preprocess(
   (data) => {
-    const hasEmail = data.email && data.email.length > 0
-    const hasUsername = data.username && data.username.length > 0
-    return hasEmail || hasUsername
+    if (typeof data === 'object' && data !== null) {
+      return {
+        ...data,
+        email: data.email && typeof data.email === 'string' && data.email.trim() ? data.email.trim() : undefined,
+        username: data.username && typeof data.username === 'string' && data.username.trim() ? data.username.trim() : undefined
+      }
+    }
+    return data
   },
-  {
-    message: 'Either email or username must be provided',
-    path: ['email']
-  }
+  z.object({
+    email: z.string().email('Invalid email address').optional(),
+    username: z.string().min(1, 'Username is required').optional(),
+    tenantId: z.string().min(1, 'Tenant ID is required')
+  }).refine(
+    (data) => {
+      const hasEmail = data.email && data.email.length > 0
+      const hasUsername = data.username && data.username.length > 0
+      return hasEmail || hasUsername
+    },
+    {
+      message: 'Either email or username must be provided',
+      path: ['email']
+    }
+  )
 )
 
 const resetPINSchema = z.object({
