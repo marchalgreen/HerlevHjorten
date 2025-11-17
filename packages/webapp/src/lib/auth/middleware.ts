@@ -1,7 +1,7 @@
 import type { VercelRequest } from '@vercel/node'
-import { verifyAccessToken } from './jwt'
-import { getPostgresClient, getDatabaseUrl } from '../../../api/auth/db-helper'
-import { isSuperAdmin, isAdmin, isCoach } from './roles'
+import { verifyAccessToken } from './jwt.js'
+import { getPostgresClient, getDatabaseUrl } from '../../../api/auth/db-helper.js'
+import { isSuperAdmin, isAdmin, isCoach } from './roles.js'
 
 export interface AuthenticatedRequest extends VercelRequest {
   clubId?: string
