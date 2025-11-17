@@ -122,6 +122,7 @@ async function setupAuthRoutes() {
   const logoutHandler = (await import('../api/auth/logout.js')).default
   const forgotPasswordHandler = (await import('../api/auth/forgot-password.js')).default
   const resetPasswordHandler = (await import('../api/auth/reset-password.js')).default
+  const resetPinHandler = (await import('../api/auth/reset-pin.js')).default
   const changePasswordHandler = (await import('../api/auth/change-password.js')).default
   const setup2FAHandler = (await import('../api/auth/setup-2fa.js')).default
   const verify2FASetupHandler = (await import('../api/auth/verify-2fa-setup.js')).default
@@ -137,6 +138,7 @@ async function setupAuthRoutes() {
   app.post('/api/auth/logout', wrapHandler(logoutHandler))
   app.post('/api/auth/forgot-password', wrapHandler(forgotPasswordHandler))
   app.post('/api/auth/reset-password', wrapHandler(resetPasswordHandler))
+  app.post('/api/auth/reset-pin', wrapHandler(resetPinHandler))
   app.post('/api/auth/change-password', wrapHandler(changePasswordHandler))
   app.post('/api/auth/setup-2fa', wrapHandler(setup2FAHandler))
   app.post('/api/auth/verify-2fa-setup', wrapHandler(verify2FASetupHandler))

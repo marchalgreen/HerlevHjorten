@@ -37,12 +37,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Request PIN reset
       const body = requestResetSchema.parse(req.body)
 
-      // Find coach by email, username, and tenant
+      // Find coach by email, username, and tenant (case-insensitive username)
       const coaches = await sql`
         SELECT id, email, username
         FROM clubs
         WHERE email = ${body.email}
-          AND username = ${body.username}
+          AND LOWER(username) = LOWER(${body.username})
           AND tenant_id = ${body.tenantId}
           AND role = 'coach'
       `
@@ -70,7 +70,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `
 
       // Send reset email
-      await sendPINResetEmail(coach.email, resetToken, body.tenantId, coach.username)
+      try {
+        await sendPINResetEmail(coach.email, resetToken, body.tenantId, coach.username)
+        console.log(`[reset-pin] PIN reset email sent successfully to ${coach.email}`)
+      } catch (emailError) {
+        console.error('[reset-pin] Failed to send PIN reset email:', emailError)
+        // Still return success to user (security best practice), but log the error
+        return res.status(500).json({
+          error: 'Failed to send PIN reset email',
+          message: emailError instanceof Error ? emailError.message : 'Unknown error',
+          ...(process.env.NODE_ENV === 'development' && {
+            details: emailError instanceof Error ? emailError.stack : undefined
+          })
+        })
+      }
 
       return res.status(200).json({
         success: true,
