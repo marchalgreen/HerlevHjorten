@@ -29,20 +29,22 @@ const loginSchema = z.object({
 )
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers and ensure JSON content type
-  setCorsHeaders(res, req.headers.origin)
-  res.setHeader('Content-Type', 'application/json')
-  
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end()
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
-
-  // Ensure we always return JSON, even on errors
+  // Wrap entire handler to catch any errors, including import failures
   try {
+    // Set CORS headers and ensure JSON content type
+    setCorsHeaders(res, req.headers.origin)
+    res.setHeader('Content-Type', 'application/json')
+    
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end()
+    }
+
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Method not allowed' })
+    }
+
+    // Ensure we always return JSON, even on errors
+    try {
     // Parse body safely with proper error handling
     let body
     try {
