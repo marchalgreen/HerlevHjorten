@@ -11,8 +11,14 @@ let verifyPIN: ((pin: string, hash: string) => Promise<boolean>) | null = null
 let logger: { error: (msg: string, error?: unknown) => void } = {
   error: (msg: string, error?: unknown) => console.error(msg, error)
 }
-let setCorsHeaders: ((res: { setHeader: (name: string, value: string) => void }, origin?: string) => void) = (res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+let setCorsHeaders: ((res: { setHeader: (name: string, value: string) => void }, origin?: string) => void) = (res, origin) => {
+  // In development, allow the requesting origin or all origins
+  const isDev = origin && (
+    origin.includes('localhost') || 
+    origin.includes('127.0.0.1') ||
+    !process.env.VERCEL_ENV
+  )
+  res.setHeader('Access-Control-Allow-Origin', isDev ? (origin || '*') : '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 }
