@@ -43,8 +43,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(405).json({ error: 'Method not allowed' })
     }
 
-    // Ensure we always return JSON, even on errors
-    try {
     // Parse body safely with proper error handling
     let body
     try {
@@ -89,32 +87,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const isPINLogin = !!(body.username && body.pin)
     const isEmailLogin = !!(body.email && body.password)
     
-    // Log debug info
-    logger.error('Login attempt', {
-      hasUsername: !!body.username,
-      hasPin: !!body.pin,
-      pinLength: body.pin?.length,
-      hasEmail: !!body.email,
-      hasPassword: !!body.password,
-      isPINLogin,
-      isEmailLogin,
-      verifyPINAvailable: !!verifyPIN,
-      tenantId: body.tenantId
-    })
-    
     // Check if PIN login is requested but PIN module not available
     if (isPINLogin && !verifyPIN) {
       logger.error('PIN login requested but PIN module not available')
       return res.status(400).json({
         error: 'PIN login not available',
-        message: 'PIN authentication module is not loaded. Please use email/password login or contact support.',
-        debug: {
-          verifyPINAvailable: false,
-          received: {
-            username: body.username,
-            pinLength: body.pin?.length
-          }
-        }
+        message: 'PIN authentication module is not loaded. Please use email/password login or contact support.'
       })
     }
 
@@ -278,21 +256,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         twoFactorEnabled: club.two_factor_enabled
       }
     })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: 'Validation error',
-        details: error.errors
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: 'Validation error',
+          details: error.errors
+        })
+      }
+
+      // Log error but don't expose internal details
+      logger.error('Login error', error)
+      
+      // Always return JSON, never HTML
+      return res.status(500).json({
+        error: 'Login failed',
+        message: error instanceof Error ? error.message : 'An unexpected error occurred'
       })
     }
-
-    // Log error but don't expose internal details
-    logger.error('Login error', error)
+  } catch (outerError) {
+    // Catch any errors from imports or top-level code
+    // This ensures we always return JSON, even if imports fail
+    try {
+      logger.error('Login handler error', outerError)
+    } catch {
+      // If logger fails, use console.error as fallback
+      console.error('[ERROR] Login handler error', outerError)
+    }
     
-    // Always return JSON, never HTML
-    return res.status(500).json({
-      error: 'Login failed',
-      message: error instanceof Error ? error.message : 'An unexpected error occurred'
-    })
+    // Always return JSON, never HTML - even for import/runtime errors
+    try {
+      res.setHeader('Content-Type', 'application/json')
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      return res.status(500).json({
+        error: 'Server error',
+        message: outerError instanceof Error ? outerError.message : 'An unexpected error occurred'
+      })
+    } catch {
+      // If even setting headers fails, return minimal JSON
+      return res.status(500).json({ error: 'Server error' })
+    }
   }
 }
