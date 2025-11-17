@@ -167,13 +167,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Login with username/PIN (for coaches)
   const loginWithPIN = useCallback(async (username: string, pin: string) => {
+    // Normalize username to lowercase for case-insensitive matching
+    const normalizedUsername = username.toLowerCase().trim()
+    
     const response = await fetch(getApiUrl('/login'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        username,
+        username: normalizedUsername,
         pin,
         tenantId
       })
