@@ -7,13 +7,21 @@ import { logger } from '../../src/lib/utils/logger'
 import { setCorsHeaders } from '../../src/lib/utils/cors'
 
 const requestResetSchema = z.object({
-  email: z.string().email('Invalid email address').optional().or(z.literal('')),
-  username: z.string().min(1, 'Username is required').optional().or(z.literal('')),
+  email: z.union([
+    z.string().email('Invalid email address'),
+    z.literal(''),
+    z.undefined()
+  ]).optional(),
+  username: z.union([
+    z.string().min(1, 'Username is required'),
+    z.literal(''),
+    z.undefined()
+  ]).optional(),
   tenantId: z.string().min(1, 'Tenant ID is required')
 }).refine(
   (data) => {
-    const hasEmail = data.email && data.email.trim().length > 0
-    const hasUsername = data.username && data.username.trim().length > 0
+    const hasEmail = data.email && typeof data.email === 'string' && data.email.trim().length > 0
+    const hasUsername = data.username && typeof data.username === 'string' && data.username.trim().length > 0
     return hasEmail || hasUsername
   },
   {
