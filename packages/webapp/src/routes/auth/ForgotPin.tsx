@@ -17,6 +17,13 @@ export default function ForgotPinPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    // Validate that at least one field is filled
+    if (!email && !username) {
+      setError('Indtast enten email eller brugernavn')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -30,8 +37,8 @@ export default function ForgotPinPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          email,
-          username,
+          email: email || undefined,
+          username: username || undefined,
           tenantId
         })
       })
@@ -64,7 +71,7 @@ export default function ForgotPinPage() {
               Email sendt!
             </h1>
             <p className="text-[hsl(var(--muted))] mb-4">
-              Hvis en konto med denne email og brugernavn findes, har vi sendt et link til nulstilling af PIN.
+              Hvis en konto med den angivne email eller brugernavn findes, har vi sendt et link til nulstilling af PIN.
             </p>
             <p className="text-sm text-[hsl(var(--muted))] mb-6">
               Tjek din email og klik på linket for at nulstille din PIN.
@@ -98,7 +105,7 @@ export default function ForgotPinPage() {
             Glemt PIN?
           </h1>
           <p className="text-sm text-[hsl(var(--muted))]">
-            Indtast din email og brugernavn for at få sendt et nulstillingslink
+            Indtast din email eller brugernavn for at få sendt et nulstillingslink
           </p>
         </div>
 
@@ -130,7 +137,7 @@ export default function ForgotPinPage() {
               htmlFor="email" 
               className="block text-sm font-medium text-[hsl(var(--foreground))]"
             >
-              Email
+              Email <span className="text-[hsl(var(--muted))] font-normal">(valgfrit)</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -141,7 +148,6 @@ export default function ForgotPinPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 className="w-full pl-10 pr-3 py-2.5
                   bg-[hsl(var(--surface))] 
                   border border-[hsl(var(--line)/.3)]
@@ -162,13 +168,22 @@ export default function ForgotPinPage() {
             </div>
           </div>
 
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-[hsl(var(--line)/.3)]"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-[hsl(var(--surface))] text-[hsl(var(--muted))]">eller</span>
+            </div>
+          </div>
+
           {/* Username Field */}
           <div className="space-y-2">
             <label 
               htmlFor="username" 
               className="block text-sm font-medium text-[hsl(var(--foreground))]"
             >
-              Brugernavn
+              Brugernavn <span className="text-[hsl(var(--muted))] font-normal">(valgfrit)</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -179,7 +194,6 @@ export default function ForgotPinPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                required
                 className="w-full pl-10 pr-3 py-2.5
                   bg-[hsl(var(--surface))] 
                   border border-[hsl(var(--line)/.3)]
