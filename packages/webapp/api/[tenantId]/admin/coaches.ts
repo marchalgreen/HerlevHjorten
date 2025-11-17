@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../../../src/lib/auth/middleware'
 import { hashPIN, generateRandomPIN, validatePIN } from '../../../src/lib/auth/pin'
-import { sendPINResetEmail } from '../../../src/lib/auth/email'
+import { sendCoachWelcomeEmail } from '../../../src/lib/auth/email'
 import { getPostgresClient, getDatabaseUrl } from '../../auth/db-helper'
 
 const createCoachSchema = z.object({
@@ -81,11 +81,14 @@ export default async function handler(
       
       const sql = getPostgresClient(getDatabaseUrl())
       
-      // Check if username already exists for this tenant
+      // Check if username already exists for this tenant (case-insensitive)
+      // Normalize username to lowercase for storage
+      const normalizedUsername = body.username.toLowerCase().trim()
+      
       const existingUsername = await sql`
         SELECT id
         FROM clubs
-        WHERE username = ${body.username}
+        WHERE LOWER(username) = LOWER(${normalizedUsername})
           AND tenant_id = ${tenantId}
       `
       
@@ -124,7 +127,7 @@ export default async function handler(
       // Hash PIN
       const pinHash = await hashPIN(pin)
       
-      // Create coach
+      // Create coach (store username in lowercase)
       const [coach] = await sql`
         INSERT INTO clubs (
           tenant_id,
@@ -137,7 +140,7 @@ export default async function handler(
         VALUES (
           ${tenantId},
           ${body.email},
-          ${body.username},
+          ${normalizedUsername},
           ${pinHash},
           'coach',
           true
@@ -148,19 +151,7 @@ export default async function handler(
       // Send welcome email if requested
       if (body.sendEmail) {
         try {
-          // Generate a temporary reset token for welcome email
-          const { generatePINResetToken } = await import('../../../src/lib/auth/pin')
-          const resetToken = await generatePINResetToken()
-          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-          
-          await sql`
-            UPDATE clubs
-            SET pin_reset_token = ${resetToken},
-                pin_reset_expires = ${expiresAt}
-            WHERE id = ${coach.id}
-          `
-          
-          await sendPINResetEmail(coach.email, resetToken, tenantId, coach.username)
+          await sendCoachWelcomeEmail(coach.email, pin, tenantId, coach.username)
         } catch (emailError) {
           console.error('Failed to send welcome email:', emailError)
           // Don't fail the request if email fails

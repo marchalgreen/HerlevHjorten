@@ -96,20 +96,25 @@ export default async function handler(
         })
       }
 
-      // Check username uniqueness if updating username
-      if (body.username && body.username !== existing[0].username) {
-        const usernameCheck = await sql`
-          SELECT id
-          FROM clubs
-          WHERE username = ${body.username}
-            AND tenant_id = ${tenantId}
-            AND id != ${coachId}
-        `
+      // Check username uniqueness if updating username (case-insensitive)
+      let normalizedUsername: string | undefined
+      if (body.username) {
+        normalizedUsername = body.username.toLowerCase().trim()
+        // Compare case-insensitively with existing username
+        if (normalizedUsername !== existing[0].username?.toLowerCase()) {
+          const usernameCheck = await sql`
+            SELECT id
+            FROM clubs
+            WHERE LOWER(username) = LOWER(${normalizedUsername})
+              AND tenant_id = ${tenantId}
+              AND id != ${coachId}
+          `
 
-        if (usernameCheck.length > 0) {
-          return res.status(400).json({
-            error: 'Username already exists for this tenant'
-          })
+          if (usernameCheck.length > 0) {
+            return res.status(400).json({
+              error: 'Username already exists for this tenant'
+            })
+          }
         }
       }
 
@@ -153,8 +158,9 @@ export default async function handler(
         values.push(body.email)
       }
       if (body.username) {
+        // Store username in lowercase
         updates.push(`username = $${paramIndex++}`)
-        values.push(body.username)
+        values.push(normalizedUsername)
       }
       if (pinHash) {
         updates.push(`pin_hash = $${paramIndex++}`)
@@ -247,7 +253,20 @@ export default async function handler(
         `
 
         // Send reset email
-        await sendPINResetEmail(coach.email, resetToken, tenantId, coach.username)
+        try {
+          await sendPINResetEmail(coach.email, resetToken, tenantId, coach.username)
+          console.log(`[reset-pin] PIN reset email sent successfully to ${coach.email}`)
+        } catch (emailError) {
+          console.error('[reset-pin] Failed to send PIN reset email:', emailError)
+          // Still return success to user (security best practice), but log the error
+          return res.status(500).json({
+            error: 'Failed to send PIN reset email',
+            message: emailError instanceof Error ? emailError.message : 'Unknown error',
+            ...(process.env.NODE_ENV === 'development' && {
+              details: emailError instanceof Error ? emailError.stack : undefined
+            })
+          })
+        }
 
         return res.status(200).json({
           success: true,

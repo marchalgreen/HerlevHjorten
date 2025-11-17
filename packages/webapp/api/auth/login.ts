@@ -67,11 +67,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Find club based on login method
     let clubs
     if (isPINLogin) {
-      // PIN login: find by username and tenant_id
+      // PIN login: find by username and tenant_id (case-insensitive)
       clubs = await sql`
         SELECT id, email, username, pin_hash, tenant_id, role, email_verified, two_factor_enabled, two_factor_secret
         FROM clubs
-        WHERE username = ${body.username}
+        WHERE LOWER(username) = LOWER(${body.username})
           AND tenant_id = ${body.tenantId}
           AND role = 'coach'
       `
