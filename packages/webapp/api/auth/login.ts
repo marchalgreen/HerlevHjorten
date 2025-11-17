@@ -52,14 +52,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         logger.error('Login validation error', parseError.errors)
         return res.status(400).json({
           error: 'Validation error',
-          details: parseError.errors,
-          received: req.body // Debug: show what was received
+          details: parseError.errors
         })
       }
       logger.error('Login parse error', parseError)
       return res.status(400).json({
-        error: 'Invalid request body',
-        received: req.body // Debug: show what was received
+        error: 'Invalid request body'
       })
     }
 
@@ -152,20 +150,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           AND role IN ('admin', 'super_admin')
       `
     } else {
-      logger.error('Invalid login method', { body, isPINLogin, isEmailLogin, verifyPINAvailable: !!verifyPIN })
       return res.status(400).json({
         error: 'Invalid login credentials',
-        message: 'Either email/password or username/PIN must be provided',
-        debug: {
-          received: {
-            email: !!body.email,
-            password: !!body.password,
-            username: !!body.username,
-            pin: !!body.pin,
-            pinLength: body.pin?.length
-          },
-          verifyPINAvailable: !!verifyPIN
-        }
+        message: 'Either email/password or username/PIN must be provided'
       })
     }
 
