@@ -6,11 +6,33 @@ import { getPostgresClient, getDatabaseUrl } from './db-helper'
 import { logger } from '../../src/lib/utils/logger'
 import { setCorsHeaders } from '../../src/lib/utils/cors'
 
-const requestResetSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  username: z.string().min(1, 'Username is required'),
-  tenantId: z.string().min(1, 'Tenant ID is required')
-})
+const requestResetSchema = z.preprocess(
+  (data) => {
+    if (typeof data === 'object' && data !== null) {
+      return {
+        ...data,
+        email: data.email && typeof data.email === 'string' && data.email.trim() ? data.email.trim() : undefined,
+        username: data.username && typeof data.username === 'string' && data.username.trim() ? data.username.trim() : undefined
+      }
+    }
+    return data
+  },
+  z.object({
+    email: z.string().email('Invalid email address').optional(),
+    username: z.string().min(1, 'Username is required').optional(),
+    tenantId: z.string().min(1, 'Tenant ID is required')
+  }).refine(
+    (data) => {
+      const hasEmail = data.email && data.email.length > 0
+      const hasUsername = data.username && data.username.length > 0
+      return hasEmail || hasUsername
+    },
+    {
+      message: 'Either email or username must be provided',
+      path: ['email']
+    }
+  )
+)
 
 const resetPINSchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
@@ -37,15 +59,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Request PIN reset
       const body = requestResetSchema.parse(req.body)
 
-      // Find coach by email, username, and tenant (case-insensitive username)
-      const coaches = await sql`
-        SELECT id, email, username
-        FROM clubs
-        WHERE email = ${body.email}
-          AND LOWER(username) = LOWER(${body.username})
-          AND tenant_id = ${body.tenantId}
-          AND role = 'coach'
-      `
+      // Normalize inputs - trim and check if non-empty
+      const email = body.email?.trim() || ''
+      const username = body.username?.trim() || ''
+      
+      // Find coach by email OR username and tenant (case-insensitive username)
+      let coaches
+      if (email && username) {
+        // Both provided - match both
+        coaches = await sql`
+          SELECT id, email, username
+          FROM clubs
+          WHERE email = ${email}
+            AND LOWER(username) = LOWER(${username})
+            AND tenant_id = ${body.tenantId}
+            AND role = 'coach'
+        `
+      } else if (email) {
+        // Only email provided
+        coaches = await sql`
+          SELECT id, email, username
+          FROM clubs
+          WHERE email = ${email}
+            AND tenant_id = ${body.tenantId}
+            AND role = 'coach'
+        `
+      } else if (username) {
+        // Only username provided
+        coaches = await sql`
+          SELECT id, email, username
+          FROM clubs
+          WHERE LOWER(username) = LOWER(${username})
+            AND tenant_id = ${body.tenantId}
+            AND role = 'coach'
+        `
+      } else {
+        return res.status(400).json({
+          error: 'Either email or username must be provided'
+        })
+      }
 
       if (coaches.length === 0) {
         // Don't reveal if user exists or not (security best practice)
@@ -89,6 +141,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         success: true,
         message: 'If a matching account exists, a PIN reset email has been sent.'
       })
+    } else if (action === 'validate') {
+      // Validate token and return username
+      const body = z.object({
+        token: z.string().min(1, 'Reset token is required'),
+        tenantId: z.string().min(1, 'Tenant ID is required')
+      }).parse(req.body)
+
+      // Find coach by reset token
+      const coaches = await sql`
+        SELECT id, username, pin_reset_token, pin_reset_expires
+        FROM clubs
+        WHERE pin_reset_token = ${body.token}
+          AND tenant_id = ${body.tenantId}
+          AND role = 'coach'
+      `
+
+      if (coaches.length === 0) {
+        return res.status(400).json({
+          error: 'Invalid or expired reset token'
+        })
+      }
+
+      const coach = coaches[0]
+
+      // Check if token is expired
+      if (!coach.pin_reset_expires || isPINResetTokenExpired(coach.pin_reset_expires)) {
+        return res.status(400).json({
+          error: 'Reset token has expired'
+        })
+      }
+
+      return res.status(200).json({
+        success: true,
+        username: coach.username
+      })
     } else if (action === 'reset') {
       // Reset PIN with token
       const body = resetPINSchema.parse(req.body)
@@ -104,7 +191,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Find coach by reset token
       const coaches = await sql`
-        SELECT id, email, pin_reset_token, pin_reset_expires
+        SELECT id, email, username, pin_reset_token, pin_reset_expires
         FROM clubs
         WHERE pin_reset_token = ${body.token}
           AND tenant_id = ${body.tenantId}
@@ -140,11 +227,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       return res.status(200).json({
         success: true,
-        message: 'PIN has been reset successfully'
+        message: 'PIN has been reset successfully',
+        username: coach.username
       })
     } else {
       return res.status(400).json({
-        error: 'Invalid action. Use ?action=request or ?action=reset'
+        error: 'Invalid action. Use ?action=request, ?action=validate, or ?action=reset'
       })
     }
   } catch (error) {

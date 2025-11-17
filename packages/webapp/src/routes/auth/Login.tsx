@@ -334,7 +334,7 @@ export default function LoginPage() {
           {loginMethod === 'pin' ? (
             <button
               type="button"
-              onClick={() => navigateToAuth('reset-pin')}
+              onClick={() => navigateToAuth('forgot-pin')}
               className="text-sm text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/.8)] hover:underline transition-colors duration-200"
             >
               Glemt PIN?

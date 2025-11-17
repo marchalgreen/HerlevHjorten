@@ -49,11 +49,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body = loginSchema.parse(req.body)
     } catch (parseError) {
       if (parseError instanceof z.ZodError) {
+        logger.error('Login validation error', parseError.errors)
         return res.status(400).json({
           error: 'Validation error',
           details: parseError.errors
         })
       }
+      logger.error('Login parse error', parseError)
       return res.status(400).json({
         error: 'Invalid request body'
       })
@@ -84,6 +86,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Determine login method
     const isPINLogin = !!(body.username && body.pin)
     const isEmailLogin = !!(body.email && body.password)
+    
+    // Log debug info
+    logger.error('Login attempt', {
+      hasUsername: !!body.username,
+      hasPin: !!body.pin,
+      pinLength: body.pin?.length,
+      hasEmail: !!body.email,
+      hasPassword: !!body.password,
+      isPINLogin,
+      isEmailLogin,
+      verifyPINAvailable: !!verifyPIN,
+      tenantId: body.tenantId
+    })
+    
+    // Check if PIN login is requested but PIN module not available
+    if (isPINLogin && !verifyPIN) {
+      logger.error('PIN login requested but PIN module not available')
+      return res.status(400).json({
+        error: 'PIN login not available',
+        message: 'PIN authentication module is not loaded. Please use email/password login or contact support.',
+        debug: {
+          verifyPINAvailable: false,
+          received: {
+            username: body.username,
+            pinLength: body.pin?.length
+          }
+        }
+      })
+    }
 
     // Check rate limiting (use email or username as identifier)
     const rateLimitIdentifier = body.email || body.username || ''
@@ -99,10 +130,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let clubs
     if (isPINLogin) {
       // PIN login: find by username and tenant_id (case-insensitive)
+      // Normalize username to lowercase for matching (username is stored in lowercase)
+      const normalizedUsername = body.username.toLowerCase().trim()
+      
       clubs = await sql`
         SELECT id, email, username, pin_hash, tenant_id, role, email_verified, two_factor_enabled, two_factor_secret
         FROM clubs
-        WHERE LOWER(username) = LOWER(${body.username})
+        WHERE LOWER(username) = LOWER(${normalizedUsername})
           AND tenant_id = ${body.tenantId}
           AND role = 'coach'
       `
@@ -117,39 +151,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `
     } else {
       return res.status(400).json({
-        error: 'Invalid login credentials'
+        error: 'Invalid login credentials',
+        message: 'Either email/password or username/PIN must be provided'
       })
     }
 
     if (clubs.length === 0) {
-      // Debug: Check what users exist for this tenant
-      const debugUsers = await sql`
-        SELECT id, email, username, role, tenant_id, 
-               password_hash IS NOT NULL as has_password,
-               pin_hash IS NOT NULL as has_pin,
-               email_verified
-        FROM clubs
-        WHERE tenant_id = ${body.tenantId}
-        LIMIT 10
-      `
-      
       await recordLoginAttempt(sql, null, rateLimitIdentifier, ipAddress, false)
       return res.status(401).json({
-        error: isPINLogin ? 'Invalid username or PIN' : 'Invalid email or password',
-        debug: {
-          searched_email: body.email,
-          searched_username: body.username,
-          tenant_id: body.tenantId,
-          login_method: isPINLogin ? 'PIN' : 'email',
-          available_users: debugUsers.map(u => ({
-            email: u.email,
-            username: u.username,
-            role: u.role,
-            has_password: u.has_password,
-            has_pin: u.has_pin,
-            email_verified: u.email_verified
-          }))
-        }
+        error: isPINLogin ? 'Invalid username or PIN' : 'Invalid email or password'
       })
     }
 
@@ -157,16 +167,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Verify credentials based on login method
     let credentialsValid = false
-    if (isPINLogin) {
+    if (isPINLogin && verifyPIN) {
       if (!club.pin_hash) {
+        logger.error('PIN login attempted but no PIN hash found', { clubId: club.id, username: club.username })
         await recordLoginAttempt(sql, club.id, rateLimitIdentifier, ipAddress, false)
         return res.status(401).json({
           error: 'PIN not set for this user'
         })
       }
+      
       credentialsValid = await verifyPIN(body.pin!, club.pin_hash)
     } else if (isEmailLogin) {
+      if (!club.password_hash) {
+        await recordLoginAttempt(sql, club.id, rateLimitIdentifier, ipAddress, false)
+        return res.status(401).json({
+          error: 'Password not set for this user'
+        })
+      }
       credentialsValid = await verifyPassword(body.password!, club.password_hash)
+    } else {
+      await recordLoginAttempt(sql, null, rateLimitIdentifier, ipAddress, false)
+      return res.status(400).json({
+        error: 'Invalid login method',
+        message: verifyPIN ? 'Either email/password or username/PIN required' : 'Email/password login required'
+      })
     }
 
     if (!credentialsValid) {
@@ -208,6 +232,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Generate tokens (include role and email)
+    // Ensure we have required fields
+    if (!club.role || !club.email) {
+      logger.error('Missing required fields for token generation', { club })
+      return res.status(500).json({
+        error: 'User data incomplete',
+        message: 'Missing role or email'
+      })
+    }
+    
     const accessToken = generateAccessToken(club.id, club.tenant_id, club.role, club.email)
     const refreshToken = await generateRefreshToken()
     const refreshTokenHash = await hashRefreshToken(refreshToken)

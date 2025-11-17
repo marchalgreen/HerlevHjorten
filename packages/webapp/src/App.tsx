@@ -9,6 +9,7 @@ import LoginPage from './routes/auth/Login'
 import RegisterPage from './routes/auth/Register'
 import VerifyEmailPage from './routes/auth/VerifyEmail'
 import ForgotPasswordPage from './routes/auth/ForgotPassword'
+import ForgotPinPage from './routes/auth/ForgotPin'
 import ResetPasswordPage from './routes/auth/ResetPassword'
 import ResetPinPage from './routes/auth/ResetPin'
 import AccountSettingsPage from './routes/auth/AccountSettings'
@@ -378,6 +379,7 @@ const AppContent = () => {
             {authPage === 'register' && <RegisterPage />}
             {authPage === 'verify-email' && <VerifyEmailPage />}
             {authPage === 'forgot-password' && <ForgotPasswordPage />}
+            {authPage === 'forgot-pin' && <ForgotPinPage />}
             {authPage === 'reset-password' && <ResetPasswordPage />}
             {authPage === 'reset-pin' && <ResetPinPage />}
             {authPage === 'account' && <ProtectedRoute><AccountSettingsPage /></ProtectedRoute>}

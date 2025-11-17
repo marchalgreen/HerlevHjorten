@@ -6,6 +6,7 @@ import { setCorsHeaders } from '../../src/lib/utils/cors'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCorsHeaders(res, req.headers.origin)
+  res.setHeader('Content-Type', 'application/json')
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
 export type Page = 'coach' | 'check-in' | 'rounds' | 'match-program' | 'players' | 'statistics' | 'prism-test' | 'admin'
-type AuthPage = 'login' | 'register' | 'verify-email' | 'forgot-password' | 'reset-password' | 'reset-pin' | 'account'
+type AuthPage = 'login' | 'register' | 'verify-email' | 'forgot-password' | 'forgot-pin' | 'reset-password' | 'reset-pin' | 'account'
 
 interface NavigationContextType {
   currentPage: Page
@@ -72,7 +72,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
           window.history.replaceState(null, '', window.location.pathname)
           return
         }
-        const knownAuthPages: AuthPage[] = ['login', 'register', 'verify-email', 'forgot-password', 'reset-password', 'reset-pin', 'account']
+        const knownAuthPages: AuthPage[] = ['login', 'register', 'verify-email', 'forgot-password', 'forgot-pin', 'reset-password', 'reset-pin', 'account']
         
         if (knownPages.includes(path as Page)) {
           setCurrentPage(path as Page)

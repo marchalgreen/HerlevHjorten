@@ -44,9 +44,25 @@ const getAllowedOrigins = (): string[] => {
  * @returns Allowed origin or '*' for development
  */
 export const getCorsOrigin = (origin: string | undefined): string => {
-  if (process.env.NODE_ENV === 'development') {
+  // Always allow localhost/127.0.0.1 origins (development)
+  if (origin && (
+    origin.startsWith('http://localhost:') ||
+    origin.startsWith('http://127.0.0.1:') ||
+    origin.includes('localhost') ||
+    origin.includes('127.0.0.1')
+  )) {
+    return origin
+  }
+  
+  // Check if we're in development (Vercel dev or local)
+  const isDevelopment = 
+    process.env.NODE_ENV === 'development' ||
+    process.env.VERCEL_ENV === 'development' ||
+    !process.env.VERCEL_ENV
+  
+  if (isDevelopment) {
     // In development, allow all origins
-    return '*'
+    return origin || '*'
   }
   
   // In production, check against allowed origins
