@@ -46,7 +46,11 @@ export default function CoachesPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [tenantId])
+
+  useEffect(() => {
+    fetchCoaches()
+  }, [fetchCoaches])
 
   const handleDeleteCoach = async (coachId: string) => {
     if (!confirm('Er du sikker på, at du vil slette denne træner?')) {
