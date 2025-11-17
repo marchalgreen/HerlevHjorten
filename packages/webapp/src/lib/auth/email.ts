@@ -142,7 +142,7 @@ export async function sendCoachWelcomeEmail(
   }
 
   // Build login URL based on tenant subdomain
-  const subdomain = tenantId === 'herlev-hjorten' ? '' : `${tenantId}.`
+  const _subdomain = tenantId === 'herlev-hjorten' ? '' : `${tenantId}.`
   const loginUrl = `${APP_URL}/#/${tenantId}/login`
 
   await resend.emails.send({
@@ -191,7 +191,7 @@ export async function sendPINResetEmail(
   }
 
   // Build reset URL based on tenant subdomain
-  const subdomain = tenantId === 'herlev-hjorten' ? '' : `${tenantId}.`
+  const _subdomain = tenantId === 'herlev-hjorten' ? '' : `${tenantId}.`
   const resetUrl = `${APP_URL}/#/${tenantId}/reset-pin?token=${token}`
 
   try {

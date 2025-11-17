@@ -154,14 +154,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check if response is JSON before parsing
     const contentType = response.headers.get('content-type')
     if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text()
+      await response.text() // Consume response body
       throw new Error(`Server error: ${response.status} ${response.statusText}`)
     }
 
     let data
     try {
       data = await response.json()
-    } catch (parseError) {
+    } catch {
       throw new Error('Invalid response from server')
     }
 

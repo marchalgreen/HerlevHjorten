@@ -12,7 +12,6 @@ import { PageCard, EmptyState, Button } from '../components/ui'
 import { TableSearch } from '../components/ui/Table'
 import { PlayerCard, CheckedInPlayerCard, LetterFilters, AnimatedList } from '../components/checkin'
 import { useSession, useCheckIns, usePlayers } from '../hooks'
-import { formatDate } from '../lib/formatting'
 import { LETTER_FILTERS, UI_CONSTANTS } from '../constants'
 import coachLandingApi from '../services/coachLandingApi'
 import CrossGroupSearchModal from '../components/checkin/CrossGroupSearchModal'
@@ -218,7 +217,7 @@ const CheckInPage = () => {
   const checkedInIds = useMemo(() => new Set(checkedIn.map((player) => player.id)), [checkedIn])
 
   /** Gender breakdown of checked-in players. */
-  const genderBreakdown = useMemo(() => {
+  const _genderBreakdown = useMemo(() => {
     const male = checkedIn.filter((player) => player.gender === 'Herre').length
     const female = checkedIn.filter((player) => player.gender === 'Dame').length
     return { male, female }

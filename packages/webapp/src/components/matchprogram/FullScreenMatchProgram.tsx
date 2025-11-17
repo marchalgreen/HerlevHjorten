@@ -6,7 +6,6 @@
 
 import React from 'react'
 import type { CourtWithPlayers, Player } from '@rundeklar/common'
-import { PageCard } from '../ui'
 import { PlayerSlot } from './PlayerSlot'
 import { MATCH_CONSTANTS } from '../../constants'
 

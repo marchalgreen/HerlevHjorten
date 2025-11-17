@@ -68,8 +68,8 @@ interface MatchProgramHeaderProps {
  */
 export const MatchProgramHeader: React.FC<MatchProgramHeaderProps> = ({
   session,
-  checkedInCount,
-  genderBreakdown,
+  checkedInCount: _checkedInCount,
+  genderBreakdown: _genderBreakdown,
   selectedRound,
   onRoundChange,
   error,
