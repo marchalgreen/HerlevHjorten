@@ -4,6 +4,7 @@ import { logger } from '../utils/logger.js'
 const RESEND_API_KEY = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 const RESEND_FROM_NAME = process.env.RESEND_FROM_NAME || 'Herlev Hjorten'
+const BASE_DOMAIN = process.env.BASE_DOMAIN || 'rundeklar.dk'
 const APP_URL = process.env.APP_URL || process.env.VITE_APP_URL || 'http://localhost:5173'
 
 if (!RESEND_API_KEY) {
@@ -11,6 +12,28 @@ if (!RESEND_API_KEY) {
 }
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null
+
+/**
+ * Builds a tenant-specific subdomain URL
+ * @param tenantId - Tenant ID (e.g., "herlev-hjorten", "demo")
+ * @param path - Path to append (e.g., "/login", "/reset-pin?token=...")
+ * @returns Full URL with subdomain (e.g., "https://herlev-hjorten.rundeklar.dk/login")
+ */
+function buildTenantUrl(tenantId: string, path: string): string {
+  // For development/localhost, use APP_URL with hash routing
+  if (APP_URL.includes('localhost') || APP_URL.includes('127.0.0.1')) {
+    // Remove leading slash from path and ensure it starts with /#
+    const cleanPath = path.startsWith('/') ? path : `/${path}`
+    return `${APP_URL}/#/${tenantId}${cleanPath}`
+  }
+
+  // For production, build subdomain URL
+  // tenantId is already the subdomain (e.g., "herlev-hjorten")
+  // Always use https in production
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : (APP_URL.startsWith('https') ? 'https' : 'http')
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  return `${protocol}://${tenantId}.${BASE_DOMAIN}${cleanPath}`
+}
 
 /**
  * Send email verification email
@@ -28,7 +51,7 @@ export async function sendVerificationEmail(
     return
   }
 
-  const verifyUrl = `${APP_URL}/#/${tenantId}/verify-email?token=${token}`
+  const verifyUrl = buildTenantUrl(tenantId, `/verify-email?token=${token}`)
 
   await resend.emails.send({
     from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
@@ -69,7 +92,7 @@ export async function sendPasswordResetEmail(
     return
   }
 
-  const resetUrl = `${APP_URL}/#/${tenantId}/reset-password?token=${token}`
+  const resetUrl = buildTenantUrl(tenantId, `/reset-password?token=${token}`)
 
   await resend.emails.send({
     from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
@@ -142,8 +165,7 @@ export async function sendCoachWelcomeEmail(
   }
 
   // Build login URL based on tenant subdomain
-  const _subdomain = tenantId === 'herlev-hjorten' ? '' : `${tenantId}.`
-  const loginUrl = `${APP_URL}/#/${tenantId}/login`
+  const loginUrl = buildTenantUrl(tenantId, '/login')
 
   await resend.emails.send({
     from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
@@ -191,8 +213,7 @@ export async function sendPINResetEmail(
   }
 
   // Build reset URL based on tenant subdomain
-  const _subdomain = tenantId === 'herlev-hjorten' ? '' : `${tenantId}.`
-  const resetUrl = `${APP_URL}/#/${tenantId}/reset-pin?token=${token}`
+  const resetUrl = buildTenantUrl(tenantId, `/reset-pin?token=${token}`)
 
   try {
     logger.debug(`Attempting to send PIN reset email to ${email}`)
