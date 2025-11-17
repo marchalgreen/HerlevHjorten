@@ -3,6 +3,7 @@ import type { TenantConfig } from '@rundeklar/common'
 import type { PostgresClient } from '../lib/postgres'
 import { loadTenantConfig, buildTenantPath } from '../lib/tenant'
 import { createTenantPostgresClient, setCurrentTenantPostgresClient, setCurrentTenantConfig } from '../lib/postgres'
+import { invalidateCache } from '../api/postgres'
 
 interface TenantContextValue {
   tenantId: string
@@ -68,6 +69,8 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ tenantId, childr
     // Update module-level client and config for API access
     setCurrentTenantPostgresClient(client)
     setCurrentTenantConfig(config)
+    // Invalidate cache when tenant changes to prevent stale data from previous tenant
+    invalidateCache()
     return client
   }, [config])
 
@@ -76,6 +79,8 @@ export const TenantProvider: React.FC<TenantProviderProps> = ({ tenantId, childr
     return () => {
       setCurrentTenantPostgresClient(null)
       setCurrentTenantConfig(null)
+      // Invalidate cache when tenant unmounts to prevent stale data
+      invalidateCache()
     }
   }, [])
 
