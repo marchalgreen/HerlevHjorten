@@ -136,7 +136,7 @@ export default async function handler(
       }
 
       // Hash PIN if provided
-      let pinHash = undefined
+      let pinHash: string | undefined = undefined
       if (body.pin) {
         const pinValidation = validatePIN(body.pin)
         if (!pinValidation.isValid) {
@@ -162,7 +162,7 @@ export default async function handler(
       if (body.username) {
         // Store username in lowercase
         updates.push(`username = $${paramIndex++}`)
-        values.push(normalizedUsername)
+        values.push(normalizedUsername ?? null)
       }
       if (pinHash) {
         updates.push(`pin_hash = $${paramIndex++}`)

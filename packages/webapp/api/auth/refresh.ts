@@ -27,9 +27,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { hashRefreshToken } = await import('../../src/lib/auth/jwt')
     const tokenHash = await hashRefreshToken(body.refreshToken)
 
-    // Find session
+    // Find session with club details
     const sessions = await sql`
-      SELECT cs.id, cs.club_id, cs.expires_at, c.tenant_id
+      SELECT cs.id, cs.club_id, cs.expires_at, c.tenant_id, c.role, c.email
       FROM club_sessions cs
       JOIN clubs c ON cs.club_id = c.id
       WHERE cs.token_hash = ${tokenHash}
@@ -44,8 +44,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const session = sessions[0]
 
+    // Ensure we have required fields
+    if (!session.role || !session.email) {
+      logger.error('Missing required fields for token generation', { session })
+      return res.status(500).json({
+        error: 'User data incomplete',
+        message: 'Missing role or email'
+      })
+    }
+
     // Generate new access token
-    const accessToken = generateAccessToken(session.club_id, session.tenant_id)
+    const accessToken = generateAccessToken(session.club_id, session.tenant_id, session.role, session.email)
 
     return res.status(200).json({
       success: true,

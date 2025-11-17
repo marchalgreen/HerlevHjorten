@@ -41,11 +41,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `
 
     // Group by role
+    type UserRow = typeof users[number]
     const byRole = {
-      super_admin: [] as typeof users,
-      admin: [] as typeof users,
-      coach: [] as typeof users,
-      null: [] as typeof users
+      super_admin: [] as UserRow[],
+      admin: [] as UserRow[],
+      coach: [] as UserRow[],
+      null: [] as UserRow[]
     }
 
     users.forEach(user => {

@@ -9,10 +9,11 @@ import { setCorsHeaders } from '../../src/lib/utils/cors'
 const requestResetSchema = z.preprocess(
   (data) => {
     if (typeof data === 'object' && data !== null) {
+      const obj = data as Record<string, unknown>
       return {
-        ...data,
-        email: data.email && typeof data.email === 'string' && data.email.trim() ? data.email.trim() : undefined,
-        username: data.username && typeof data.username === 'string' && data.username.trim() ? data.username.trim() : undefined
+        ...obj,
+        email: obj.email && typeof obj.email === 'string' && obj.email.trim() ? obj.email.trim() : undefined,
+        username: obj.username && typeof obj.username === 'string' && obj.username.trim() ? obj.username.trim() : undefined
       }
     }
     return data

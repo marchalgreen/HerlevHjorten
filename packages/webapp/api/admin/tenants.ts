@@ -60,7 +60,7 @@ export default async function handler(req: AuthenticatedRequest, res: VercelResp
           WHERE tenant_id = ANY(${tenantIds})
           GROUP BY tenant_id
         `
-        userCounts = result as Array<{ tenant_id: string; count: number }>
+        userCounts = result as unknown as Array<{ tenant_id: string; count: number }>
       }
       
       const countsMap = new Map(userCounts.map((r) => [r.tenant_id, r.count]))

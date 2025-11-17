@@ -65,7 +65,7 @@ export default async function handler(
       
       return res.status(200).json({
         success: true,
-        coaches: coaches.map((coach: { id: string; email: string; username: string; role: string; email_verified: boolean; created_at: Date; last_login: Date | null }) => ({
+        coaches: coaches.map((coach) => ({
           id: coach.id,
           email: coach.email,
           username: coach.username,
