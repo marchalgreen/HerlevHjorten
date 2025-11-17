@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { getPostgresClient, getDatabaseUrl } from './db-helper'
 
 // Support both email/password (admins) and username/PIN (coaches)
 const loginSchema = z.object({
@@ -55,6 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Dynamically import all modules to handle failures gracefully
     const [
+      dbHelperModule,
       verifyPasswordModule,
       verifyPINModule,
       jwtModule,
@@ -63,6 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       loggerModule,
       corsModule
     ] = await Promise.all([
+      safeImport('./db-helper.js'),
       safeImport('../../src/lib/auth/password'),
       safeImport('../../src/lib/auth/pin'),
       safeImport('../../src/lib/auth/jwt'),
@@ -71,6 +72,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       safeImport('../../src/lib/utils/logger'),
       safeImport('../../src/lib/utils/cors')
     ])
+
+    // Extract db-helper functions
+    const getPostgresClient = dbHelperModule?.getPostgresClient as ((connectionString: string) => any) | null
+    const getDatabaseUrl = dbHelperModule?.getDatabaseUrl as (() => string) | null
 
     // Extract functions with fallbacks
     const verifyPassword = verifyPasswordModule?.verifyPassword as ((password: string, hash: string) => Promise<boolean>) | null
@@ -92,8 +97,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     setCorsHeaders(res, req.headers.origin)
 
     // Validate required modules
-    if (!verifyPassword || !generateAccessToken || !generateRefreshToken || !hashRefreshToken || !checkLoginAttempts || !recordLoginAttempt) {
+    if (!getPostgresClient || !getDatabaseUrl || !verifyPassword || !generateAccessToken || !generateRefreshToken || !hashRefreshToken || !checkLoginAttempts || !recordLoginAttempt) {
       logger.error('Critical modules failed to load', {
+        getPostgresClient: !!getPostgresClient,
+        getDatabaseUrl: !!getDatabaseUrl,
         verifyPassword: !!verifyPassword,
         generateAccessToken: !!generateAccessToken,
         verifyPIN: !!verifyPIN
