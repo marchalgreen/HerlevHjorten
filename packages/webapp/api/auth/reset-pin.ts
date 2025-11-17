@@ -175,7 +175,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       return res.status(200).json({
         success: true,
-        message: 'PIN has been reset successfully'
+        message: 'PIN has been reset successfully',
+        username: coach.username
       })
     } else {
       return res.status(400).json({
