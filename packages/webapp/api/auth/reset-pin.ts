@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { generatePINResetToken, isPINResetTokenExpired, hashPIN, validatePIN } from '../../src/lib/auth/pin'
-import { sendPINResetEmail } from '../../src/lib/auth/email'
-import { getPostgresClient, getDatabaseUrl } from './db-helper'
-import { logger } from '../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../src/lib/utils/cors'
+import { generatePINResetToken, isPINResetTokenExpired, hashPIN, validatePIN } from '../../src/lib/auth/pin.js'
+import { sendPINResetEmail } from '../../src/lib/auth/email.js'
+import { getPostgresClient, getDatabaseUrl } from './db-helper.js'
+import { logger } from '../../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../../src/lib/utils/cors.js'
 
 const requestResetSchema = z.preprocess(
   (data) => {

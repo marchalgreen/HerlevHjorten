@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { verifyTOTP, generateBackupCodes, hashBackupCodes } from '../../src/lib/auth/totp'
-import { getPostgresClient, getDatabaseUrl } from './db-helper'
-import { verifyAccessToken } from '../../src/lib/auth/jwt'
-import { logger } from '../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../src/lib/utils/cors'
+import { verifyTOTP, generateBackupCodes, hashBackupCodes } from '../../src/lib/auth/totp.js'
+import { getPostgresClient, getDatabaseUrl } from './db-helper.js'
+import { verifyAccessToken } from '../../src/lib/auth/jwt.js'
+import { logger } from '../../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../../src/lib/utils/cors.js'
 
 const verify2FASetupSchema = z.object({
   code: z.string().length(6, 'Code must be 6 digits')

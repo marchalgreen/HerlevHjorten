@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { sendPasswordResetEmail } from '../../src/lib/auth/email'
-import { getPostgresClient, getDatabaseUrl } from './db-helper'
+import { sendPasswordResetEmail } from '../../src/lib/auth/email.js'
+import { getPostgresClient, getDatabaseUrl } from './db-helper.js'
 import { randomBytes } from 'crypto'
-import { logger } from '../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../src/lib/utils/cors'
+import { logger } from '../../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../../src/lib/utils/cors.js'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),

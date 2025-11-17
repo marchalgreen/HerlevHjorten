@@ -1,11 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { getPostgresClient, getDatabaseUrl } from './db-helper'
-import { verifyAccessToken } from '../../src/lib/auth/jwt'
+import { getPostgresClient, getDatabaseUrl } from './db-helper.js'
+import { verifyAccessToken } from '../../src/lib/auth/jwt.js'
 import { randomBytes } from 'crypto'
-import { sendVerificationEmail } from '../../src/lib/auth/email'
-import { logger } from '../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../src/lib/utils/cors'
+import { sendVerificationEmail } from '../../src/lib/auth/email.js'
+import { logger } from '../../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../../src/lib/utils/cors.js'
 
 const updateProfileSchema = z.object({
   email: z.string().email('Invalid email address').optional()

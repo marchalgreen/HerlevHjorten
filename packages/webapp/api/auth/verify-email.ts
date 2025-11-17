@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { getPostgresClient, getDatabaseUrl } from './db-helper'
-import { logger } from '../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../src/lib/utils/cors'
+import { getPostgresClient, getDatabaseUrl } from './db-helper.js'
+import { logger } from '../../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../../src/lib/utils/cors.js'
 
 const verifyEmailSchema = z.object({
   token: z.string().min(1, 'Token is required')

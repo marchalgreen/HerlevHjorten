@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { verifyPassword } from '../../src/lib/auth/password'
-import { getPostgresClient, getDatabaseUrl } from './db-helper'
-import { verifyAccessToken } from '../../src/lib/auth/jwt'
-import { logger } from '../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../src/lib/utils/cors'
+import { verifyPassword } from '../../src/lib/auth/password.js'
+import { getPostgresClient, getDatabaseUrl } from './db-helper.js'
+import { verifyAccessToken } from '../../src/lib/auth/jwt.js'
+import { logger } from '../../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../../src/lib/utils/cors.js'
 
 const disable2FASchema = z.object({
   password: z.string().min(1, 'Password is required')

@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
-import { hashPIN, verifyPIN, validatePIN } from '../../src/lib/auth/pin'
-import { getPostgresClient, getDatabaseUrl } from './db-helper'
-import { verifyAccessToken } from '../../src/lib/auth/jwt'
-import { logger } from '../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../src/lib/utils/cors'
+import { hashPIN, verifyPIN, validatePIN } from '../../src/lib/auth/pin.js'
+import { getPostgresClient, getDatabaseUrl } from './db-helper.js'
+import { verifyAccessToken } from '../../src/lib/auth/jwt.js'
+import { logger } from '../../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../../src/lib/utils/cors.js'
 
 const changePINSchema = z.object({
   currentPIN: z.string().min(6, 'Current PIN must be 6 digits').max(6, 'Current PIN must be 6 digits'),
