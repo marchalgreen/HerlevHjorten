@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useNavigation } from '../../contexts/NavigationContext'
 import { UserRole, isSuperAdmin, isAdmin, hasMinimumRole } from '../../lib/auth/roles'
 
-interface ProtectedRouteProps {
+export interface ProtectedRouteProps {
   children: React.ReactNode
   requireRole?: UserRole | UserRole[] // Optional role requirement
   requireMinRole?: UserRole // Optional minimum role requirement
@@ -14,11 +14,11 @@ interface ProtectedRouteProps {
  * Optionally requires specific role(s) or minimum role
  * Redirects to login if not authenticated or unauthorized
  */
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+export function ProtectedRoute({ 
   children, 
   requireRole,
   requireMinRole 
-}) => {
+}: ProtectedRouteProps) {
   const { isAuthenticated, loading, club } = useAuth()
   const { navigateToAuth } = useNavigation()
 
