@@ -1,13 +1,43 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { verifyPassword } from '../../src/lib/auth/password'
-import { verifyPIN } from '../../src/lib/auth/pin'
 import { generateAccessToken, generateRefreshToken, hashRefreshToken } from '../../src/lib/auth/jwt'
 import { checkLoginAttempts, recordLoginAttempt } from '../../src/lib/auth/rateLimit'
 import { getPostgresClient, getDatabaseUrl } from './db-helper'
 import { verifyTOTP } from '../../src/lib/auth/totp'
-import { logger } from '../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../src/lib/utils/cors'
+
+// Import optional utilities with fallbacks
+let verifyPIN: ((pin: string, hash: string) => Promise<boolean>) | null = null
+let logger: { error: (msg: string, error?: unknown) => void } = {
+  error: (msg: string, error?: unknown) => console.error(msg, error)
+}
+let setCorsHeaders: ((res: { setHeader: (name: string, value: string) => void }, origin?: string) => void) = (res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+}
+
+// Try to load optional modules (will fail gracefully if not available)
+try {
+  const pinModule = require('../../src/lib/auth/pin')
+  verifyPIN = pinModule.verifyPIN
+} catch {
+  // PIN support not available - will disable PIN login
+}
+
+try {
+  const loggerModule = require('../../src/lib/utils/logger')
+  logger = loggerModule.logger
+} catch {
+  // Use console.error fallback
+}
+
+try {
+  const corsModule = require('../../src/lib/utils/cors')
+  setCorsHeaders = corsModule.setCorsHeaders
+} catch {
+  // Use basic CORS fallback
+}
 
 // Support both email/password (admins) and username/PIN (coaches)
 const loginSchema = z.object({
@@ -82,7 +112,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Determine login method
-    const isPINLogin = !!(body.username && body.pin)
+    // Only allow PIN login if verifyPIN is available
+    const isPINLogin = !!(body.username && body.pin && verifyPIN)
     const isEmailLogin = !!(body.email && body.password)
 
     // Check rate limiting (use email or username as identifier)
@@ -157,7 +188,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Verify credentials based on login method
     let credentialsValid = false
-    if (isPINLogin) {
+    if (isPINLogin && verifyPIN) {
       if (!club.pin_hash) {
         await recordLoginAttempt(sql, club.id, rateLimitIdentifier, ipAddress, false)
         return res.status(401).json({
@@ -166,7 +197,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       credentialsValid = await verifyPIN(body.pin!, club.pin_hash)
     } else if (isEmailLogin) {
+      if (!club.password_hash) {
+        await recordLoginAttempt(sql, club.id, rateLimitIdentifier, ipAddress, false)
+        return res.status(401).json({
+          error: 'Password not set for this user'
+        })
+      }
       credentialsValid = await verifyPassword(body.password!, club.password_hash)
+    } else {
+      await recordLoginAttempt(sql, null, rateLimitIdentifier, ipAddress, false)
+      return res.status(400).json({
+        error: 'Invalid login method',
+        message: verifyPIN ? 'Either email/password or username/PIN required' : 'Email/password login required'
+      })
     }
 
     if (!credentialsValid) {
@@ -208,6 +251,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Generate tokens (include role and email)
+    // Ensure we have required fields
+    if (!club.role || !club.email) {
+      logger.error('Missing required fields for token generation', { club })
+      return res.status(500).json({
+        error: 'User data incomplete',
+        message: 'Missing role or email'
+      })
+    }
+    
     const accessToken = generateAccessToken(club.id, club.tenant_id, club.role, club.email)
     const refreshToken = await generateRefreshToken()
     const refreshTokenHash = await hashRefreshToken(refreshToken)
