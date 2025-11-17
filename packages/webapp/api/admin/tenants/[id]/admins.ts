@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { requireAuth, requireSuperAdmin, AuthenticatedRequest } from '../../../../src/lib/auth/middleware'
 import { hashPassword } from '../../../../src/lib/auth/password'
 import { getPostgresClient, getDatabaseUrl } from '../../../auth/db-helper'
+import { logger } from '../../../../src/lib/utils/logger'
+import { setCorsHeaders } from '../../../../src/lib/utils/cors'
 
 const createAdminSchema = z.object({
   email: z.string().email('Valid email is required'),
@@ -13,9 +15,7 @@ export default async function handler(
   req: AuthenticatedRequest & { query?: { id?: string }, params?: { id?: string } },
   res: VercelResponse
 ) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  setCorsHeaders(res, req.headers.origin)
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -48,7 +48,7 @@ export default async function handler(
       
       return res.status(200).json({
         success: true,
-        admins: admins.map((admin: any) => ({
+        admins: admins.map((admin) => ({
           id: admin.id,
           email: admin.email,
           role: admin.role,
@@ -128,7 +128,7 @@ export default async function handler(
       return res.status(403).json({ error: error.message })
     }
 
-    console.error('Admin management error:', error)
+    logger.error('Admin management error', error)
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Admin management failed'
     })

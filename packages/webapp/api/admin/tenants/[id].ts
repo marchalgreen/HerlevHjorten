@@ -12,7 +12,7 @@ const updateTenantSchema = z.object({
   name: z.string().min(1).optional(),
   logo: z.string().optional(),
   maxCourts: z.number().int().min(1).max(20).optional(),
-  features: z.record(z.any()).optional()
+  features: z.record(z.unknown()).optional()
 })
 
 export default async function handler(

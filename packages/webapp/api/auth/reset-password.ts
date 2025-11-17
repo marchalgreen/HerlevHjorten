@@ -2,6 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { z } from 'zod'
 import { hashPassword, validatePasswordStrength } from '../../src/lib/auth/password'
 import { getPostgresClient, getDatabaseUrl } from './db-helper'
+import { logger } from '../../src/lib/utils/logger'
+import { setCorsHeaders } from '../../src/lib/utils/cors'
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Token is required'),
@@ -9,9 +11,7 @@ const resetPasswordSchema = z.object({
 })
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+  setCorsHeaders(res, req.headers.origin)
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
@@ -87,7 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       })
     }
 
-    console.error('Password reset error:', error)
+    logger.error('Password reset error', error)
     return res.status(500).json({
       error: error instanceof Error ? error.message : 'Password reset failed'
     })

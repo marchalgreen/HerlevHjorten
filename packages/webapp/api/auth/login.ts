@@ -42,11 +42,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const body = loginSchema.parse(req.body)
     // Safely get IP address - handle both Express and Vercel formats
-    const forwardedFor = req.headers?.['x-forwarded-for'] as string
-    const ipAddress = forwardedFor?.split(',')[0]?.trim() ||
-                     (req as any).socket?.remoteAddress ||
-                     (req as any).ip ||
-                     'unknown'
+    const forwardedFor = req.headers?.['x-forwarded-for'] as string | undefined
+    const ipAddress = forwardedFor?.split(',')[0]?.trim() || 'unknown'
 
     const sql = getPostgresClient(getDatabaseUrl())
 

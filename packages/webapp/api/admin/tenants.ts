@@ -29,7 +29,7 @@ const updateTenantSchema = z.object({
   name: z.string().min(1).optional(),
   logo: z.string().optional(),
   maxCourts: z.number().int().min(1).max(20).optional(),
-  features: z.record(z.any()).optional()
+  features: z.record(z.unknown()).optional()
 })
 
 export default async function handler(req: AuthenticatedRequest, res: VercelResponse) {
@@ -54,15 +54,16 @@ export default async function handler(req: AuthenticatedRequest, res: VercelResp
       
       let userCounts: Array<{ tenant_id: string; count: number }> = []
       if (tenantIds.length > 0) {
-        userCounts = await sql`
+        const result = await sql`
           SELECT tenant_id, COUNT(*)::int as count
           FROM clubs
           WHERE tenant_id = ANY(${tenantIds})
           GROUP BY tenant_id
         `
+        userCounts = result as Array<{ tenant_id: string; count: number }>
       }
       
-      const countsMap = new Map(userCounts.map((r: any) => [r.tenant_id, r.count]))
+      const countsMap = new Map(userCounts.map((r) => [r.tenant_id, r.count]))
       
       const tenants = configs.map(config => ({
         id: config.id,
