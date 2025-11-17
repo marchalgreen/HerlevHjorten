@@ -27,8 +27,10 @@ let setCorsHeaders: ((res: { setHeader: (name: string, value: string) => void },
 try {
   const pinModule = require('../../src/lib/auth/pin')
   verifyPIN = pinModule.verifyPIN
-} catch {
+  logger.error('PIN module loaded successfully', { hasVerifyPIN: !!verifyPIN })
+} catch (error) {
   // PIN support not available - will disable PIN login
+  logger.error('PIN module failed to load', error)
 }
 
 try {
@@ -122,16 +124,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Determine login method
-    // Only allow PIN login if verifyPIN is available
     const isPINLogin = !!(body.username && body.pin)
     const isEmailLogin = !!(body.email && body.password)
+    
+    // Log debug info
+    logger.error('Login attempt', {
+      hasUsername: !!body.username,
+      hasPin: !!body.pin,
+      pinLength: body.pin?.length,
+      hasEmail: !!body.email,
+      hasPassword: !!body.password,
+      isPINLogin,
+      isEmailLogin,
+      verifyPINAvailable: !!verifyPIN,
+      tenantId: body.tenantId
+    })
     
     // Check if PIN login is requested but PIN module not available
     if (isPINLogin && !verifyPIN) {
       logger.error('PIN login requested but PIN module not available')
       return res.status(400).json({
         error: 'PIN login not available',
-        message: 'PIN authentication module is not loaded. Please use email/password login or contact support.'
+        message: 'PIN authentication module is not loaded. Please use email/password login or contact support.',
+        debug: {
+          verifyPINAvailable: false,
+          received: {
+            username: body.username,
+            pinLength: body.pin?.length
+          }
+        }
       })
     }
 
@@ -149,13 +170,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let clubs
     if (isPINLogin) {
       // PIN login: find by username and tenant_id (case-insensitive)
+      // Normalize username to lowercase for matching (username is stored in lowercase)
+      const normalizedUsername = body.username.toLowerCase().trim()
+      logger.error('PIN login search', {
+        searchedUsername: body.username,
+        normalizedUsername,
+        tenantId: body.tenantId
+      })
+      
       clubs = await sql`
         SELECT id, email, username, pin_hash, tenant_id, role, email_verified, two_factor_enabled, two_factor_secret
         FROM clubs
-        WHERE LOWER(username) = LOWER(${body.username})
+        WHERE LOWER(username) = LOWER(${normalizedUsername})
           AND tenant_id = ${body.tenantId}
           AND role = 'coach'
       `
+      
+      logger.error('PIN login query result', {
+        found: clubs.length,
+        usernames: clubs.map(c => c.username)
+      })
     } else if (isEmailLogin) {
       // Email/password login: find by email and tenant_id (admins)
       clubs = await sql`
@@ -221,12 +255,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let credentialsValid = false
     if (isPINLogin && verifyPIN) {
       if (!club.pin_hash) {
+        logger.error('PIN login attempted but no PIN hash found', { clubId: club.id, username: club.username })
         await recordLoginAttempt(sql, club.id, rateLimitIdentifier, ipAddress, false)
         return res.status(401).json({
           error: 'PIN not set for this user'
         })
       }
+      
+      logger.error('Verifying PIN', {
+        pinLength: body.pin?.length,
+        hasPinHash: !!club.pin_hash,
+        pinHashLength: club.pin_hash?.length
+      })
+      
       credentialsValid = await verifyPIN(body.pin!, club.pin_hash)
+      
+      logger.error('PIN verification result', { credentialsValid })
     } else if (isEmailLogin) {
       if (!club.password_hash) {
         await recordLoginAttempt(sql, club.id, rateLimitIdentifier, ipAddress, false)
