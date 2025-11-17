@@ -57,6 +57,17 @@ export const SESSION_STATUS = {
 } as const
 
 /**
+ * Training session timeout configuration.
+ */
+export const SESSION_TIMEOUT = {
+  /** Maximum duration for an active training session in milliseconds (default: 5 hours). */
+  MAX_DURATION_MS: 5 * 60 * 60 * 1000, // 5 hours in milliseconds
+  
+  /** Maximum duration for an active training session in hours (for display). */
+  MAX_DURATION_HOURS: 5,
+} as const
+
+/**
  * UI and animation constants.
  */
 export const UI_CONSTANTS = {

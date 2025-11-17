@@ -206,7 +206,51 @@ const playersApi = {
 }
 
 /**
+ * Automatically ends training sessions that have been active for too long.
+ * @param session - Session to check
+ * @returns True if session was auto-ended, false otherwise
+ */
+const autoEndExpiredSession = async (session: TrainingSession): Promise<boolean> => {
+  const { SESSION_TIMEOUT } = await import('../constants')
+  const sessionStartTime = new Date(session.createdAt).getTime()
+  const now = Date.now()
+  const sessionAge = now - sessionStartTime
+  
+  if (sessionAge > SESSION_TIMEOUT.MAX_DURATION_MS) {
+    console.log(`[autoEndExpiredSession] Auto-ending session ${session.id} (age: ${Math.round(sessionAge / 1000 / 60)} minutes)`)
+    
+    // Update session status to ended
+    await updateSessionInDb(session.id, { status: 'ended' })
+    
+    // Update all matches for this session with endedAt
+    const matches = await getMatches()
+    const sessionMatches = matches.filter((match: Match) => match.sessionId === session.id)
+    const endedAt = new Date().toISOString()
+    await Promise.all(sessionMatches.map((match) => updateMatchInDb(match.id, { endedAt })))
+    
+    // Invalidate cache
+    const { invalidateCache } = await import('./postgres')
+    invalidateCache('matches')
+    invalidateCache('sessions')
+    
+    // Try to create statistics snapshot (don't fail if it errors)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 200))
+      await statsApi.snapshotSession(session.id)
+      console.log('[autoEndExpiredSession] Statistics snapshot created successfully')
+    } catch (err) {
+      console.error('[autoEndExpiredSession] Failed to create statistics snapshot:', err)
+    }
+    
+    return true
+  }
+  
+  return false
+}
+
+/**
  * Gets the active training session (if any).
+ * Automatically ends sessions that have been active for too long.
  * @returns Active session or null
  */
 const getActiveSession = async (): Promise<TrainingSession | null> => {
@@ -214,7 +258,19 @@ const getActiveSession = async (): Promise<TrainingSession | null> => {
   const active = sessions
     .filter((session) => session.status === 'active')
     .sort((a: TrainingSession, b: TrainingSession) => b.createdAt.localeCompare(a.createdAt))[0]
-  return active ?? null
+  
+  if (!active) {
+    return null
+  }
+  
+  // Check if session has expired and auto-end it
+  const wasEnded = await autoEndExpiredSession(active)
+  if (wasEnded) {
+    // Session was auto-ended, return null
+    return null
+  }
+  
+  return active
 }
 
 /**
