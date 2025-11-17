@@ -5,8 +5,8 @@ import { getPostgresClient, getDatabaseUrl } from '../../auth/db-helper.js'
 import { getTenantConfig } from '../../../src/lib/admin/tenant-utils.js'
 import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
-import { logger } from '../../../src/lib/utils/logger'
-import { setCorsHeaders } from '../../../src/lib/utils/cors'
+import { logger } from '../../../src/lib/utils/logger.js'
+import { setCorsHeaders } from '../../../src/lib/utils/cors.js'
 
 const updateTenantSchema = z.object({
   name: z.string().min(1).optional(),
