@@ -148,14 +148,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     })
 
-    const data = await response.json()
+    // Check if response is JSON before parsing
+    const contentType = response.headers.get('content-type')
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text()
+      throw new Error(`Server error: ${response.status} ${response.statusText}`)
+    }
+
+    let data
+    try {
+      data = await response.json()
+    } catch (parseError) {
+      throw new Error('Invalid response from server')
+    }
 
     if (!response.ok) {
       if (data.requires2FA) {
         // Return special error to indicate 2FA needed
         throw new Error('2FA_REQUIRED')
       }
-      throw new Error(data.error || 'Login failed')
+      throw new Error(data.error || data.message || 'Login failed')
     }
 
     setTokens(data.accessToken, data.refreshToken)
