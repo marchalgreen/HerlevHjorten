@@ -1,30 +1,34 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigation } from '../../contexts/NavigationContext'
 import { getCurrentTenantId } from '../../lib/tenant'
-import { Button } from '../../components/ui'
+import { Button, PINInput } from '../../components/ui'
+import type { PINInputRef } from '../../components/auth/PINInput'
 import { PageCard } from '../../components/ui'
+import { User, Lock } from 'lucide-react'
 
 export default function ResetPinPage() {
   const { navigateToAuth } = useNavigation()
   const [token, setToken] = useState<string | null>(null)
   const [tenantId, setTenantId] = useState<string>('')
+  const [username, setUsername] = useState<string | null>(null)
   const [pin, setPin] = useState('')
   const [confirmPin, setConfirmPin] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const pinInputRef = useRef<PINInputRef>(null)
+  const confirmPinInputRef = useRef<PINInputRef>(null)
 
   useEffect(() => {
     // Extract token and tenantId from URL
-    // Try multiple URL formats:
-    // 1. Hash routing: /#/${tenantId}/reset-pin?token=...
-    // 2. Hash routing: /#/reset-pin?token=...
-    // 3. Query params: ?token=...
-    
+    // URL format: /#/${tenantId}/reset-pin?token=...
     const hash = window.location.hash.replace(/^#/, '')
     const search = window.location.search
     
-    // Try hash first
+    let foundToken: string | null = null
+    let foundTenantId: string = ''
+    
+    // Try hash first (primary format)
     if (hash) {
       const [pathPart, queryPart] = hash.split('?')
       const parts = pathPart.split('/').filter(p => p)
@@ -32,38 +36,67 @@ export default function ResetPinPage() {
       // Find tenantId (should be before 'reset-pin')
       const resetPinIndex = parts.findIndex(part => part === 'reset-pin')
       if (resetPinIndex > 0) {
-        setTenantId(parts[resetPinIndex - 1])
-      } else {
-        // Fallback to current tenant
-        setTenantId(getCurrentTenantId())
+        foundTenantId = parts[resetPinIndex - 1]
       }
       
       // Extract token from query params in hash
       if (queryPart) {
         const params = new URLSearchParams(queryPart)
-        const tokenParam = params.get('token')
-        if (tokenParam) {
-          setToken(tokenParam)
-          return
-        }
+        foundToken = params.get('token')
       }
     }
     
     // Fallback to window.location.search
-    if (search) {
+    if (!foundToken && search) {
       const params = new URLSearchParams(search)
-      const tokenParam = params.get('token')
-      if (tokenParam) {
-        setToken(tokenParam)
-        setTenantId(getCurrentTenantId())
-        return
-      }
+      foundToken = params.get('token')
     }
     
-    // No token found
-    setError('Ingen nulstillings-token fundet. Tjek om linket i emailen er korrekt.')
-    setTenantId(getCurrentTenantId())
+    // Set tenantId (fallback to current if not found)
+    if (!foundTenantId) {
+      foundTenantId = getCurrentTenantId()
+    }
+    
+    setTenantId(foundTenantId)
+    
+    if (foundToken) {
+      setToken(foundToken)
+      // Validate token and get username
+      validateToken(foundToken, foundTenantId)
+    } else {
+      setError('Ingen nulstillings-token fundet. Tjek om linket i emailen er korrekt.')
+    }
   }, [])
+
+  const validateToken = async (tokenValue: string, tenantIdValue: string) => {
+    try {
+      const apiUrl = import.meta.env.DEV 
+        ? 'http://127.0.0.1:3000/api/auth/reset-pin?action=validate'
+        : '/api/auth/reset-pin?action=validate'
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          token: tokenValue,
+          tenantId: tenantIdValue
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.username) {
+        setUsername(data.username)
+        setError(null)
+      } else {
+        setError(data.error || 'Ugyldig eller udløbet nulstillings-token')
+      }
+    } catch (err) {
+      setError('Kunne ikke validere token. Tjek om linket er korrekt.')
+    }
+  }
 
   const validatePIN = (pinValue: string): string[] => {
     const errors: string[] = []
@@ -139,9 +172,21 @@ export default function ResetPinPage() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4 py-12">
-        <PageCard className="w-full max-w-md">
+      <div className="flex min-h-screen items-center justify-center px-4 py-12 bg-app-gradient">
+        <PageCard className="w-full max-w-md u-glass ring-1 ring-[hsl(var(--line)/.12)] shadow-lg">
           <div className="text-center">
+            <div className="mb-6">
+              <div className="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                <svg 
+                  className="w-8 h-8 text-green-600 dark:text-green-400" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
             <h1 className="text-2xl font-semibold mb-4 text-green-600 dark:text-green-400">
               PIN nulstillet!
             </h1>
@@ -158,79 +203,116 @@ export default function ResetPinPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-12">
-      <PageCard className="w-full max-w-md">
-        <h1 className="text-2xl font-semibold mb-6 text-center">Nulstil PIN</h1>
+    <div className="flex min-h-screen items-center justify-center px-4 py-12 bg-app-gradient">
+      <PageCard className="w-full max-w-md u-glass ring-1 ring-[hsl(var(--line)/.12)] shadow-lg">
+        {/* Logo Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-6">
+            <img 
+              src="/fulllogo_transparent_nobuffer_horizontal.png" 
+              alt="Rundeklar" 
+              className="h-12 sm:h-14 object-contain"
+            />
+          </div>
+          <h1 className="text-3xl font-semibold mb-2 text-[hsl(var(--foreground))]">
+            Nulstil PIN
+          </h1>
+          {username && (
+            <p className="text-sm text-[hsl(var(--muted))]">
+              For bruger: <span className="font-medium text-[hsl(var(--foreground))]">{username}</span>
+            </p>
+          )}
+        </div>
 
+        {/* Error Message */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <div 
+            className="mb-6 p-4 bg-[hsl(var(--destructive)/.08)] border border-[hsl(var(--destructive)/.2)] rounded-lg flex items-start gap-3 animate-swap-in"
+            role="alert"
+          >
+            <div className="flex-shrink-0 mt-0.5">
+              <svg 
+                className="w-5 h-5 text-[hsl(var(--destructive))]" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-sm text-[hsl(var(--destructive))] flex-1">{error}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="pin" className="block text-sm font-medium mb-1">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* New PIN Input */}
+          <div className="space-y-2">
+            <label 
+              htmlFor="pin" 
+              className="block text-sm font-medium text-[hsl(var(--foreground))] text-center"
+            >
               Ny PIN (6 cifre)
             </label>
-            <input
-              id="pin"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
+            <PINInput
+              ref={pinInputRef}
               value={pin}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '') // Only allow digits
-                setPin(value)
-              }}
-              required
-              className="w-full px-3 py-2 border border-[hsl(var(--line))] rounded-md bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] text-center text-2xl tracking-widest"
-              disabled={loading}
-              placeholder="000000"
+              onChange={setPin}
+              length={6}
+              disabled={loading || !token}
+              error={!!error && pin.length > 0}
+              autoFocus={!!token && !error}
+              aria-label="New PIN code"
             />
-            {pin && validatePIN(pin).length > 0 && (
-              <ul className="mt-1 text-xs text-[hsl(var(--muted))] list-disc list-inside">
-                {validatePIN(pin).map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-            )}
           </div>
 
-          <div>
-            <label htmlFor="confirmPin" className="block text-sm font-medium mb-1">
+          {/* Confirm PIN Input */}
+          <div className="space-y-2">
+            <label 
+              htmlFor="confirmPin" 
+              className="block text-sm font-medium text-[hsl(var(--foreground))] text-center"
+            >
               Bekræft PIN
             </label>
-            <input
-              id="confirmPin"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
+            <PINInput
+              ref={confirmPinInputRef}
               value={confirmPin}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '') // Only allow digits
-                setConfirmPin(value)
-              }}
-              required
-              className="w-full px-3 py-2 border border-[hsl(var(--line))] rounded-md bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] text-center text-2xl tracking-widest"
-              disabled={loading}
-              placeholder="000000"
+              onChange={setConfirmPin}
+              length={6}
+              disabled={loading || !token}
+              error={pin !== confirmPin && confirmPin.length > 0}
+              autoFocus={false}
+              aria-label="Confirm PIN code"
             />
             {confirmPin && pin !== confirmPin && (
-              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+              <p className="text-xs text-center text-[hsl(var(--destructive))] mt-2">
                 PIN-koderne matcher ikke
               </p>
             )}
           </div>
 
-          <Button type="submit" className="w-full" loading={loading}>
+          {/* Submit Button */}
+          <Button 
+            type="submit" 
+            className="w-full py-3 text-base font-medium shadow-sm hover:shadow-md transition-shadow duration-200" 
+            loading={loading}
+            disabled={!token || pin.length !== 6 || confirmPin.length !== 6}
+          >
             Nulstil PIN
           </Button>
         </form>
+
+        {/* Footer Links */}
+        <div className="mt-8 text-center">
+          <button
+            type="button"
+            onClick={() => navigateToAuth('login')}
+            className="text-sm text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/.8)] hover:underline transition-colors duration-200"
+          >
+            Tilbage til login
+          </button>
+        </div>
       </PageCard>
     </div>
   )
 }
-
