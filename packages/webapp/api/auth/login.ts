@@ -122,9 +122,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (clubs.length === 0) {
+      // Debug: Check what users exist for this tenant
+      const debugUsers = await sql`
+        SELECT id, email, username, role, tenant_id, 
+               password_hash IS NOT NULL as has_password,
+               pin_hash IS NOT NULL as has_pin,
+               email_verified
+        FROM clubs
+        WHERE tenant_id = ${body.tenantId}
+        LIMIT 10
+      `
+      
       await recordLoginAttempt(sql, null, rateLimitIdentifier, ipAddress, false)
       return res.status(401).json({
-        error: isPINLogin ? 'Invalid username or PIN' : 'Invalid email or password'
+        error: isPINLogin ? 'Invalid username or PIN' : 'Invalid email or password',
+        debug: {
+          searched_email: body.email,
+          searched_username: body.username,
+          tenant_id: body.tenantId,
+          login_method: isPINLogin ? 'PIN' : 'email',
+          available_users: debugUsers.map(u => ({
+            email: u.email,
+            username: u.username,
+            role: u.role,
+            has_password: u.has_password,
+            has_pin: u.has_pin,
+            email_verified: u.email_verified
+          }))
+        }
       })
     }
 
