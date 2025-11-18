@@ -67,10 +67,10 @@ function generatePINBoxes(pin: string): string {
 
 /**
  * Builds logo URL for emails
- * @param tenantId - Tenant ID (optional, defaults to main domain)
+ * @param _tenantId - Tenant ID (optional, reserved for future tenant-specific logos)
  * @returns Full URL to logo image
  */
-function buildLogoUrl(tenantId?: string): string {
+function buildLogoUrl(_tenantId?: string): string {
   // Use the horizontal logo with text for emails
   const logoFilename = 'fulllogo_transparent_nobuffer_horizontal.png'
   

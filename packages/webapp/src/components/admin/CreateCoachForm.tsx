@@ -79,21 +79,6 @@ export default function CreateCoachForm({ onSuccess, onCancel }: CreateCoachForm
       )}
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium mb-1">
-          Email *
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full px-3 py-2 border border-[hsl(var(--line))] rounded-md bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
-          disabled={loading}
-        />
-      </div>
-
-      <div>
         <label htmlFor="username" className="block text-sm font-medium mb-1">
           Brugernavn *
         </label>
@@ -111,6 +96,21 @@ export default function CreateCoachForm({ onSuccess, onCancel }: CreateCoachForm
         <p className="text-xs text-[hsl(var(--muted))] mt-1">
           Minimum 3 tegn, maksimum 50 tegn
         </p>
+      </div>
+
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium mb-1">
+          Email *
+        </label>
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full px-3 py-2 border border-[hsl(var(--line))] rounded-md bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+          disabled={loading}
+        />
       </div>
 
       <div>

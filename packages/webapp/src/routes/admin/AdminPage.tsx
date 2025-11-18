@@ -4,14 +4,14 @@ import { UserRole } from '../../lib/auth/roles'
 import TenantsPage from './Tenants'
 import CoachesPage from '../[tenantId]/admin/Coaches'
 import { PageCard } from '../../components/ui'
-import { Button } from '../../components/ui'
+import { Building2, Users } from 'lucide-react'
 
 type AdminTab = 'tenants' | 'coaches'
 
 export default function AdminPage() {
   const { club } = useAuth()
   const clubRole = (club as any)?.role as string | undefined
-  const isSuperAdmin = clubRole === UserRole.SYSADMIN || clubRole === 'sysadmin' || clubRole === UserRole.SUPER_ADMIN || clubRole === 'super_admin' // Backward compatibility
+  const isSuperAdmin = clubRole === UserRole.SYSADMIN || clubRole === 'sysadmin' || clubRole === 'super_admin' // Backward compatibility
   const [activeTab, setActiveTab] = useState<AdminTab>(isSuperAdmin ? 'tenants' : 'coaches')
 
   return (
@@ -19,19 +19,41 @@ export default function AdminPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Administration</h1>
         {isSuperAdmin && (
-          <div className="flex gap-2">
-            <Button
-              variant={activeTab === 'tenants' ? 'primary' : 'secondary'}
+          <div className="flex gap-1 p-1 bg-[hsl(var(--surface-2)/.5)] rounded-lg ring-1 ring-[hsl(var(--line)/.12)]">
+            <button
+              type="button"
               onClick={() => setActiveTab('tenants')}
+              className={`
+                flex-1 px-4 py-2.5 text-sm font-medium rounded-md
+                transition-all duration-200 ease-out
+                flex items-center justify-center gap-2
+                ${
+                  activeTab === 'tenants'
+                    ? 'bg-[hsl(var(--surface))] text-[hsl(var(--foreground))] shadow-sm ring-1 ring-[hsl(var(--line)/.2)]'
+                    : 'text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2)/.3)]'
+                }
+              `}
             >
-              Tenants
-            </Button>
-            <Button
-              variant={activeTab === 'coaches' ? 'primary' : 'secondary'}
+              <Building2 className="w-4 h-4" />
+              <span>Tenants</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('coaches')}
+              className={`
+                flex-1 px-4 py-2.5 text-sm font-medium rounded-md
+                transition-all duration-200 ease-out
+                flex items-center justify-center gap-2
+                ${
+                  activeTab === 'coaches'
+                    ? 'bg-[hsl(var(--surface))] text-[hsl(var(--foreground))] shadow-sm ring-1 ring-[hsl(var(--line)/.2)]'
+                    : 'text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2)/.3)]'
+                }
+              `}
             >
-              Trænere
-            </Button>
+              <Users className="w-4 h-4" />
+              <span>Trænere</span>
+            </button>
           </div>
         )}
       </div>

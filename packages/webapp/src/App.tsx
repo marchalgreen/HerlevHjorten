@@ -101,7 +101,7 @@ const Header = () => {
   }, [isMenuOpen])
 
   const clubRole = (club as any)?.role as string | undefined
-  const isSuperAdmin = clubRole === UserRole.SUPER_ADMIN || clubRole === 'super_admin'
+  const isSuperAdmin = clubRole === UserRole.SYSADMIN || clubRole === 'sysadmin' || clubRole === 'super_admin' // Backward compatibility
   const isAdmin = clubRole === UserRole.ADMIN || clubRole === 'admin' || isSuperAdmin
 
   const navItems: Array<{ page: Page; icon: React.ReactNode; label: string }> = [
