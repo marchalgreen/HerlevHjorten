@@ -5,7 +5,7 @@
  * with proper locale support.
  */
 
-import { DATE_CONSTANTS } from '../constants'
+import { DATE_CONSTANTS } from '../constants/index.js'
 
 /**
  * Formats a date string to Danish locale format.
