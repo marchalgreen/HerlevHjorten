@@ -25,6 +25,8 @@ export default async function handler(
   req: AuthenticatedRequest & { query?: { tenantId?: string }, params?: { tenantId?: string } },
   res: VercelResponse
 ) {
+  // Always set JSON content type first to ensure all responses are JSON
+  res.setHeader('Content-Type', 'application/json')
   setCorsHeaders(res, req.headers.origin)
   
   if (req.method === 'OPTIONS') {
@@ -53,7 +55,17 @@ export default async function handler(
 
     if (req.method === 'GET') {
       // List coaches for tenant
-      const sql = getPostgresClient(getDatabaseUrl())
+      let sql
+      try {
+        const databaseUrl = getDatabaseUrl()
+        sql = getPostgresClient(databaseUrl)
+      } catch (dbError) {
+        logger.error('Database connection failed', dbError)
+        return res.status(500).json({
+          error: 'Database connection failed',
+          message: dbError instanceof Error ? dbError.message : 'Unknown database error'
+        })
+      }
       
       const coaches = await sql`
         SELECT id, email, username, role, email_verified, created_at, last_login
@@ -79,7 +91,17 @@ export default async function handler(
       // Create coach
       const body = createCoachSchema.parse(req.body)
       
-      const sql = getPostgresClient(getDatabaseUrl())
+      let sql
+      try {
+        const databaseUrl = getDatabaseUrl()
+        sql = getPostgresClient(databaseUrl)
+      } catch (dbError) {
+        logger.error('Database connection failed', dbError)
+        return res.status(500).json({
+          error: 'Database connection failed',
+          message: dbError instanceof Error ? dbError.message : 'Unknown database error'
+        })
+      }
       
       // Check if username already exists for this tenant (case-insensitive)
       // Normalize username to lowercase for comparison, but store with proper capitalization
@@ -178,6 +200,9 @@ export default async function handler(
       return res.status(405).json({ error: 'Method not allowed' })
     }
   } catch (error) {
+    // Ensure Content-Type is set even in error cases
+    res.setHeader('Content-Type', 'application/json')
+    
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         error: 'Validation error',
@@ -191,6 +216,13 @@ export default async function handler(
 
     if (error instanceof Error && error.message.includes('Admin access required')) {
       return res.status(403).json({ error: error.message })
+    }
+
+    if (error instanceof Error && error.message.includes('DATABASE_URL')) {
+      return res.status(500).json({
+        error: 'Database configuration error',
+        message: error.message
+      })
     }
 
     logger.error('Coach management error', error)
