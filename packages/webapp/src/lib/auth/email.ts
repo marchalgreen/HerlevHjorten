@@ -36,6 +36,173 @@ function buildTenantUrl(tenantId: string, path: string): string {
 }
 
 /**
+ * Generates HTML for PIN code displayed in 6 separate boxes
+ * @param pin - 6-digit PIN code
+ * @returns HTML string with styled PIN boxes
+ */
+function generatePINBoxes(pin: string): string {
+  const digits = pin.split('')
+  return digits
+    .map(
+      (digit) => `
+      <td style="
+        width: 56px;
+        height: 64px;
+        background-color: #ffffff;
+        border: 2px solid #007bff;
+        border-radius: 10px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 32px;
+        font-weight: 700;
+        color: #007bff;
+        font-family: 'Courier New', monospace;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+        padding: 0;
+      ">${digit}</td>
+    `
+    )
+    .join('')
+}
+
+/**
+ * Builds logo URL for emails
+ * @param tenantId - Tenant ID (optional, defaults to main domain)
+ * @returns Full URL to logo image
+ */
+function buildLogoUrl(tenantId?: string): string {
+  // Use the horizontal logo with text for emails
+  const logoFilename = 'fulllogo_transparent_nobuffer_horizontal.png'
+  
+  // For development/localhost
+  if (APP_URL.includes('localhost') || APP_URL.includes('127.0.0.1')) {
+    return `${APP_URL}/${logoFilename}`
+  }
+
+  // For production, use base domain (logo is same for all tenants)
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : (APP_URL.startsWith('https') ? 'https' : 'http')
+  return `${protocol}://${BASE_DOMAIN}/${logoFilename}`
+}
+
+/**
+ * Base email template wrapper with consistent styling
+ * @param content - HTML content for the email body
+ * @param tenantId - Optional tenant ID for logo URL
+ * @returns Complete HTML email template
+ */
+function emailTemplate(content: string, tenantId?: string): string {
+  const logoUrl = buildLogoUrl(tenantId)
+  
+  return `
+    <!DOCTYPE html>
+    <html lang="da">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f5f5; padding: 20px 0;">
+        <tr>
+          <td align="center" style="padding: 20px 0;">
+            <table role="presentation" style="width: 100%; max-width: 600px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+              <!-- Logo Header -->
+              <tr>
+                <td style="padding: 32px 40px 24px 40px; text-align: center; border-bottom: 1px solid #e9ecef;">
+                  <img 
+                    src="${logoUrl}" 
+                    alt="Rundeklar" 
+                    style="max-width: 240px; height: auto; display: block; margin: 0 auto;"
+                    width="240"
+                  />
+                </td>
+              </tr>
+              <!-- Email Content -->
+              <tr>
+                <td style="padding: 40px 40px 30px 40px;">
+                  ${content}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 32px 40px; background-color: #f8f9fa; border-top: 1px solid #e9ecef;">
+                  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td style="padding: 0 0 16px 0; text-align: center;">
+                        <p style="margin: 0; font-size: 13px; font-weight: 600; color: #495057; text-transform: uppercase; letter-spacing: 0.5px;">
+                          Har du spørgsmål?
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0 0 20px 0; text-align: center;">
+                        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #6c757d;">
+                          Hvis du oplever problemer eller har spørgsmål, er du meget velkommen til at kontakte os på
+                        </p>
+                        <p style="margin: 8px 0 0 0;">
+                          <a href="mailto:marchalgreen@gmail.com" style="
+                            color: #007bff;
+                            text-decoration: none;
+                            font-weight: 600;
+                            font-size: 14px;
+                          ">marchalgreen@gmail.com</a>
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 20px 0 0 0; border-top: 1px solid #e9ecef; text-align: center;">
+                        <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: #495057;">
+                          ${RESEND_FROM_NAME}
+                        </p>
+                        <p style="margin: 0; font-size: 11px; color: #6c757d;">
+                          Denne email blev sendt automatisk. Besvar ikke denne email direkte.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `
+}
+
+/**
+ * Generates a styled button/link for emails
+ * @param text - Button text
+ * @param url - Button URL
+ * @param variant - Button style variant ('primary' | 'secondary')
+ * @returns HTML string for button
+ */
+function emailButton(text: string, url: string, variant: 'primary' | 'secondary' = 'primary'): string {
+  const styles =
+    variant === 'primary'
+      ? 'background-color: #007bff; color: #ffffff;'
+      : 'background-color: #6c757d; color: #ffffff;'
+  return `
+    <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 24px 0;">
+      <tr>
+        <td align="center" style="padding: 0;">
+          <a href="${url}" style="
+            display: inline-block;
+            padding: 14px 32px;
+            ${styles}
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background-color 0.2s;
+          ">${text}</a>
+        </td>
+      </tr>
+    </table>
+  `
+}
+
+/**
  * Send email verification email
  * @param email - Recipient email
  * @param token - Verification token
@@ -53,26 +220,40 @@ export async function sendVerificationEmail(
 
   const verifyUrl = buildTenantUrl(tenantId, `/verify-email?token=${token}`)
 
+  const content = `
+    <h1 style="margin: 0 0 24px 0; font-size: 28px; font-weight: 700; color: #212529; line-height: 1.2;">
+      Bekræft din email-adresse
+    </h1>
+    
+    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Tak fordi du registrerede dig hos ${RESEND_FROM_NAME}!
+    </p>
+    
+    <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Klik på knappen nedenfor for at bekræfte din email-adresse:
+    </p>
+
+    ${emailButton('Bekræft email', verifyUrl)}
+
+    <div style="margin: 32px 0; padding: 16px; background-color: #d1ecf1; border-left: 4px solid #0c5460; border-radius: 4px;">
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #0c5460;">
+        <strong>Bemærk:</strong> Dette link udløber om 24 timer. Hvis du ikke har oprettet en konto, kan du ignorere denne email.
+      </p>
+    </div>
+
+    <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.6; color: #6c757d;">
+      Hvis knappen ikke virker, kan du kopiere og indsætte denne URL i din browser:
+    </p>
+    <p style="margin: 8px 0 0 0; font-size: 12px; line-height: 1.6; color: #6c757d; word-break: break-all; font-family: 'Courier New', monospace;">
+      ${verifyUrl}
+    </p>
+  `
+
   await resend.emails.send({
     from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
     to: email,
-    subject: 'Verify your email address',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1>Verify your email address</h1>
-        <p>Thank you for registering with ${RESEND_FROM_NAME}!</p>
-        <p>Please click the link below to verify your email address:</p>
-        <p>
-          <a href="${verifyUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;">
-            Verify Email
-          </a>
-        </p>
-        <p>Or copy and paste this URL into your browser:</p>
-        <p style="word-break: break-all; color: #666;">${verifyUrl}</p>
-        <p>This link will expire in 24 hours.</p>
-        <p>If you didn't create an account, you can safely ignore this email.</p>
-      </div>
-    `
+    subject: 'Bekræft din email-adresse',
+    html: emailTemplate(content, tenantId)
   })
 }
 
@@ -94,26 +275,40 @@ export async function sendPasswordResetEmail(
 
   const resetUrl = buildTenantUrl(tenantId, `/reset-password?token=${token}`)
 
+  const content = `
+    <h1 style="margin: 0 0 24px 0; font-size: 28px; font-weight: 700; color: #212529; line-height: 1.2;">
+      Nulstil din adgangskode
+    </h1>
+    
+    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Du har anmodet om at nulstille din adgangskode for ${RESEND_FROM_NAME}.
+    </p>
+    
+    <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Klik på knappen nedenfor for at fortsætte:
+    </p>
+
+    ${emailButton('Nulstil adgangskode', resetUrl)}
+
+    <div style="margin: 32px 0; padding: 16px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #856404;">
+        <strong>Vigtigt:</strong> Dette link udløber om 1 time. Hvis du ikke har anmodet om en nulstilling, kan du ignorere denne email.
+      </p>
+    </div>
+
+    <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.6; color: #6c757d;">
+      Hvis knappen ikke virker, kan du kopiere og indsætte denne URL i din browser:
+    </p>
+    <p style="margin: 8px 0 0 0; font-size: 12px; line-height: 1.6; color: #6c757d; word-break: break-all; font-family: 'Courier New', monospace;">
+      ${resetUrl}
+    </p>
+  `
+
   await resend.emails.send({
     from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
     to: email,
-    subject: 'Reset your password',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1>Reset your password</h1>
-        <p>You requested to reset your password for ${RESEND_FROM_NAME}.</p>
-        <p>Click the link below to reset your password:</p>
-        <p>
-          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;">
-            Reset Password
-          </a>
-        </p>
-        <p>Or copy and paste this URL into your browser:</p>
-        <p style="word-break: break-all; color: #666;">${resetUrl}</p>
-        <p>This link will expire in 1 hour.</p>
-        <p>If you didn't request a password reset, you can safely ignore this email.</p>
-      </div>
-    `
+    subject: 'Nulstil din adgangskode',
+    html: emailTemplate(content, tenantId)
   })
 }
 
@@ -131,18 +326,37 @@ export async function send2FASetupEmail(
     return
   }
 
+  const content = `
+    <h1 style="margin: 0 0 24px 0; font-size: 28px; font-weight: 700; color: #212529; line-height: 1.2;">
+      To-faktor godkendelse aktiveret
+    </h1>
+    
+    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      To-faktor godkendelse er blevet aktiveret for din ${RESEND_FROM_NAME} konto.
+    </p>
+    
+    <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Fra nu af skal du indtaste en verifikationskode fra din authenticator app, når du logger ind.
+    </p>
+
+    <div style="margin: 32px 0; padding: 16px; background-color: #d4edda; border-left: 4px solid #28a745; border-radius: 4px;">
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #155724;">
+        <strong>✓ Sikkerhed forbedret:</strong> Din konto er nu beskyttet med to-faktor godkendelse.
+      </p>
+    </div>
+
+    <div style="margin: 32px 0; padding: 16px; background-color: #f8d7da; border-left: 4px solid #dc3545; border-radius: 4px;">
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #721c24;">
+        <strong>Vigtigt:</strong> Hvis du ikke har aktiveret to-faktor godkendelse, skal du kontakte support med det samme.
+      </p>
+    </div>
+  `
+
   await resend.emails.send({
     from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
     to: email,
-    subject: 'Two-factor authentication enabled',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1>Two-factor authentication enabled</h1>
-        <p>Two-factor authentication has been successfully enabled for your ${RESEND_FROM_NAME} account.</p>
-        <p>From now on, you'll need to enter a verification code from your authenticator app when logging in.</p>
-        <p>If you didn't enable two-factor authentication, please contact support immediately.</p>
-      </div>
-    `
+    subject: 'To-faktor godkendelse aktiveret',
+    html: emailTemplate(content, _tenantId)
   })
 }
 
@@ -167,30 +381,56 @@ export async function sendCoachWelcomeEmail(
   // Build login URL based on tenant subdomain
   const loginUrl = buildTenantUrl(tenantId, '/login')
 
+  const content = `
+    <h1 style="margin: 0 0 24px 0; font-size: 28px; font-weight: 700; color: #212529; line-height: 1.2;">
+      Velkommen til ${RESEND_FROM_NAME}!
+    </h1>
+    
+    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Hej ${username},
+    </p>
+    
+    <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Din trænerkonto er blevet oprettet. Du kan nu logge ind med følgende oplysninger:
+    </p>
+
+    <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 32px 0; background-color: #f8f9fa; border-radius: 8px; padding: 20px;">
+      <tr>
+        <td style="padding: 0 0 16px 0;">
+          <p style="margin: 0; font-size: 14px; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">
+            Brugernavn
+          </p>
+          <p style="margin: 8px 0 0 0; font-size: 18px; font-weight: 600; color: #212529;">
+            ${username}
+          </p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 16px 0 0 0; border-top: 1px solid #dee2e6;">
+          <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">
+            PIN-kode
+          </p>
+          <table role="presentation" style="border-collapse: separate; border-spacing: 10px; margin: 12px auto 0 auto;">
+            <tr>
+              ${generatePINBoxes(pin)}
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    ${emailButton('Log ind', loginUrl)}
+
+    <p style="margin: 32px 0 0 0; font-size: 14px; line-height: 1.6; color: #6c757d; text-align: center;">
+      Hvis du har spørgsmål, er du velkommen til at kontakte os.
+    </p>
+  `
+
   await resend.emails.send({
     from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
     to: email,
     subject: `Velkommen til ${RESEND_FROM_NAME}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1>Velkommen til ${RESEND_FROM_NAME}!</h1>
-        <p>Hej ${username},</p>
-        <p>Din trænerkonto er blevet oprettet.</p>
-        <p>Du kan nu logge ind med:</p>
-        <ul style="list-style: none; padding: 0;">
-          <li style="margin: 10px 0;"><strong>Brugernavn:</strong> ${username}</li>
-          <li style="margin: 10px 0;"><strong>PIN:</strong> <span style="font-size: 18px; font-weight: bold; letter-spacing: 2px; background-color: #f0f0f0; padding: 8px 12px; border-radius: 4px;">${pin}</span></li>
-        </ul>
-        <p>
-          <a href="${loginUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; margin-top: 20px;">
-            Log ind
-          </a>
-        </p>
-        <p style="margin-top: 30px; color: #666; font-size: 14px;">
-          Hvis du har spørgsmål, er du velkommen til at kontakte os.
-        </p>
-      </div>
-    `
+    html: emailTemplate(content, tenantId)
   })
 }
 
@@ -218,27 +458,40 @@ export async function sendPINResetEmail(
   try {
     logger.debug(`Attempting to send PIN reset email to ${email}`)
     
+    const content = `
+      <h1 style="margin: 0 0 24px 0; font-size: 28px; font-weight: 700; color: #212529; line-height: 1.2;">
+        Nulstil din PIN
+      </h1>
+      
+      <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+        Hej ${username},
+      </p>
+      
+      <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+        Du har anmodet om at nulstille din PIN for ${RESEND_FROM_NAME}. Klik på knappen nedenfor for at fortsætte.
+      </p>
+
+      ${emailButton('Nulstil PIN', resetUrl)}
+
+      <div style="margin: 32px 0; padding: 16px; background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #856404;">
+          <strong>Vigtigt:</strong> Dette link udløber om 1 time. Hvis du ikke har anmodet om en PIN-nulstilling, kan du ignorere denne email.
+        </p>
+      </div>
+
+      <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.6; color: #6c757d;">
+        Hvis knappen ikke virker, kan du kopiere og indsætte denne URL i din browser:
+      </p>
+      <p style="margin: 8px 0 0 0; font-size: 12px; line-height: 1.6; color: #6c757d; word-break: break-all; font-family: 'Courier New', monospace;">
+        ${resetUrl}
+      </p>
+    `
+
     const result = await resend.emails.send({
       from: `${RESEND_FROM_NAME} <${RESEND_FROM_EMAIL}>`,
       to: email,
-      subject: 'Reset your PIN',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1>Reset your PIN</h1>
-          <p>Hej ${username},</p>
-          <p>Du har anmodet om at nulstille din PIN for ${RESEND_FROM_NAME}.</p>
-          <p>Klik på linket nedenfor for at nulstille din PIN:</p>
-          <p>
-            <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px;">
-              Nulstil PIN
-            </a>
-          </p>
-          <p>Eller kopier og indsæt denne URL i din browser:</p>
-          <p style="word-break: break-all; color: #666;">${resetUrl}</p>
-          <p>Dette link udløber om 1 time.</p>
-          <p>Hvis du ikke har anmodet om en PIN-nulstilling, kan du ignorere denne email.</p>
-        </div>
-      `
+      subject: 'Nulstil din PIN',
+      html: emailTemplate(content, tenantId)
     })
     
     // Check for errors in result

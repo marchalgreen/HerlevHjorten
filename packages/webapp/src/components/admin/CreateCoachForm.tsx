@@ -14,7 +14,7 @@ export default function CreateCoachForm({ onSuccess, onCancel }: CreateCoachForm
   const [username, setUsername] = useState('')
   const [pin, setPin] = useState('')
   const [autoGeneratePIN, setAutoGeneratePIN] = useState(true)
-  const [sendEmail, setSendEmail] = useState(false)
+  const [sendEmail, setSendEmail] = useState(true) // Default to checked - email is usually wanted
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
