@@ -462,7 +462,7 @@ export async function sendPINResetEmail(
       </h1>
       
       <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
-        Hej ${username},
+        Hej ${formatCoachUsername(username)},
       </p>
       
       <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #495057;">
