@@ -35,8 +35,39 @@ export default async function handler(
 
   try {
     // Require authentication and admin role
-    await requireAuth(req)
-    requireAdmin(req)
+    try {
+      await requireAuth(req)
+    } catch (authError) {
+      logger.error('Authentication failed in coaches endpoint', authError)
+      if (authError instanceof Error) {
+        if (authError.message.includes('Authentication required')) {
+          return res.status(401).json({ error: authError.message })
+        }
+        if (authError.message.includes('Invalid or expired token')) {
+          return res.status(401).json({ error: authError.message })
+        }
+        if (authError.message.includes('Club not found')) {
+          return res.status(401).json({ error: authError.message })
+        }
+        if (authError.message.includes('DATABASE_URL')) {
+          return res.status(500).json({
+            error: 'Database configuration error',
+            message: authError.message
+          })
+        }
+      }
+      throw authError // Re-throw if not handled above
+    }
+    
+    try {
+      requireAdmin(req)
+    } catch (adminError) {
+      logger.error('Admin check failed in coaches endpoint', adminError)
+      if (adminError instanceof Error && adminError.message.includes('Admin access required')) {
+        return res.status(403).json({ error: adminError.message })
+      }
+      throw adminError // Re-throw if not handled above
+    }
 
     // Get tenantId from params (Express) or query (Vercel)
     const tenantId = (req.params?.tenantId || req.query?.tenantId) as string
