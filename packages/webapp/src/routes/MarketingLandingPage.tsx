@@ -1,5 +1,4 @@
 import React from 'react'
-import { motion } from 'framer-motion'
 import { HeroSection } from '../components/marketing/HeroSection'
 import { FeaturesSection } from '../components/marketing/FeaturesSection'
 import { InteractiveDemoSection } from '../components/marketing/InteractiveDemoSection'

@@ -35,17 +35,14 @@ export const DragDropDemo: React.FC<DragDropDemoProps> = ({ checkedInPlayers }) 
   // Bench players are the checked-in players that aren't on a court
   const [playersOnCourts, setPlayersOnCourts] = useState<Set<string>>(new Set())
   const benchPlayers = checkedInPlayers.filter(p => !playersOnCourts.has(p.id))
-  const [draggedPlayer, setDraggedPlayer] = useState<Player | null>(null)
   const [dragOverSlot, setDragOverSlot] = useState<{ courtIdx: number; slot: number } | null>(null)
 
   const handleDragStart = (e: React.DragEvent, player: Player) => {
-    setDraggedPlayer(player)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('application/x-player-id', player.id)
   }
 
   const handleDragEnd = () => {
-    setDraggedPlayer(null)
     setDragOverSlot(null)
   }
 
@@ -216,7 +213,7 @@ export const DragDropDemo: React.FC<DragDropDemoProps> = ({ checkedInPlayers }) 
         {benchPlayers.length === 0 ? (
           <div className="text-center py-8 text-[hsl(var(--muted))]">
             <p className="text-sm">Ingen spillere på bænken</p>
-            <p className="text-xs mt-1">Tjek spillere ind i "Tjek ind" for at se dem her</p>
+            <p className="text-xs mt-1">Tjek spillere ind i &quot;Tjek ind&quot; for at se dem her</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pb-2">

@@ -62,7 +62,7 @@ export const TestimonialsSection: React.FC = () => {
                 <PageCard hover className="h-full flex flex-col">
                   <Quote className="w-8 h-8 text-[hsl(var(--primary))] mb-4" />
                   <p className="text-[hsl(var(--foreground))] mb-6 leading-relaxed flex-1">
-                    "{testimonial.quote}"
+                    &quot;{testimonial.quote}&quot;
                   </p>
                   <div className="mt-auto">
                     <p className="font-semibold text-[hsl(var(--foreground))]">{testimonial.author}</p>
