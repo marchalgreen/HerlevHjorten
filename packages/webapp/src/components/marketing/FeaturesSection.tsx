@@ -55,7 +55,7 @@ const FeatureCard: React.FC<{ feature: Feature; index: number }> = ({ feature, i
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <PageCard hover className="h-full">
+      <PageCard hover className="h-full card-white-bg">
         <div className="flex flex-col items-start gap-4">
           <div className="text-[hsl(var(--primary))]">
             {feature.icon}

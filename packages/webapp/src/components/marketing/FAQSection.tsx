@@ -52,7 +52,7 @@ const FAQItem: React.FC<{ faq: FAQItem; index: number }> = ({ faq, index }) => {
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
     >
-      <PageCard hover className="cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+      <PageCard hover className="cursor-pointer card-white-bg" onClick={() => setIsOpen(!isOpen)}>
         <div className="flex items-start justify-between gap-4">
           <h3 className="text-lg font-semibold text-[hsl(var(--foreground))] flex-1 text-left">
             {faq.question}

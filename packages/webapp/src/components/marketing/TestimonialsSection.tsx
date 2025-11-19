@@ -71,7 +71,7 @@ export const TestimonialsSection: React.FC = () => {
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <PageCard hover className="h-full flex flex-col">
+                <PageCard hover className="h-full flex flex-col card-white-bg">
                   <Quote className="w-8 h-8 text-[hsl(var(--primary))] mb-4" />
                   <p className="text-[hsl(var(--foreground))] mb-6 leading-relaxed flex-1">
                     &quot;{testimonial.quote}&quot;
