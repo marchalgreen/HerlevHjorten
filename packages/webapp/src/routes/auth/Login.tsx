@@ -5,11 +5,9 @@ import { Button, PINInput } from '../../components/ui'
 import type { PINInputRef } from '../../components/auth/PINInput'
 import { PageCard } from '../../components/ui'
 import { User, Lock, Mail } from 'lucide-react'
-import { getCurrentTenantId } from '../../lib/tenant'
-import { isSuperAdmin } from '../../lib/auth/roles'
 
 export default function LoginPage() {
-  const { login, loginWithPIN, club } = useAuth()
+  const { login, loginWithPIN } = useAuth()
   const { navigate, navigateToAuth } = useNavigation()
   const [loginMethod, setLoginMethod] = useState<'pin' | 'email'>('pin') // Default to PIN for coaches
   const [email, setEmail] = useState('')
@@ -20,7 +18,6 @@ export default function LoginPage() {
   const [requires2FA, setRequires2FA] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [justLoggedIn, setJustLoggedIn] = useState(false)
   const pinInputRef = useRef<PINInputRef>(null)
   
   // Auto-focus username field when PIN login method is selected (only once)
@@ -35,24 +32,6 @@ export default function LoginPage() {
       return () => clearTimeout(timer)
     }
   }, [loginMethod, username])
-  
-  // Redirect sys-admin users from marketing tenant to demo tenant after login
-  useEffect(() => {
-    if (justLoggedIn && club) {
-      const currentTenantId = getCurrentTenantId()
-      if (currentTenantId === 'marketing') {
-        const userRole = club.role as string
-        if (isSuperAdmin(userRole)) {
-          // Redirect sys-admin to demo tenant where they have full admin access
-          window.location.href = 'https://demo.rundeklar.dk'
-          return
-        }
-      }
-      // Reset flag and navigate normally if not redirecting
-      setJustLoggedIn(false)
-      navigate('coach')
-    }
-  }, [justLoggedIn, club, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -72,10 +51,10 @@ export default function LoginPage() {
         await login(email, password, totpCode || undefined)
       }
       
-      // Set flag to trigger redirect check in useEffect after club state updates
-      setJustLoggedIn(true)
+      // Navigate to coach page after successful login
+      // Redirect logic for sys-admin from marketing tenant is handled in App.tsx
+      navigate('coach')
     } catch (err) {
-      setJustLoggedIn(false) // Reset flag on error
       if (err instanceof Error && err.message === '2FA_REQUIRED') {
         setRequires2FA(true)
         setError(null)

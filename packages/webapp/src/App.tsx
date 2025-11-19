@@ -23,7 +23,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { NavigationProvider, useNavigation, type Page } from './contexts/NavigationContext'
 import { getCurrentTenantId } from './lib/tenant'
 import { Button } from './components/ui'
-import { UserRole } from './lib/auth/roles'
+import { UserRole, isSuperAdmin } from './lib/auth/roles'
 import AdminPage from './routes/admin/AdminPage'
 import { formatCoachUsername } from './lib/formatting'
 import { trackPageView } from './lib/analytics/track'
@@ -374,6 +374,17 @@ const AppContent = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only track once on mount, not on every page change
+  
+  // Redirect sys-admin users from marketing tenant to demo tenant after login
+  useEffect(() => {
+    if (isMarketingTenant && club) {
+      const userRole = club.role as string
+      if (isSuperAdmin(userRole)) {
+        // Redirect sys-admin to demo tenant where they have full admin access
+        window.location.href = 'https://demo.rundeklar.dk'
+      }
+    }
+  }, [isMarketingTenant, club])
   
   // Prepare coach object for LandingPage - use username for coaches, email for admins
   const coachForLanding = club ? {
