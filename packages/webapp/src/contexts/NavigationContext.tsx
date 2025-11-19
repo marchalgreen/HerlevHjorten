@@ -63,11 +63,17 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
       const pathname = window.location.pathname
       const search = window.location.search
       
-      // Check hash first (for backward compatibility)
+      // Check hash first (for backward compatibility and development mode)
       if (hash) {
         // Remove query params before matching
         const pathWithoutQuery = hash.split('?')[0]
         const path = pathWithoutQuery.split('/').pop() || ''
+        
+        // Extract token from hash if present (hash format: /tenant/verify-email?token=...)
+        const hashQueryPart = hash.includes('?') ? hash.split('?')[1] : ''
+        const hashSearchParams = hashQueryPart ? new URLSearchParams(hashQueryPart) : null
+        const tokenFromHash = hashSearchParams?.get('token')
+        
         const knownPages: Page[] = ['coach', 'check-in', 'rounds', 'match-program', 'players', 'statistics', 'prism-test', 'admin']
         // Handle redirect from old route
         if (path === 'match-program') {
@@ -86,10 +92,28 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
         } else if (knownAuthPages.includes(path as AuthPage)) {
           setAuthPage(path as AuthPage)
           setCurrentPage('coach')
+          
+          // CRITICAL: Store token from hash in sessionStorage BEFORE clearing hash
+          // This ensures VerifyEmail/ResetPassword/etc can read token even after hash is cleared
+          if (tokenFromHash) {
+            if (path === 'verify-email') {
+              sessionStorage.setItem('verify_email_token', tokenFromHash)
+            } else if (path === 'reset-password') {
+              sessionStorage.setItem('reset_password_token', tokenFromHash)
+            } else if (path === 'reset-pin') {
+              sessionStorage.setItem('reset_pin_token', tokenFromHash)
+            }
+          }
+          
           // Don't clear hash for reset-pin/reset-password to preserve token in query params
-          // But clear it for other auth pages
+          // But clear it for other auth pages (token is now in sessionStorage)
           if (path !== 'reset-pin' && path !== 'reset-password') {
-            window.history.replaceState(null, '', window.location.pathname)
+            // Preserve token in URL search params when clearing hash
+            if (tokenFromHash) {
+              window.history.replaceState(null, '', `/?token=${tokenFromHash}`)
+            } else {
+              window.history.replaceState(null, '', window.location.pathname)
+            }
           }
         }
         return // Hash takes precedence
@@ -106,7 +130,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
           setAuthPage(path as AuthPage)
           setCurrentPage('coach')
           
-          // For token-based auth pages, store token in sessionStorage before updating URL
+          // For token-based auth pages, store token in sessionStorage BEFORE updating URL
           // This ensures VerifyEmail/ResetPassword/etc can read token even if URL update happens first
           if (search) {
             const searchParams = new URLSearchParams(search)

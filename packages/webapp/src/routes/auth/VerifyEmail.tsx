@@ -12,28 +12,36 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     const verifyEmail = async () => {
       // Extract token from URL query params
-      // NavigationContext may have updated the URL, so check both current search and hash
+      // CRITICAL: Read token from multiple sources to handle race conditions
+      // NavigationContext may update URL before this component reads it
       let token: string | null = null
       
-      // First try current location search (after NavigationContext update)
-      const params = new URLSearchParams(window.location.search)
-      token = params.get('token')
+      // Strategy 1: Check sessionStorage FIRST (NavigationContext stores it before URL update)
+      // This is the most reliable source since it's set synchronously before URL change
+      const storedToken = sessionStorage.getItem('verify_email_token')
+      if (storedToken) {
+        token = storedToken
+        sessionStorage.removeItem('verify_email_token')
+      }
       
-      // If not found, check hash (for backward compatibility or if NavigationContext hasn't run yet)
+      // Strategy 2: Check current URL search params (after NavigationContext update)
+      if (!token) {
+        const params = new URLSearchParams(window.location.search)
+        token = params.get('token')
+      }
+      
+      // Strategy 3: Check hash (for backward compatibility)
       if (!token && window.location.hash) {
         const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '')
         token = hashParams.get('token')
       }
       
-      // Also check if token is in the original URL before NavigationContext modified it
-      // by checking if we can get it from the initial page load
+      // Strategy 4: Try to read from the original URL before NavigationContext modified it
+      // This handles the case where NavigationContext hasn't run yet
       if (!token) {
-        // Try to get from sessionStorage if NavigationContext stored it
-        const storedToken = sessionStorage.getItem('verify_email_token')
-        if (storedToken) {
-          token = storedToken
-          sessionStorage.removeItem('verify_email_token')
-        }
+        const initialUrl = window.location.href
+        const urlObj = new URL(initialUrl)
+        token = urlObj.searchParams.get('token')
       }
       
       if (!token) {
