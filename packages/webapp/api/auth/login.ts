@@ -113,12 +113,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `
     } else if (isEmailLogin) {
       // Email/password login: find by email and tenant_id (admins)
+      // For sys-admin users, allow login regardless of tenant_id (they can access all tenants)
+      // For regular admins, require matching tenant_id
       clubs = await sql`
         SELECT id, email, username, password_hash, tenant_id, role, email_verified, two_factor_enabled, two_factor_secret
         FROM clubs
         WHERE email = ${body.email}
-          AND tenant_id = ${body.tenantId}
-          AND role IN ('admin', 'sysadmin', 'super_admin') -- Backward compatibility
+          AND role IN ('admin', 'sysadmin', 'super_admin')
+          AND (
+            role IN ('sysadmin', 'super_admin')
+            OR tenant_id = ${body.tenantId}
+          )
       `
     } else {
       return res.status(400).json({
