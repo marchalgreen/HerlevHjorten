@@ -121,3 +121,4 @@ openssl rand -base64 32
 **VIGTIGT:** Hvis du genererer en ny secret, skal alle eksisterende sessions invalideres. Brugere skal logge ind igen.
 
 
+

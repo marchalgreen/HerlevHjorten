@@ -505,3 +505,114 @@ export async function sendPINResetEmail(
   }
 }
 
+/**
+ * Send cold-call email to club presidents
+ * @param email - Recipient email
+ * @param clubName - Name of the club
+ * @param presidentName - Name of the club president
+ * @returns Promise that resolves when email is sent
+ */
+export async function sendColdCallEmail(
+  email: string,
+  clubName: string,
+  presidentName: string
+): Promise<void> {
+  if (!resend) {
+    logger.warn('Resend not configured - skipping cold-call email')
+    throw new Error('Resend email service is not configured. Please set RESEND_API_KEY environment variable.')
+  }
+
+  const demoUrl = 'https://demo.rundeklar.dk'
+  const signupUrl = 'https://rundeklar.dk'
+
+  const content = `
+    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Hej ${presidentName},
+    </p>
+    
+    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Mit navn er Marc Halgreen. Jeg spiller selv i Herlev Hjorten Badmintonklub, og de sidste par år har jeg arbejdet tæt sammen med vores trænere om at løse en udfordring, som jeg tror I også kender.
+    </p>
+    
+    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      På travle træningsaftener forsvinder meget tid på indtjekning, papirlister, overblik over hvem der er mødt op og på at sætte runder hurtigt og fair. Derfor har jeg udviklet Rundeklar sammen med trænerteamet i Herlev Hjorten.
+    </p>
+    
+    <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #495057; font-weight: 600;">
+      Rundeklar gør tre ting særligt godt:
+    </p>
+    
+    <ul style="margin: 0 0 24px 0; padding-left: 24px; font-size: 16px; line-height: 1.8; color: #495057;">
+      <li style="margin-bottom: 12px;">Spillerne tjekker ind på få sekunder</li>
+      <li style="margin-bottom: 12px;">Runder sættes automatisk på tværs af baner</li>
+      <li style="margin-bottom: 12px;">Trænerne får ro, overblik og mere tid på banen</li>
+    </ul>
+    
+    <div style="margin: 32px 0; padding: 20px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 4px;">
+      <p style="margin: 0 0 12px 0; font-size: 16px; line-height: 1.6; color: #495057; font-style: italic;">
+        "Vi har fået meget bedre ro på træningsaftenerne. Spillerne tjekker selv ind, og vi kan sætte runderne på få minutter."
+      </p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #6c757d; font-weight: 600;">
+        — Morten Regaard, træner
+      </p>
+    </div>
+    
+    <p style="margin: 32px 0 24px 0; font-size: 16px; line-height: 1.6; color: #495057; font-weight: 600;">
+      Hvis I vil prøve det
+    </p>
+    
+    <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      I kan teste løsningen med det samme på <a href="${demoUrl}" style="color: #007bff; text-decoration: none; font-weight: 600;">demo.rundeklar.dk</a>
+    </p>
+    
+    <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Og hvis I vil mærke hvordan det fungerer i jeres egen klub, kan I nu oprette en gratis 14 dages prøveperiode uden binding. Det tager under et minut.
+    </p>
+
+    ${emailButton('Start her', signupUrl)}
+
+    <p style="margin: 32px 0 20px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Hvis du vil, kan jeg også vise dig løsningen på et kort opkald. Ti minutter er nok til at gennemgå de vigtigste ting.
+    </p>
+    
+    <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      Vil du se en hurtig demo, eller vil I hellere prøve selv først?
+    </p>
+    
+    <p style="margin: 32px 0 0 0; font-size: 16px; line-height: 1.6; color: #495057;">
+      De bedste hilsner<br>
+      <strong style="color: #212529;">Marc Halgreen</strong><br>
+      <span style="font-size: 14px; color: #6c757d;">Rundeklar</span>
+    </p>
+    
+    <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.6; color: #6c757d;">
+      <a href="tel:+4553696952" style="color: #007bff; text-decoration: none;">+45 53 69 69 52</a><br>
+      <a href="mailto:marchalgreen@gmail.com" style="color: #007bff; text-decoration: none;">marchalgreen@gmail.com</a>
+    </p>
+  `
+
+  try {
+    const result = await resend.emails.send({
+      from: 'Marc Halgreen <marchalgreen@gmail.com>',
+      to: email,
+      subject: `En lettere måde at styre træningsaftenerne i ${clubName}`,
+      html: emailTemplate(content),
+      // Enable click tracking (default is true, but being explicit)
+      tags: [
+        { name: 'category', value: 'cold-call' },
+        { name: 'club-name', value: clubName }
+      ]
+    })
+    
+    if (result.error) {
+      logger.error('Resend API returned an error', result.error)
+      throw new Error(`Resend API error: ${result.error.message || JSON.stringify(result.error)}`)
+    }
+    
+    logger.info(`Cold-call email sent successfully to ${email} for ${clubName}`)
+  } catch (error) {
+    logger.error('Failed to send cold-call email', error)
+    throw error
+  }
+}
+

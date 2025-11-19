@@ -43,7 +43,7 @@ PIN-koder sendes ikke fra production, fordi RESEND ikke er konfigureret korrekt 
 
    ✅ **RESEND_FROM_NAME**
    - Key: `RESEND_FROM_NAME`
-   - Value: `Herlev Hjorten` (eller dit foretrukne navn)
+   - Value: `Rundeklar` (eller dit foretrukne navn)
    - Environment: **Production**
 
    ✅ **APP_URL** (valgfri - bruges kun til at detektere protocol i development)
