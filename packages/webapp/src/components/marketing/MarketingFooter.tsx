@@ -94,7 +94,7 @@ export const MarketingFooter: React.FC = () => {
               © {new Date().getFullYear()} Rundeklar. Alle rettigheder forbeholdes.
             </p>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => navigateToAuth('login')}
               className="flex items-center gap-2"
