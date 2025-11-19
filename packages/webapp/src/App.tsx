@@ -384,7 +384,34 @@ const AppContent = () => {
   } : undefined
   
   // Marketing tenant shows marketing page for ALL users
+  // BUT: Allow login/register/auth pages to be shown if explicitly requested
   if (isMarketingTenant) {
+    // Check if user is trying to access auth pages (login, register, etc.)
+    if (isAuthRoute && authPage) {
+      // Show auth pages normally
+      return (
+        <>
+          <TenantTitleUpdater />
+          <div className="flex min-h-screen flex-col text-[hsl(var(--foreground))] overflow-x-hidden max-w-full relative">
+            {/* Show header for account settings, but not for other auth pages */}
+            {authPage === 'account' && <Header />}
+            <main className="flex-1 overflow-y-auto overflow-x-hidden max-w-full relative z-0">
+              <div className="flex w-full flex-col gap-4 sm:gap-6 px-4 sm:px-6 pb-6 sm:pb-10 pt-4 sm:pt-6 md:px-8 lg:px-12 max-w-full overflow-x-hidden">
+                {authPage === 'login' && <LoginPage />}
+                {authPage === 'register' && <RegisterPage />}
+                {authPage === 'verify-email' && <VerifyEmailPage />}
+                {authPage === 'forgot-password' && <ForgotPasswordPage />}
+                {authPage === 'forgot-pin' && <ForgotPinPage />}
+                {authPage === 'reset-password' && <ResetPasswordPage />}
+                {authPage === 'reset-pin' && <ResetPinPage />}
+                {authPage === 'account' && <ProtectedRoute><AccountSettingsPage /></ProtectedRoute>}
+              </div>
+            </main>
+          </div>
+        </>
+      )
+    }
+    
     // SIMPLE: Just check sessionStorage directly - no state management
     // MarketingSignupPage will handle its own state internally
     const hasPlanParam = typeof window !== 'undefined' && window.location.search.includes('plan=')
