@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { PageCard } from '../../components/ui'
 import { Button } from '../../components/ui'
+import { formatCoachUsername } from '../../lib/formatting'
 
 interface TenantDetails {
   id: string
@@ -21,6 +22,16 @@ interface Admin {
   lastLogin?: string
 }
 
+interface Coach {
+  id: string
+  email: string
+  username: string
+  role: string
+  emailVerified: boolean
+  createdAt: string
+  lastLogin?: string | null
+}
+
 interface TenantDetailsPageProps {
   tenantId: string
   onClose: () => void
@@ -29,9 +40,10 @@ interface TenantDetailsPageProps {
 export default function TenantDetailsPage({ tenantId, onClose }: TenantDetailsPageProps) {
   const [tenant, setTenant] = useState<TenantDetails | null>(null)
   const [admins, setAdmins] = useState<Admin[]>([])
+  const [coaches, setCoaches] = useState<Coach[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'details' | 'admins'>('details')
+  const [activeTab, setActiveTab] = useState<'details' | 'admins' | 'coaches'>('details')
 
   const fetchTenantDetails = useCallback(async () => {
     try {
@@ -82,10 +94,33 @@ export default function TenantDetailsPage({ tenantId, onClose }: TenantDetailsPa
     }
   }, [tenantId])
 
+  const fetchCoaches = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('auth_access_token')
+      const apiUrl = import.meta.env.DEV 
+        ? `http://127.0.0.1:3000/api/admin/tenants/${tenantId}/coaches`
+        : `/api/admin/tenants/${tenantId}/coaches`
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setCoaches(data.coaches || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch coaches:', err)
+    }
+  }, [tenantId])
+
   useEffect(() => {
     fetchTenantDetails()
     fetchAdmins()
-  }, [fetchTenantDetails, fetchAdmins])
+    fetchCoaches()
+  }, [fetchTenantDetails, fetchAdmins, fetchCoaches])
 
   const handleDeleteTenant = async () => {
     if (!confirm(`Er du sikker på, at du vil slette tenant "${tenant?.name}"? Dette vil markere tenanten som slettet, men data vil blive bevaret.`)) {
@@ -187,6 +222,16 @@ export default function TenantDetailsPage({ tenantId, onClose }: TenantDetailsPa
           >
             Administratorer ({admins.length})
           </button>
+          <button
+            onClick={() => setActiveTab('coaches')}
+            className={`pb-2 px-1 border-b-2 transition-colors ${
+              activeTab === 'coaches'
+                ? 'border-[hsl(var(--primary))] text-[hsl(var(--primary))]'
+                : 'border-transparent text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]'
+            }`}
+          >
+            Trænere ({coaches.length})
+          </button>
         </div>
       </div>
 
@@ -265,6 +310,43 @@ export default function TenantDetailsPage({ tenantId, onClose }: TenantDetailsPa
                     <Button variant="secondary" size="sm">
                       Rediger
                     </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'coaches' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Trænere</h3>
+          </div>
+
+          {coaches.length === 0 ? (
+            <p className="text-[hsl(var(--muted))]">Ingen trænere fundet.</p>
+          ) : (
+            <div className="space-y-2">
+              {coaches.map((coach) => (
+                <div
+                  key={coach.id}
+                  className="p-4 border border-[hsl(var(--line))] rounded-md bg-[hsl(var(--surface))]"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">
+                        {coach.username ? formatCoachUsername(coach.username) : coach.email}
+                      </p>
+                      <p className="text-sm text-[hsl(var(--muted))]">
+                        {coach.email} • {coach.emailVerified ? 'Email verificeret' : 'Email ikke verificeret'}
+                      </p>
+                      {coach.lastLogin && (
+                        <p className="text-xs text-[hsl(var(--muted))] mt-1">
+                          Sidst aktiv: {new Date(coach.lastLogin).toLocaleString('da-DK')}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

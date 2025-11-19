@@ -153,6 +153,7 @@ async function setupAdminRoutes() {
   const tenantsHandler = (await import('../api/admin/tenants.js')).default
   const tenantByIdHandler = (await import('../api/admin/tenants/[id].js')).default
   const tenantAdminsHandler = (await import('../api/admin/tenants/[id]/admins.js')).default
+  const tenantCoachesHandler = (await import('../api/admin/tenants/[id]/coaches.js')).default
   const analyticsHandler = (await import('../api/admin/analytics.js')).default
   
   // Admin routes
@@ -163,6 +164,7 @@ async function setupAdminRoutes() {
   app.delete('/api/admin/tenants/:id', wrapHandler(tenantByIdHandler))
   app.get('/api/admin/tenants/:id/admins', wrapHandler(tenantAdminsHandler))
   app.post('/api/admin/tenants/:id/admins', wrapHandler(tenantAdminsHandler))
+  app.get('/api/admin/tenants/:id/coaches', wrapHandler(tenantCoachesHandler))
   app.get('/api/admin/analytics', wrapHandler(analyticsHandler))
 }
 
