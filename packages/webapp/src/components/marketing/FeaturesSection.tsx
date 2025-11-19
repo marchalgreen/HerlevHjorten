@@ -81,8 +81,20 @@ export const FeaturesSection: React.FC = () => {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section id="features" ref={ref} className="py-20 sm:py-24 lg:py-32 bg-[hsl(var(--bg-canvas))]">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="features" ref={ref} className="relative py-20 sm:py-24 lg:py-32 bg-[hsl(var(--bg-canvas))] overflow-hidden">
+      {/* Blurred background image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
+        style={{
+          backgroundImage: `url(${import.meta.env.BASE_URL}tennis1.jpg)`,
+          filter: 'blur(8px)',
+          transform: 'scale(1.05)',
+        }}
+      />
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--bg-canvas)/.7)] via-[hsl(var(--bg-canvas)/.6)] to-[hsl(var(--bg-canvas)/.7)] z-0" />
+      
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           className="text-center mb-12 sm:mb-16 lg:mb-20"
           initial={{ opacity: 0, y: 20 }}

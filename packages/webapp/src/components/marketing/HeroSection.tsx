@@ -26,7 +26,29 @@ export const HeroSection: React.FC = () => {
         animate={{ scale: 1 }}
         transition={{ duration: 1.5, ease: 'easeOut' }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary)/.1)] via-transparent to-[hsl(var(--success)/.08)]" />
+        {/* Tenant gradient background */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            opacity: 0.6,
+            background: `
+              radial-gradient(circle at 15% 25%, rgba(147, 197, 253, 0.28) 0%, transparent 45%),
+              radial-gradient(circle at 85% 75%, rgba(134, 239, 172, 0.25) 0%, transparent 50%),
+              radial-gradient(circle at 50% 50%, rgba(187, 247, 208, 0.22) 0%, transparent 55%),
+              radial-gradient(circle at 70% 30%, rgba(191, 219, 254, 0.24) 0%, transparent 48%),
+              radial-gradient(circle at 30% 70%, rgba(167, 243, 208, 0.2) 0%, transparent 52%),
+              conic-gradient(from 45deg at 50% 50%, 
+                rgba(187, 247, 208, 0.18) 0deg,
+                rgba(147, 197, 253, 0.18) 60deg,
+                rgba(134, 239, 172, 0.18) 120deg,
+                rgba(191, 219, 254, 0.18) 180deg,
+                rgba(187, 247, 208, 0.18) 240deg,
+                rgba(147, 197, 253, 0.18) 300deg,
+                rgba(187, 247, 208, 0.18) 360deg
+              )
+            `
+          }}
+        />
       </motion.div>
 
       {/* Content */}
