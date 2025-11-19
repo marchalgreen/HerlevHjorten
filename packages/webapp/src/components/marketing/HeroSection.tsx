@@ -117,7 +117,7 @@ export const HeroSection: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 1.0 }}
           >
-            Ingen kortoplysninger. Klar til brug på under 10 minutter.
+            Ingen kortoplysninger. 14 dages gratis prøveperiode. Klar til brug på under 10 minutter.
           </motion.p>
 
           {/* Scroll indicator */}
