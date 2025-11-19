@@ -13,6 +13,7 @@ interface SignupData {
   clubName: string
   email: string
   planId: string
+  billingPeriod: 'monthly' | 'yearly'
   password: string
   confirmPassword: string
 }
@@ -69,6 +70,7 @@ export default function MarketingSignupPage() {
     clubName: '',
     email: '',
     planId: initialPlanId || '',
+    billingPeriod: 'yearly',
     password: '',
     confirmPassword: ''
   })
@@ -184,7 +186,8 @@ export default function MarketingSignupPage() {
           email: signupData.email,
           password: signupData.password,
           clubName: signupData.clubName,
-          planId: signupData.planId
+          planId: signupData.planId,
+          billingPeriod: signupData.billingPeriod
         })
       })
 
@@ -249,35 +252,59 @@ export default function MarketingSignupPage() {
   const currentStepIndex = steps.findIndex(s => s.key === currentStep)
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--bg-canvas))] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-[hsl(var(--bg-gradient-1))] via-[hsl(var(--bg-canvas))] to-[hsl(var(--bg-gradient-2))] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-2xl">
+        {/* Logo Header */}
+        {currentStep !== 'success' && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-8 flex justify-center"
+          >
+            <img
+              src="/fulllogo_transparent_nobuffer_horizontal.png"
+              alt="Rundeklar"
+              className="h-12 sm:h-16 object-contain"
+            />
+          </motion.div>
+        )}
+
         {/* Progress indicator */}
         {currentStep !== 'success' && (
-          <div className="mb-8">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mb-8"
+          >
             <div className="flex items-center justify-between mb-4">
               {steps.map((step, index) => (
                 <React.Fragment key={step.key}>
                   <div className="flex flex-col items-center flex-1">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-all duration-300 shadow-sm ${
                         index <= currentStepIndex
-                          ? 'bg-[hsl(var(--primary))] text-white'
+                          ? 'bg-[hsl(var(--primary))] text-white shadow-[hsl(var(--primary))]/20'
                           : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted))]'
                       }`}
                     >
                       {index < currentStepIndex ? (
-                        <Check className="w-5 h-5" />
+                        <Check className="w-6 h-6" />
                       ) : (
-                        index + 1
+                        <span className="text-sm">{index + 1}</span>
                       )}
-                    </div>
-                    <span className="text-xs mt-2 text-[hsl(var(--muted))] text-center hidden sm:block">
+                    </motion.div>
+                    <span className="text-xs mt-2 text-[hsl(var(--muted))] text-center hidden sm:block font-medium">
                       {step.title}
                     </span>
                   </div>
                   {index < steps.length - 1 && (
                     <div
-                      className={`h-1 flex-1 mx-2 transition-colors ${
+                      className={`h-1 flex-1 mx-3 transition-all duration-300 rounded-full ${
                         index < currentStepIndex
                           ? 'bg-[hsl(var(--primary))]'
                           : 'bg-[hsl(var(--surface-2))]'
@@ -287,7 +314,7 @@ export default function MarketingSignupPage() {
                 </React.Fragment>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
 
         <AnimatePresence mode="wait">
@@ -299,52 +326,140 @@ export default function MarketingSignupPage() {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <PageCard className="w-full">
-                <h1 className="text-3xl font-bold mb-2">Vælg din pakke</h1>
-                <p className="text-[hsl(var(--muted))] mb-8">
-                  Vælg den pakke der passer bedst til din klub
-                </p>
+              <PageCard className="w-full shadow-lg">
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-[hsl(var(--foreground))] to-[hsl(var(--primary))] bg-clip-text text-transparent">
+                    Vælg din pakke
+                  </h1>
+                  <p className="text-[hsl(var(--muted))] text-lg">
+                    Vælg den pakke der passer bedst til din klub
+                  </p>
+                </div>
 
                 {error && (
-                  <div className="mb-6 p-4 bg-[hsl(var(--danger)/.1)] border border-[hsl(var(--danger)/.3)] rounded-md">
-                    <p className="text-sm text-[hsl(var(--danger))]">{error}</p>
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 bg-[hsl(var(--danger)/.1)] border border-[hsl(var(--danger)/.3)] rounded-lg"
+                  >
+                    <p className="text-sm text-[hsl(var(--danger))] font-medium">{error}</p>
+                  </motion.div>
                 )}
+
+                {/* Billing Period Toggle */}
+                <div className="flex items-center justify-center gap-4 mb-8 p-4 bg-[hsl(var(--surface-2))] rounded-xl">
+                  <span className={`text-sm font-medium transition-colors ${signupData.billingPeriod === 'monthly' ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted))]'}`}>
+                    Månedlig
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSignupData(prev => ({
+                        ...prev,
+                        billingPeriod: prev.billingPeriod === 'monthly' ? 'yearly' : 'monthly'
+                      }))
+                    }}
+                    className={`relative inline-flex h-9 w-16 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:ring-offset-2 ${
+                      signupData.billingPeriod === 'yearly' ? 'bg-[hsl(var(--primary))]' : 'bg-[hsl(var(--line))]'
+                    }`}
+                    aria-label="Skift mellem månedlig og årlig betaling"
+                  >
+                    <span
+                      className={`inline-block h-7 w-7 transform rounded-full bg-white shadow-md transition-transform ${
+                        signupData.billingPeriod === 'yearly' ? 'translate-x-8' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                  <div className="flex flex-col">
+                    <span className={`text-sm font-medium transition-colors ${signupData.billingPeriod === 'yearly' ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted))]'}`}>
+                      Årlig
+                    </span>
+                    {signupData.billingPeriod === 'yearly' && (
+                      <span className="text-xs text-[hsl(var(--success))] font-medium">Spar 10%</span>
+                    )}
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                   {pricingPlans
                     .filter(p => p.id !== 'enterprise')
-                    .map((plan) => (
-                      <button
-                        key={plan.id}
-                        onClick={() => {
-                          setSignupData(prev => ({ ...prev, planId: plan.id }))
-                          setError(null)
-                        }}
-                        className={`p-6 rounded-lg border-2 transition-all text-left ${
-                          signupData.planId === plan.id
-                            ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/.05)]'
-                            : 'border-[hsl(var(--line)/.3)] hover:border-[hsl(var(--primary)/.5)]'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="text-xl font-semibold">{plan.name}</h3>
-                          {signupData.planId === plan.id && (
-                            <CheckCircle2 className="w-6 h-6 text-[hsl(var(--primary))] flex-shrink-0" />
+                    .map((plan) => {
+                      const price = signupData.billingPeriod === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice
+                      const monthlyEquivalent = signupData.billingPeriod === 'yearly' ? Math.round(plan.yearlyPrice / 12) : null
+                      const isSelected = signupData.planId === plan.id
+                      
+                      return (
+                        <motion.button
+                          key={plan.id}
+                          onClick={() => {
+                            setSignupData(prev => ({ ...prev, planId: plan.id }))
+                            setError(null)
+                          }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`p-6 rounded-xl border-2 transition-all text-left relative overflow-hidden ${
+                            isSelected
+                              ? 'border-[hsl(var(--primary))] bg-gradient-to-br from-[hsl(var(--primary)/.1)] to-[hsl(var(--primary)/.05)] shadow-md'
+                              : 'border-[hsl(var(--line)/.3)] hover:border-[hsl(var(--primary)/.5)] bg-[hsl(var(--surface))]'
+                          }`}
+                        >
+                          {isSelected && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute top-4 right-4"
+                            >
+                              <div className="w-8 h-8 bg-[hsl(var(--primary))] rounded-full flex items-center justify-center shadow-lg">
+                                <CheckCircle2 className="w-5 h-5 text-white" />
+                              </div>
+                            </motion.div>
                           )}
-                        </div>
-                        <p className="text-sm text-[hsl(var(--muted))] mb-4">{plan.description}</p>
-                        <div className="text-2xl font-bold">
-                          {plan.monthlyPrice} kr<span className="text-base font-normal text-[hsl(var(--muted))]">/måned</span>
-                        </div>
-                      </button>
-                    ))}
+                          
+                          <div className="mb-3">
+                            <h3 className="text-xl font-bold text-[hsl(var(--foreground))] mb-1">{plan.name}</h3>
+                            <p className="text-sm text-[hsl(var(--muted))]">{plan.description}</p>
+                          </div>
+                          
+                          <div className="mb-4">
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-3xl font-bold text-[hsl(var(--foreground))]">
+                                {price} kr
+                              </span>
+                              <span className="text-base font-normal text-[hsl(var(--muted))]">
+                                {signupData.billingPeriod === 'yearly' ? '/år' : '/måned'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-[hsl(var(--muted))] mt-1 h-5">
+                              {monthlyEquivalent ? (
+                                <>{monthlyEquivalent} kr/måned</>
+                              ) : (
+                                <span className="invisible">placeholder</span>
+                              )}
+                            </p>
+                          </div>
+
+                          <ul className="space-y-2 text-sm text-[hsl(var(--muted))]">
+                            {plan.features.slice(0, 3).map((feature, idx) => (
+                              <li key={idx} className="flex items-start gap-2">
+                                <Check className="w-4 h-4 text-[hsl(var(--success))] flex-shrink-0 mt-0.5" />
+                                <span>{feature}</span>
+                              </li>
+                            ))}
+                            {plan.features.length > 3 && (
+                              <li className="text-xs text-[hsl(var(--muted))] pl-6">
+                                + {plan.features.length - 3} flere funktioner
+                              </li>
+                            )}
+                          </ul>
+                        </motion.button>
+                      )
+                    })}
                 </div>
 
                 <div className="flex justify-end">
-                  <Button onClick={handleNext} disabled={!signupData.planId}>
+                  <Button onClick={handleNext} disabled={!signupData.planId} className="px-8">
                     Fortsæt
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
               </PageCard>
@@ -359,39 +474,58 @@ export default function MarketingSignupPage() {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <PageCard className="w-full">
-                <h1 className="text-3xl font-bold mb-2">Klub information</h1>
-                <p className="text-[hsl(var(--muted))] mb-8">
-                  Fortæl os lidt om din klub
-                </p>
+              <PageCard className="w-full shadow-lg">
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-[hsl(var(--foreground))] to-[hsl(var(--primary))] bg-clip-text text-transparent">
+                    Klub information
+                  </h1>
+                  <p className="text-[hsl(var(--muted))] text-lg">
+                    Fortæl os lidt om din klub
+                  </p>
+                </div>
 
                 {error && (
-                  <div className="mb-6 p-4 bg-[hsl(var(--danger)/.1)] border border-[hsl(var(--danger)/.3)] rounded-md">
-                    <p className="text-sm text-[hsl(var(--danger))]">{error}</p>
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 bg-[hsl(var(--danger)/.1)] border border-[hsl(var(--danger)/.3)] rounded-lg"
+                  >
+                    <p className="text-sm text-[hsl(var(--danger))] font-medium">{error}</p>
+                  </motion.div>
                 )}
 
                 {selectedPlan && (
-                  <div className="mb-6 p-4 bg-[hsl(var(--primary)/.05)] border border-[hsl(var(--primary)/.2)] rounded-md flex items-center justify-between">
-                    <p className="text-sm">
-                      <span className="font-semibold">Valgt pakke:</span> {selectedPlan.name} ({selectedPlan.monthlyPrice} kr/måned)
-                    </p>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 bg-gradient-to-r from-[hsl(var(--primary)/.1)] to-[hsl(var(--primary)/.05)] border border-[hsl(var(--primary)/.2)] rounded-xl flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-[hsl(var(--foreground))] mb-1">
+                        Valgt pakke: {selectedPlan.name}
+                      </p>
+                      <p className="text-xs text-[hsl(var(--muted))]">
+                        {signupData.billingPeriod === 'yearly' 
+                          ? `${selectedPlan.yearlyPrice} kr/år (${Math.round(selectedPlan.yearlyPrice / 12)} kr/måned)`
+                          : `${selectedPlan.monthlyPrice} kr/måned`}
+                      </p>
+                    </div>
                     <button
                       type="button"
                       onClick={() => {
                         setCurrentStep('plan')
                         setError(null)
                       }}
-                      className="text-sm text-[hsl(var(--primary))] hover:underline"
+                      className="text-sm text-[hsl(var(--primary))] hover:underline font-medium whitespace-nowrap ml-4"
                     >
                       Ændr pakke
                     </button>
-                  </div>
+                  </motion.div>
                 )}
 
                 <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-6">
                   <div>
-                    <label htmlFor="clubName" className="block text-sm font-medium mb-2">
+                    <label htmlFor="clubName" className="block text-sm font-semibold mb-2 text-[hsl(var(--foreground))]">
                       Klubnavn *
                     </label>
                     <input
@@ -404,20 +538,24 @@ export default function MarketingSignupPage() {
                       }}
                       required
                       placeholder="fx. Herlev/Hjorten Badmintonklub"
-                      className="w-full px-4 py-3 border border-[hsl(var(--line))] rounded-lg bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                      className="w-full px-4 py-3 border-2 border-[hsl(var(--line))] rounded-xl bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] transition-all"
                       disabled={loading}
                     />
                     {tenantIdPreview && (
-                      <div className="mt-3 p-3 bg-[hsl(var(--surface-2)/.5)] border border-[hsl(var(--line)/.3)] rounded-md">
-                        <p className="text-xs text-[hsl(var(--muted))] mb-1">
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="mt-3 p-4 bg-gradient-to-r from-[hsl(var(--primary)/.1)] to-[hsl(var(--primary)/.05)] border border-[hsl(var(--primary)/.2)] rounded-xl"
+                      >
+                        <p className="text-xs text-[hsl(var(--muted))] mb-2 font-medium">
                           Din URL bliver:
                         </p>
-                        <p className="text-sm font-mono text-[hsl(var(--foreground))]">
+                        <p className="text-sm font-mono text-[hsl(var(--foreground))] font-semibold">
                           <span className="text-[hsl(var(--muted))]">https://</span>
-                          <span className="font-semibold text-[hsl(var(--primary))]">{tenantIdPreview}</span>
+                          <span className="text-[hsl(var(--primary))]">{tenantIdPreview}</span>
                           <span className="text-[hsl(var(--muted))]">.rundeklar.dk</span>
                         </p>
-                      </div>
+                      </motion.div>
                     )}
                     {!tenantIdPreview && (
                       <p className="mt-2 text-xs text-[hsl(var(--muted))]">
@@ -427,7 +565,7 @@ export default function MarketingSignupPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium mb-2">
+                    <label htmlFor="email" className="block text-sm font-semibold mb-2 text-[hsl(var(--foreground))]">
                       Email *
                     </label>
                     <input
@@ -440,7 +578,7 @@ export default function MarketingSignupPage() {
                       }}
                       required
                       placeholder="din@email.dk"
-                      className="w-full px-4 py-3 border border-[hsl(var(--line))] rounded-lg bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                      className="w-full px-4 py-3 border-2 border-[hsl(var(--line))] rounded-xl bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] transition-all"
                       disabled={loading}
                     />
                     <p className="mt-2 text-xs text-[hsl(var(--muted))]">
@@ -477,21 +615,29 @@ export default function MarketingSignupPage() {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <PageCard className="w-full">
-                <h1 className="text-3xl font-bold mb-2">Opret adgangskode</h1>
-                <p className="text-[hsl(var(--muted))] mb-8">
-                  Vælg en sikker adgangskode til din konto
-                </p>
+              <PageCard className="w-full shadow-lg">
+                <div className="text-center mb-8">
+                  <h1 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-[hsl(var(--foreground))] to-[hsl(var(--primary))] bg-clip-text text-transparent">
+                    Opret adgangskode
+                  </h1>
+                  <p className="text-[hsl(var(--muted))] text-lg">
+                    Vælg en sikker adgangskode til din konto
+                  </p>
+                </div>
 
                 {error && (
-                  <div className="mb-6 p-4 bg-[hsl(var(--danger)/.1)] border border-[hsl(var(--danger)/.3)] rounded-md">
-                    <p className="text-sm text-[hsl(var(--danger))]">{error}</p>
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 p-4 bg-[hsl(var(--danger)/.1)] border border-[hsl(var(--danger)/.3)] rounded-lg"
+                  >
+                    <p className="text-sm text-[hsl(var(--danger))] font-medium">{error}</p>
+                  </motion.div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium mb-2">
+                    <label htmlFor="password" className="block text-sm font-semibold mb-2 text-[hsl(var(--foreground))]">
                       Adgangskode *
                     </label>
                     <input
@@ -500,20 +646,29 @@ export default function MarketingSignupPage() {
                       value={signupData.password}
                       onChange={(e) => handlePasswordChange(e.target.value)}
                       required
-                      className="w-full px-4 py-3 border border-[hsl(var(--line))] rounded-lg bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                      className="w-full px-4 py-3 border-2 border-[hsl(var(--line))] rounded-xl bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] transition-all"
                       disabled={loading}
                     />
                     {passwordErrors.length > 0 && (
-                      <ul className="mt-2 text-xs text-[hsl(var(--muted))] list-disc list-inside space-y-1">
+                      <ul className="mt-3 space-y-2">
                         {passwordErrors.map((err, i) => (
-                          <li key={i}>{err}</li>
+                          <li key={i} className="flex items-center gap-2 text-xs text-[hsl(var(--muted))]">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--danger))]" />
+                            {err}
+                          </li>
                         ))}
                       </ul>
+                    )}
+                    {passwordErrors.length === 0 && signupData.password && (
+                      <p className="mt-2 text-xs text-[hsl(var(--success))] font-medium flex items-center gap-2">
+                        <Check className="w-4 h-4" />
+                        Adgangskoden opfylder alle krav
+                      </p>
                     )}
                   </div>
 
                   <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">
+                    <label htmlFor="confirmPassword" className="block text-sm font-semibold mb-2 text-[hsl(var(--foreground))]">
                       Bekræft adgangskode *
                     </label>
                     <input
@@ -525,12 +680,19 @@ export default function MarketingSignupPage() {
                         setError(null)
                       }}
                       required
-                      className="w-full px-4 py-3 border border-[hsl(var(--line))] rounded-lg bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))]"
+                      className="w-full px-4 py-3 border-2 border-[hsl(var(--line))] rounded-xl bg-[hsl(var(--surface))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ring))] focus:border-[hsl(var(--primary))] transition-all"
                       disabled={loading}
                     />
                     {signupData.confirmPassword && signupData.password !== signupData.confirmPassword && (
-                      <p className="mt-2 text-xs text-[hsl(var(--danger))]">
+                      <p className="mt-2 text-xs text-[hsl(var(--danger))] font-medium flex items-center gap-2">
+                        <span>✕</span>
                         Adgangskoderne matcher ikke
+                      </p>
+                    )}
+                    {signupData.confirmPassword && signupData.password === signupData.confirmPassword && (
+                      <p className="mt-2 text-xs text-[hsl(var(--success))] font-medium flex items-center gap-2">
+                        <Check className="w-4 h-4" />
+                        Adgangskoderne matcher
                       </p>
                     )}
                   </div>
@@ -562,32 +724,71 @@ export default function MarketingSignupPage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <PageCard className="w-full text-center">
+              <PageCard className="w-full text-center shadow-lg">
+                {/* Logo */}
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="mb-6 flex justify-center"
+                >
+                  <img
+                    src="/fulllogo_transparent_nobuffer_horizontal.png"
+                    alt="Rundeklar"
+                    className="h-12 sm:h-16 object-contain"
+                  />
+                </motion.div>
+
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                  className="mb-6"
+                  className="mb-8"
                 >
-                  <div className="w-20 h-20 bg-[hsl(var(--success)/.2)] rounded-full flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-12 h-12 text-[hsl(var(--success))]" />
+                  <div className="w-24 h-24 bg-gradient-to-br from-[hsl(var(--success)/.2)] to-[hsl(var(--primary)/.2)] rounded-full flex items-center justify-center mx-auto shadow-lg">
+                    <CheckCircle2 className="w-14 h-14 text-[hsl(var(--success))]" />
                   </div>
                 </motion.div>
                 
-                <h1 className="text-3xl font-bold mb-4">Velkommen til Rundeklar!</h1>
-                <p className="text-lg text-[hsl(var(--muted))] mb-6">
-                  Din konto er blevet oprettet. Vi har sendt en bekræftelsesmail til <strong>{signupData.email}</strong>.
-                </p>
-                <p className="text-sm text-[hsl(var(--muted))] mb-8">
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-3xl sm:text-4xl font-bold mb-4 bg-gradient-to-r from-[hsl(var(--foreground))] to-[hsl(var(--primary))] bg-clip-text text-transparent"
+                >
+                  Velkommen til Rundeklar!
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-lg text-[hsl(var(--muted))] mb-6"
+                >
+                  Din konto er blevet oprettet. Vi har sendt en bekræftelsesmail til <strong className="text-[hsl(var(--foreground))]">{signupData.email}</strong>.
+                </motion.p>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-sm text-[hsl(var(--muted))] mb-8"
+                >
                   Klik på linket i emailen for at aktivere din konto og komme i gang.
-                </p>
+                </motion.p>
                 
                 {createdTenantId && (
-                  <div className="p-4 bg-[hsl(var(--primary)/.05)] border border-[hsl(var(--primary)/.2)] rounded-lg mb-6">
-                    <p className="text-sm">
-                      <strong>Din URL:</strong> <span className="font-mono">{createdTenantId}.rundeklar.dk</span>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="p-5 bg-gradient-to-r from-[hsl(var(--primary)/.1)] to-[hsl(var(--primary)/.05)] border border-[hsl(var(--primary)/.2)] rounded-xl mb-8"
+                  >
+                    <p className="text-sm font-semibold text-[hsl(var(--foreground))] mb-2">
+                      Din URL:
                     </p>
-                  </div>
+                    <p className="text-base font-mono text-[hsl(var(--primary))] font-bold">
+                      {createdTenantId}.rundeklar.dk
+                    </p>
+                  </motion.div>
                 )}
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">

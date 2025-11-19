@@ -22,7 +22,8 @@ const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   clubName: z.string().min(2, 'Club name must be at least 2 characters'),
-  planId: z.enum(['basic', 'professional']).optional() // Enterprise handled separately
+  planId: z.enum(['basic', 'professional']).optional(), // Enterprise handled separately
+  billingPeriod: z.enum(['monthly', 'yearly']).default('yearly')
 })
 
 /**
@@ -32,7 +33,8 @@ async function sendAdminNotificationEmail(
   clubName: string,
   email: string,
   tenantId: string,
-  planId: string
+  planId: string,
+  billingPeriod: 'monthly' | 'yearly'
 ): Promise<void> {
   if (!resend) {
     logger.warn('Resend not configured - skipping admin notification email')
@@ -46,10 +48,18 @@ async function sendAdminNotificationEmail(
     return
   }
 
-  const planNames: Record<string, string> = {
-    basic: 'Basispakke (250 kr/måned)',
-    professional: 'Professionel (400 kr/måned)'
+  const planNames: Record<string, { monthly: string; yearly: string }> = {
+    basic: {
+      monthly: 'Basispakke (250 kr/måned)',
+      yearly: 'Basispakke (2700 kr/år - 225 kr/måned)'
+    },
+    professional: {
+      monthly: 'Professionel (400 kr/måned)',
+      yearly: 'Professionel (4320 kr/år - 360 kr/måned)'
+    }
   }
+  
+  const planDisplay = planNames[planId]?.[billingPeriod] || `${planId} (${billingPeriod})`
 
   try {
     await resend.emails.send({
@@ -63,7 +73,7 @@ async function sendAdminNotificationEmail(
             <p><strong>Klubnavn:</strong> ${clubName}</p>
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Tenant ID:</strong> ${tenantId}</p>
-            <p><strong>Pakke:</strong> ${planNames[planId] || 'Ikke angivet'}</p>
+            <p><strong>Pakke:</strong> ${planDisplay}</p>
             <p><strong>URL:</strong> https://${tenantId}.rundeklar.dk</p>
           </div>
           <p style="color: #666;">
@@ -188,7 +198,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         body.clubName,
         body.email,
         tenantId,
-        body.planId || 'basic'
+        body.planId || 'basic',
+        body.billingPeriod || 'monthly'
       )
       logger.info(`Admin notification email sent for new tenant: ${tenantId}`)
     } catch (notificationError) {
