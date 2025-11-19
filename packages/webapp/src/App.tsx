@@ -26,6 +26,7 @@ import { Button } from './components/ui'
 import { UserRole } from './lib/auth/roles'
 import AdminPage from './routes/admin/AdminPage'
 import { formatCoachUsername } from './lib/formatting'
+import { trackPageView } from './lib/analytics/track'
 
 /**
  * Component that updates document title.
@@ -365,6 +366,14 @@ const AppContent = () => {
   const { club } = useAuth()
   const tenantId = getCurrentTenantId()
   const isMarketingTenant = tenantId === 'marketing'
+  
+  // Track page views for demo tenant (only on initial mount, not on every page change)
+  useEffect(() => {
+    if (tenantId === 'demo') {
+      trackPageView('demo')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only track once on mount, not on every page change
   
   // Prepare coach object for LandingPage - use username for coaches, email for admins
   const coachForLanding = club ? {

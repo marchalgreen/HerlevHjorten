@@ -5,6 +5,7 @@ import { Button } from '../../components/ui'
 import { Check, Loader2, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { pricingPlans, type PricingPlan } from '../../lib/marketing/pricing'
 import { nameToSubdomain } from '../../lib/marketing/tenant-utils'
+import { trackPageView, trackConversion } from '../../lib/analytics/track'
 
 type Step = 'club' | 'plan' | 'password' | 'success'
 
@@ -41,6 +42,11 @@ export default function MarketingSignupPage() {
     return initialStep
   })
   
+  // Track page view on mount
+  useEffect(() => {
+    trackPageView('marketing')
+  }, [])
+
   // Debug: Log when component mounts/unmounts
   useEffect(() => {
     console.log('[MarketingSignupPage] Component MOUNTED', {
@@ -253,6 +259,13 @@ export default function MarketingSignupPage() {
         })
       }
       
+      // Track conversion (signup completed)
+      trackConversion('marketing', 'signup', {
+        tenant_id: tenantSubdomain,
+        plan_id: signupData.planId,
+        email: signupData.email
+      })
+
       // Update state AFTER sessionStorage is set
       // Polling in useEffect will catch this and update currentStep if component remounts
       console.log('[MarketingSignupPage] Updating state: setCurrentStep("success")')

@@ -153,6 +153,7 @@ async function setupAdminRoutes() {
   const tenantsHandler = (await import('../api/admin/tenants.js')).default
   const tenantByIdHandler = (await import('../api/admin/tenants/[id].js')).default
   const tenantAdminsHandler = (await import('../api/admin/tenants/[id]/admins.js')).default
+  const analyticsHandler = (await import('../api/admin/analytics.js')).default
   
   // Admin routes
   app.get('/api/admin/tenants', wrapHandler(tenantsHandler))
@@ -162,6 +163,7 @@ async function setupAdminRoutes() {
   app.delete('/api/admin/tenants/:id', wrapHandler(tenantByIdHandler))
   app.get('/api/admin/tenants/:id/admins', wrapHandler(tenantAdminsHandler))
   app.post('/api/admin/tenants/:id/admins', wrapHandler(tenantAdminsHandler))
+  app.get('/api/admin/analytics', wrapHandler(analyticsHandler))
 }
 
 // Load tenant admin route handlers
@@ -184,6 +186,14 @@ async function setupMarketingRoutes() {
   
   // Marketing routes
   app.post('/api/marketing/signup', wrapHandler(signupHandler))
+}
+
+// Load analytics route handlers
+async function setupAnalyticsRoutes() {
+  const trackHandler = (await import('../api/analytics/track.js')).default
+  
+  // Analytics routes
+  app.post('/api/analytics/track', wrapHandler(trackHandler))
 }
 
 // API route handler (same as Vercel serverless function)
@@ -227,7 +237,8 @@ Promise.all([
   setupAuthRoutes(),
   setupAdminRoutes(),
   setupTenantAdminRoutes(),
-  setupMarketingRoutes()
+  setupMarketingRoutes(),
+  setupAnalyticsRoutes()
 ]).then(() => {
   const server = app.listen(PORT, () => {
     console.log(`🚀 API server running on http://127.0.0.1:${PORT}`)
@@ -236,7 +247,9 @@ Promise.all([
     console.log(`   - POST /api/auth/register`)
     console.log(`   - POST /api/auth/login`)
     console.log(`   - POST /api/marketing/signup`)
+    console.log(`   - POST /api/analytics/track`)
     console.log(`   - GET /api/admin/tenants`)
+    console.log(`   - GET /api/admin/analytics`)
     console.log(`   - GET /api/:tenantId/admin/coaches`)
     console.log(`   - ... and other routes`)
     console.log(`\n💡 Keep this running while developing`)
