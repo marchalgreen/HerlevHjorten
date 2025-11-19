@@ -2,8 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PageCard } from '../../components/ui'
 import { Button } from '../../components/ui'
-import { Check, Loader2, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
-import { pricingPlans, type PricingPlan } from '../../lib/marketing/pricing'
+import { Check, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { pricingPlans } from '../../lib/marketing/pricing'
 import { nameToSubdomain } from '../../lib/marketing/tenant-utils'
 import { trackPageView, trackConversion } from '../../lib/analytics/track'
 
@@ -61,6 +61,7 @@ export default function MarketingSignupPage() {
         timestamp: new Date().toISOString()
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -94,6 +95,7 @@ export default function MarketingSignupPage() {
         setSignupData(prev => ({ ...prev, email: savedEmail }))
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep])
   
   // Sync state with sessionStorage when step changes to success

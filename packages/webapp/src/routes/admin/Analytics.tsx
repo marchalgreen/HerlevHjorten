@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { PageCard } from '../../components/ui'
 import { BarChart3, Users, Eye, TrendingUp, Calendar } from 'lucide-react'
 
@@ -50,11 +50,7 @@ export default function AnalyticsPage() {
   const [endDate, setEndDate] = useState<string>('')
   const [tenantFilter, setTenantFilter] = useState<string>('')
 
-  useEffect(() => {
-    fetchAnalytics()
-  }, [startDate, endDate, tenantFilter])
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true)
       const token = localStorage.getItem('auth_access_token')
@@ -86,7 +82,11 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [startDate, endDate, tenantFilter])
+
+  useEffect(() => {
+    fetchAnalytics()
+  }, [fetchAnalytics])
 
   if (loading) {
     return (

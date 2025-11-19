@@ -341,7 +341,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ coach, onRedirectToCheckin })
             onSelect={(id) => {
               state.setSelectedGroupId(id)
               // analytics: group_selected
-              // eslint-disable-next-line no-console
               console.debug('analytics:event', 'group_selected', { groupId: id })
             }}
           />

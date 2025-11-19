@@ -64,7 +64,6 @@ export const useLandingState = (opts?: UseLandingStateOptions): UseLandingState 
   const openSearch = useCallback(() => {
     setSearchOpen(true)
     // analytics: search_opened
-    // eslint-disable-next-line no-console
     console.debug('analytics:event', 'search_opened')
   }, [])
   const closeSearch = useCallback(() => setSearchOpen(false), [])
@@ -88,7 +87,6 @@ export const useLandingState = (opts?: UseLandingStateOptions): UseLandingState 
         const fetchedGroups = await api.fetchTrainingGroups()
         setGroups(fetchedGroups)
         // analytics: landing_groups_loaded
-        // eslint-disable-next-line no-console
         console.debug('analytics:event', 'landing_groups_loaded')
       } catch (error) {
         notify({
@@ -116,7 +114,6 @@ export const useLandingState = (opts?: UseLandingStateOptions): UseLandingState 
         setSearchResults(results)
       } catch (error) {
         // fail silently; UI already conveys empty state
-        // eslint-disable-next-line no-console
         console.warn('Player search failed', error)
       }
     }
@@ -126,7 +123,6 @@ export const useLandingState = (opts?: UseLandingStateOptions): UseLandingState 
   const addCrossGroupPlayer = useCallback((p: PlayerLite) => {
     setCrossGroupPlayers((prev) => (prev.some((x) => x.id === p.id) ? prev : [...prev, p]))
     // analytics: player_selected_from_search
-    // eslint-disable-next-line no-console
     console.debug('analytics:event', 'player_selected_from_search', { playerId: p.id })
   }, [])
 
@@ -139,7 +135,6 @@ export const useLandingState = (opts?: UseLandingStateOptions): UseLandingState 
     setStarting(true)
     try {
       // analytics: session_start_attempt
-      // eslint-disable-next-line no-console
       console.debug('analytics:event', 'session_start_attempt')
 
       const payload = {
@@ -150,13 +145,11 @@ export const useLandingState = (opts?: UseLandingStateOptions): UseLandingState 
       }
       const result = await api.startSession(payload)
       // analytics: session_start_success
-      // eslint-disable-next-line no-console
       console.debug('analytics:event', 'session_start_success')
       setActiveSession(result)
       opts?.onRedirectToCheckin?.(result.sessionId)
     } catch (error) {
       // analytics: session_start_failed
-      // eslint-disable-next-line no-console
       console.debug('analytics:event', 'session_start_failed')
       notify({
         variant: 'danger',
