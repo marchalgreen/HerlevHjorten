@@ -12,8 +12,30 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     const verifyEmail = async () => {
       // Extract token from URL query params
+      // NavigationContext may have updated the URL, so check both current search and hash
+      let token: string | null = null
+      
+      // First try current location search (after NavigationContext update)
       const params = new URLSearchParams(window.location.search)
-      const token = params.get('token')
+      token = params.get('token')
+      
+      // If not found, check hash (for backward compatibility or if NavigationContext hasn't run yet)
+      if (!token && window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.split('?')[1] || '')
+        token = hashParams.get('token')
+      }
+      
+      // Also check if token is in the original URL before NavigationContext modified it
+      // by checking if we can get it from the initial page load
+      if (!token) {
+        // Try to get from sessionStorage if NavigationContext stored it
+        const storedToken = sessionStorage.getItem('verify_email_token')
+        if (storedToken) {
+          token = storedToken
+          sessionStorage.removeItem('verify_email_token')
+        }
+      }
+      
       if (!token) {
         setError('Ingen verifikationstoken fundet')
         setLoading(false)

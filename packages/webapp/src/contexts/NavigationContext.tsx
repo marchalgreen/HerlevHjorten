@@ -105,6 +105,24 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
         if (knownAuthPages.includes(path as AuthPage)) {
           setAuthPage(path as AuthPage)
           setCurrentPage('coach')
+          
+          // For token-based auth pages, store token in sessionStorage before updating URL
+          // This ensures VerifyEmail/ResetPassword/etc can read token even if URL update happens first
+          if (search) {
+            const searchParams = new URLSearchParams(search)
+            const token = searchParams.get('token')
+            if (token) {
+              // Store token based on which auth page it is
+              if (path === 'verify-email') {
+                sessionStorage.setItem('verify_email_token', token)
+              } else if (path === 'reset-password') {
+                sessionStorage.setItem('reset_password_token', token)
+              } else if (path === 'reset-pin') {
+                sessionStorage.setItem('reset_pin_token', token)
+              }
+            }
+          }
+          
           // Preserve query params in URL for token-based auth pages
           // Clean up pathname but keep search params - redirect to root with query params
           if (search) {
