@@ -16,7 +16,7 @@ const testimonials: Testimonial[] = [
   {
     quote: 'Før sad vi med pen og papir. Nu har vi overblik over baner, spillere og fremmøde på én skærm.',
     author: 'Morten Regaard',
-    role: 'Træner, Herlev/Hjorten Badmintonklub'
+    role: 'Cheftræner, Herlev/Hjorten Badmintonklub'
   },
   {
     quote: 'Vi har fået meget bedre ro på træningsaftenerne. Spillerne tjekker selv ind, og vi kan sætte runderne på få minutter.',

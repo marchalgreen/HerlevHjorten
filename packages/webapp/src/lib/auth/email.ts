@@ -569,7 +569,7 @@ export async function sendColdCallEmail(
         "Før sad vi med pen og papir. Nu har vi overblik over baner, spillere og fremmøde på én skærm."
       </p>
       <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #6c757d; font-weight: 600;">
-        — Morten Regaard, træner, Herlev/Hjorten Badmintonklub
+        — Morten Regaard, cheftræner, Herlev/Hjorten Badmintonklub
       </p>
     </div>
     

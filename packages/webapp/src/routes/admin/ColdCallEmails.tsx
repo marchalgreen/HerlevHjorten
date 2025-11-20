@@ -358,7 +358,7 @@ export default function ColdCallEmailsPage() {
                           "Før sad vi med pen og papir. Nu har vi overblik over baner, spillere og fremmøde på én skærm."
                         </p>
                         <p style={{ margin: '0', fontSize: '14px', lineHeight: '1.6', color: '#6c757d', fontWeight: '600' }}>
-                          — Morten Regaard, træner, Herlev/Hjorten Badmintonklub
+                          — Morten Regaard, cheftræner, Herlev/Hjorten Badmintonklub
                         </p>
                       </div>
                       <p style={{ margin: '32px 0 20px 0', fontSize: '16px', lineHeight: '1.6', color: '#495057' }}>
