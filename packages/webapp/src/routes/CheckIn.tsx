@@ -11,7 +11,7 @@ import { UsersRound } from 'lucide-react'
 import { PageCard, EmptyState, Button } from '../components/ui'
 import { TableSearch } from '../components/ui/Table'
 import { PlayerCard, CheckedInPlayerCard, LetterFilters, AnimatedList } from '../components/checkin'
-import { useSession, useCheckIns, usePlayers } from '../hooks'
+import { useSession, useCheckIns, usePlayers, useWakeLock } from '../hooks'
 import { LETTER_FILTERS, UI_CONSTANTS } from '../constants'
 import coachLandingApi from '../services/coachLandingApi'
 import CrossGroupSearchModal from '../components/checkin/CrossGroupSearchModal'
@@ -30,6 +30,9 @@ const CheckInPage = () => {
   const { session, loading: sessionLoading } = useSession()
   const { players, loading: playersLoading, refetch: refetchPlayers } = usePlayers({ active: true })
   const { checkedIn, checkIn, checkOut } = useCheckIns(session?.id ?? null)
+
+  // Keep screen awake when session is active
+  useWakeLock(session !== null)
 
   // UI state
   const [search, setSearch] = useState('')

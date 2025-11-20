@@ -10,7 +10,7 @@ import React from 'react'
 import { PageCard } from '../components/ui'
 import { useTenant } from '../contexts/TenantContext'
 import courtsSettings from '../services/courtsSettings'
-import { useSession, useCheckIns } from '../hooks'
+import { useSession, useCheckIns, useWakeLock } from '../hooks'
 import { useMatchProgram } from '../hooks/useMatchProgram'
 import { FullScreenMatchProgram } from '../components/matchprogram/FullScreenMatchProgram'
 import { BenchSection } from '../components/matchprogram/BenchSection'
@@ -50,6 +50,9 @@ const MatchProgramPage = () => {
   // Data hooks
   const { session, loading: sessionLoading, startSession, endSession } = useSession()
   const { checkedIn, loading: checkInsLoading } = useCheckIns(session?.id ?? null)
+
+  // Keep screen awake when session is active
+  useWakeLock(session !== null)
   
   const loading = sessionLoading || checkInsLoading
   
