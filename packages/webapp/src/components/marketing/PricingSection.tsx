@@ -231,7 +231,7 @@ const PricingCard: React.FC<{
           onClick={() => {
             if (plan.monthlyPrice === 0) {
               // Enterprise - open contact form or email
-              window.location.href = 'mailto:marchalgreen@gmail.com?subject=Enterprise henvendelse'
+              window.location.href = 'mailto:marc@rundeklar.dk?subject=Enterprise henvendelse'
             } else {
               // Navigate to signup with plan parameter
               const signupUrl = `/?plan=${plan.id}`

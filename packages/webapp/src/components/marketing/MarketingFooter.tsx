@@ -74,7 +74,7 @@ export const MarketingFooter: React.FC = () => {
             <ul className="space-y-2">
               <li>
                 <a
-                  href="mailto:marchalgreen@gmail.com"
+                  href="mailto:marc@rundeklar.dk"
                   className="flex items-center gap-2 text-sm text-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))] transition-colors"
                 >
                   <Mail className="w-4 h-4" />
