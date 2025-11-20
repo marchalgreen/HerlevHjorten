@@ -355,7 +355,7 @@ export default function ColdCallEmailsPage() {
                       </ul>
                       <div style={{ margin: '32px 0', padding: '20px', backgroundColor: '#f8f9fa', borderLeft: '4px solid #007bff', borderRadius: '4px' }}>
                         <p style={{ margin: '0 0 12px 0', fontSize: '16px', lineHeight: '1.6', color: '#495057', fontStyle: 'italic' }}>
-                          &quot;Før var det pen og papir og en masse råben på tværs af hallen. Nu ligger indtjekning, runder og overblik stille og roligt på én skærm. Det har gjort alt arbejdet omkring runder langt lettere og frigivet tid og ro til selve træningen.&quot;
+                          Før var det pen og papir og en masse råben på tværs af hallen. Nu ligger indtjekning, runder og overblik stille og roligt på én skærm. Det har gjort alt arbejdet omkring runder langt lettere og frigivet tid og ro til selve træningen.
                         </p>
                         <p style={{ margin: '0', fontSize: '14px', lineHeight: '1.6', color: '#6c757d', fontWeight: '600' }}>
                           — Morten Regaard, cheftræner, Herlev/Hjorten Badmintonklub

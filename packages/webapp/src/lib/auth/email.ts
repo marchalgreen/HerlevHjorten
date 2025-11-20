@@ -563,7 +563,7 @@ export async function sendColdCallEmail(
     
     <div style="margin: 32px 0; padding: 20px; background-color: #f8f9fa; border-left: 4px solid #007bff; border-radius: 4px;">
       <p style="margin: 0 0 12px 0; font-size: 16px; line-height: 1.6; color: #495057; font-style: italic;">
-        &quot;Før var det pen og papir og en masse råben på tværs af hallen. Nu ligger indtjekning, runder og overblik stille og roligt på én skærm. Det har gjort alt arbejdet omkring runder langt lettere og frigivet tid og ro til selve træningen.&quot;
+        Før var det pen og papir og en masse råben på tværs af hallen. Nu ligger indtjekning, runder og overblik stille og roligt på én skærm. Det har gjort alt arbejdet omkring runder langt lettere og frigivet tid og ro til selve træningen.
       </p>
       <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #6c757d; font-weight: 600;">
         — Morten Regaard, cheftræner, Herlev/Hjorten Badmintonklub
