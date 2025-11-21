@@ -10,12 +10,14 @@ interface AnalyticsData {
     last_7_days_views: number
     last_30_days_views: number
     admin_views?: number
+    excluded_views?: number // Sysadmin's own views (excluded from main counts)
   }
   views_by_tenant: Array<{
     tenant_id: string
     total_views: number
     unique_visitors: number
     admin_views?: number
+    excluded_views?: number // Sysadmin's own views (excluded from main counts)
   }>
   views_over_time: Array<{
     date: string
@@ -40,6 +42,19 @@ interface AnalyticsData {
     utm_campaign: string | null
     created_at: string
   }>
+  historical_impact?: {
+    total_historical_views: number
+    total_all_time_views: number
+    percentage_of_total: number
+    by_tenant: Array<{
+      tenant_id: string
+      views: number
+    }>
+    over_time: Array<{
+      date: string
+      views: number
+    }>
+  }
 }
 
 export default function AnalyticsPage() {
@@ -75,7 +90,37 @@ export default function AnalyticsPage() {
       }
 
       const result = await response.json()
-      setData(result.data)
+      
+      // Ensure all numbers are properly parsed
+      const parsedData: AnalyticsData = {
+        ...result.data,
+        summary: {
+          ...result.data.summary,
+          total_views: Number(result.data.summary.total_views) || 0,
+          unique_visitors: Number(result.data.summary.unique_visitors) || 0,
+          today_views: Number(result.data.summary.today_views) || 0,
+          last_7_days_views: Number(result.data.summary.last_7_days_views) || 0,
+          last_30_days_views: Number(result.data.summary.last_30_days_views) || 0,
+          admin_views: result.data.summary.admin_views ? Number(result.data.summary.admin_views) : undefined,
+          excluded_views: result.data.summary.excluded_views ? Number(result.data.summary.excluded_views) : undefined
+        },
+        views_by_tenant: result.data.views_by_tenant.map((t: any) => ({
+          ...t,
+          total_views: Number(t.total_views) || 0,
+          unique_visitors: Number(t.unique_visitors) || 0,
+          admin_views: t.admin_views ? Number(t.admin_views) : undefined,
+          excluded_views: t.excluded_views ? Number(t.excluded_views) : undefined
+        }))
+      }
+      
+      if (import.meta.env.DEV) {
+        console.log('Parsed data:', {
+          total_views: parsedData.summary.total_views,
+          tenant_views: parsedData.views_by_tenant.map(t => ({ tenant: t.tenant_id, views: t.total_views }))
+        })
+      }
+      
+      setData(parsedData)
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load analytics')
@@ -157,6 +202,17 @@ export default function AnalyticsPage() {
         </div>
       </PageCard>
 
+      {/* Info Banner */}
+      <PageCard>
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            <strong>Pålidelig filtrering:</strong> Alle views fra IP-adresser hvor du har været logget ind som sysadmin er ekskluderet fra statistikken. 
+            Dette gælder også når du skifter netværk (hjemme, kontor, mobil data, etc.). 
+            Tallene i parentes viser dine ekskluderede views for reference.
+          </p>
+        </div>
+      </PageCard>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <PageCard>
@@ -166,6 +222,11 @@ export default function AnalyticsPage() {
               <p className="text-sm text-[hsl(var(--muted))]">Total besøg</p>
               <p className="text-2xl font-bold">
                 {data.summary.total_views.toLocaleString()}
+                {data.summary.excluded_views && data.summary.excluded_views > 0 && (
+                  <span className="text-sm font-normal text-[hsl(var(--muted))] ml-1">
+                    ({data.summary.excluded_views} mine)
+                  </span>
+                )}
                 {data.summary.admin_views && data.summary.admin_views > 0 && (
                   <span className="text-sm font-normal text-[hsl(var(--muted))] ml-1">
                     ({data.summary.admin_views} admin)
@@ -244,6 +305,11 @@ export default function AnalyticsPage() {
                   <div className="text-right">
                     <p className="text-2xl font-bold text-[hsl(var(--foreground))]">
                       {tenant.total_views.toLocaleString()}
+                      {tenant.excluded_views && tenant.excluded_views > 0 && (
+                        <span className="text-sm font-normal text-[hsl(var(--muted))] ml-1">
+                          ({tenant.excluded_views} mine)
+                        </span>
+                      )}
                       {tenant.admin_views && tenant.admin_views > 0 && (
                         <span className="text-sm font-normal text-[hsl(var(--muted))] ml-1">
                           ({tenant.admin_views} admin)
@@ -350,6 +416,93 @@ export default function AnalyticsPage() {
           </div>
         </PageCard>
       </div>
+
+      {/* Historical Impact Analysis */}
+      {data.historical_impact && data.historical_impact.total_historical_views > 0 && (
+        <PageCard>
+          <h2 className="text-xl font-semibold mb-4">Din historiske indvirkning på statistikken</h2>
+          <p className="text-sm text-[hsl(var(--muted))] mb-6">
+            Denne sektion viser, hvor meget af den samlede statistik der historisk set kommer fra IP-adresser hvor du har været logget ind som sysadmin.
+            Alle views fra disse IP-adresser er nu ekskluderet fra hovedtællerne (inkl. når du skifter netværk), men vises her for reference.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="p-4 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--line)/.3)]">
+              <p className="text-sm text-[hsl(var(--muted))] mb-1">Total historiske views</p>
+              <p className="text-2xl font-bold">{data.historical_impact.total_historical_views.toLocaleString()}</p>
+            </div>
+            <div className="p-4 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--line)/.3)]">
+              <p className="text-sm text-[hsl(var(--muted))] mb-1">Procentdel af total</p>
+              <p className="text-2xl font-bold">{data.historical_impact.percentage_of_total.toFixed(2)}%</p>
+            </div>
+            <div className="p-4 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--line)/.3)]">
+              <p className="text-sm text-[hsl(var(--muted))] mb-1">Total views (alle tider)</p>
+              <p className="text-2xl font-bold">{data.historical_impact.total_all_time_views.toLocaleString()}</p>
+            </div>
+          </div>
+
+          {data.historical_impact.by_tenant.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">Opdelt på tenant</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {data.historical_impact.by_tenant.map((tenant) => {
+                  const isMarketing = tenant.tenant_id === 'marketing'
+                  const isDemo = tenant.tenant_id === 'demo'
+                  const badgeColor = isMarketing 
+                    ? 'bg-[hsl(var(--primary))] text-white' 
+                    : isDemo 
+                    ? 'bg-[hsl(var(--success))] text-white'
+                    : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))]'
+                  
+                  return (
+                    <div 
+                      key={tenant.tenant_id} 
+                      className="p-4 bg-[hsl(var(--surface))] border border-[hsl(var(--line)/.3)] rounded-lg"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wide ${badgeColor}`}>
+                          {tenant.tenant_id}
+                        </span>
+                        <p className="text-xl font-bold">{tenant.views.toLocaleString()}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {data.historical_impact.over_time.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Over tid (sidste 30 dage)</h3>
+              <div className="space-y-2">
+                {data.historical_impact.over_time.slice().reverse().map((day) => {
+                  const maxHistoricalViews = Math.max(...data.historical_impact!.over_time.map(d => d.views), 1)
+                  const width = (day.views / maxHistoricalViews) * 100
+                  return (
+                    <div key={day.date} className="flex items-center gap-4">
+                      <div className="w-24 text-sm text-[hsl(var(--muted))]">
+                        {new Date(day.date).toLocaleDateString('da-DK', { day: '2-digit', month: '2-digit' }).replace(/\./g, '/')}
+                      </div>
+                      <div className="flex-1">
+                        <div className="relative h-8 bg-[hsl(var(--surface-2))] rounded-md overflow-hidden">
+                          <div
+                            className="absolute inset-y-0 left-0 bg-orange-500 rounded-md transition-all"
+                            style={{ width: `${width}%` }}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-between px-3 text-sm font-medium">
+                            <span>{day.views}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </PageCard>
+      )}
 
       {/* Recent Views */}
       <PageCard>
